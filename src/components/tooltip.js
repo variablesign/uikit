@@ -136,7 +136,7 @@ class Tooltip extends Component {
             this._element.after(this._tooltip);
             this._autoUpdatePosition = this._updatePosition();
             
-            setTimeout(() => {
+            // setTimeout(() => {
                 if (!this._hasAnimation(this._tooltip)) {
                     util.addClass(this._tooltip, this._config.animationStartClass);
                     util.show(this._tooltip);
@@ -167,14 +167,14 @@ class Tooltip extends Component {
 
                 console.log('shown');
                 this.TriggerEvent('shown');
-            }, this._delay);
+            // }, this._delay);
         }
 
         this._hide = (e) => {
             console.log('hide');
             this.TriggerEvent('hide');
 
-            setTimeout(() => {
+            // setTimeout(() => {
 
                 if (this._config.animationEndClass) {
                     this._animation(
@@ -210,7 +210,7 @@ class Tooltip extends Component {
                 console.log('hidden');
                 this._tooltip.remove();
                 this.TriggerEvent('hidden');
-            }, this._delay);
+            // }, this._delay);
         }
 
         this._toggle = (e) => {
