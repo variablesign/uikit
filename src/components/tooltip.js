@@ -9,10 +9,12 @@ const _defaults = {
     placement: 'top',
     offset: 8,
     shift: 8,
-    delay: 0,
+    showDelay: 0,
+    hideDelay: 0,
     trigger: ['hover', 'focus'],
     class: null,
     showArrow: true,
+    html: false,
     arrowClass: null,
     animationStartClass: null,
     animationEndClass: null
@@ -29,24 +31,29 @@ class Tooltip extends Component {
             ? [this._config.trigger] 
             : this._config.trigger;
 
-        this._triggers = this._config.trigger instanceof Array 
+        this._config.trigger = this._config.trigger instanceof Array 
             ? this._config.trigger 
             : [];
 
         this._config.placement = this._config.placement.replace('-start', '').replace('-end', '');
-        this._delay = parseInt(this._config.delay);
-        this._id = 'tooltip' + util.randomNumber(6);
+        this._config.showDelay = parseInt(this._config.showDelay);
+        this._config.hideDelay = parseInt(this._config.hideDelay);
+        this._id = 'tooltip-' + util.randomNumber(4);
         this._originalTitle = null;
         this._title = this._config.title; 
 
         if (this._element.title.length > 0) {
             this._title = this._element.title;
             this._originalTitle = this._element.title;
-            this._element.setAttribute('data-tooltip-original-title', this._element.title);
+            util.setAttributes(this._element, {
+                'data-tooltip-original-title': this._element.title,
+                'aria-describedby': this._id
+            });
             this._element.removeAttribute('title');
         }
 
         this._tooltipElement = () => {
+            const type = this._config.html ? 'innerHTML' : 'innerText'
             const tooltip = document.createElement('div');
             tooltip.id = this._id;
             tooltip.style.display = 'none';
@@ -55,9 +62,10 @@ class Tooltip extends Component {
             tooltip.style.left = 0;
             tooltip.style.zIndex = '1000';
             tooltip.className = this._config.class ? this._config.class : '';
+            tooltip.setAttribute('role', 'tooltip');
 
             const tooltipContent = document.createElement('div');
-            tooltipContent.textContent = this._title;
+            tooltipContent[type] = this._title;
             tooltipContent.setAttribute('data-tooltip-content', '');
             tooltip.appendChild(tooltipContent);
 
@@ -73,6 +81,7 @@ class Tooltip extends Component {
             arrow.style.backgroundColor = 'inherit';
             arrow.style.width = '8px';
             arrow.style.height = '8px';
+            arrow.style.zIndex = '-1';
             arrow.className = this._config.arrowClass ? this._config.arrowClass : '';
 
             if (this._config.showArrow) {
@@ -130,88 +139,91 @@ class Tooltip extends Component {
             return autoUpdate(this._element, this._tooltip, this._setPosition);
         };
 
-        this._show = (e) => {
-            console.log('show');
+        const showTooltip = () => {
             this.TriggerEvent('show');
             this._element.after(this._tooltip);
             this._autoUpdatePosition = this._updatePosition();
             
-            // setTimeout(() => {
-                if (!this._hasAnimation(this._tooltip)) {
-                    util.addClass(this._tooltip, this._config.animationStartClass);
-                    util.show(this._tooltip);
-                }
+            if (!this._hasAnimation(this._tooltip)) {
+                util.addClass(this._tooltip, this._config.animationStartClass);
+                util.show(this._tooltip);
+            }
 
-                if (this._config.animationStartClass) {
-                    this._animation(
-                        this._tooltip, 
-                        () => {   
-                            if (this._hasAnimation(this._tooltip)) {
-                                util.show(this._tooltip);
-                                util.addClass(this._tooltip, this._config.animationStartClass);
-        
-                                return;
-                            }
-        
-                            util.removeClass(this._tooltip, this._config.animationStartClass);
-                            util.addClass(this._tooltip, this._config.animationEndClass);
-                        },
-                        (e) => {
-                            console.log('shown - anime');
-                            this.TriggerEvent('shown');
+            if (this._config.animationStartClass) {
+                this._animation(
+                    this._tooltip, 
+                    () => {   
+                        if (this._hasAnimation(this._tooltip)) {
+                            util.show(this._tooltip);
+                            util.addClass(this._tooltip, this._config.animationStartClass);
+    
+                            return;
                         }
-                    );
-        
-                    return;
-                }
+    
+                        util.removeClass(this._tooltip, this._config.animationStartClass);
+                        util.addClass(this._tooltip, this._config.animationEndClass);
+                    },
+                    (e) => {
+                        this.TriggerEvent('shown');
+                    }
+                );
+    
+                return;
+            }
 
-                console.log('shown');
-                this.TriggerEvent('shown');
-            // }, this._delay);
+            this.TriggerEvent('shown');
         }
 
-        this._hide = (e) => {
-            console.log('hide');
+        const hideTooltip = () => {
             this.TriggerEvent('hide');
 
-            // setTimeout(() => {
-
-                if (this._config.animationEndClass) {
-                    this._animation(
-                        this._tooltip, 
-                        () => {
-                            if (this._hasAnimation(this._tooltip)) {
-                                util.removeClass(this._tooltip, this._config.animationStartClass);
-                                util.addClass(this._tooltip, this._config.animationEndClass);
-        
-                                return;
-                            }
-        
-                            util.removeClass(this._tooltip, this._config.animationEndClass);
-                            util.addClass(this._tooltip, this._config.animationStartClass);
-                        },
-                        (e) => {
-                            console.log('hidden - anime');
-                            this.TriggerEvent('hidden');
-                            this._autoUpdatePosition();
-                            
-                            if (this._hasAnimation(this._tooltip)) {
-                                util.hide(this._tooltip);
-                                util.removeClass(this._tooltip, this._config.animationEndClass);
-                            }
-
-                            this._tooltip.remove();
+            if (this._config.animationEndClass) {
+                this._animation(
+                    this._tooltip, 
+                    () => {
+                        if (this._hasAnimation(this._tooltip)) {
+                            util.removeClass(this._tooltip, this._config.animationStartClass);
+                            util.addClass(this._tooltip, this._config.animationEndClass);
+    
+                            return;
                         }
-                    );
-        
-                    return;
-                }
+    
+                        util.removeClass(this._tooltip, this._config.animationEndClass);
+                        util.addClass(this._tooltip, this._config.animationStartClass);
+                    },
+                    (e) => {
+                        this.TriggerEvent('hidden');
+                        this._autoUpdatePosition();
+                        
+                        if (this._hasAnimation(this._tooltip)) {
+                            util.hide(this._tooltip);
+                            util.removeClass(this._tooltip, this._config.animationEndClass);
+                        }
 
-                console.log('hidden');
-                this._tooltip.remove();
-                this.TriggerEvent('hidden');
-            // }, this._delay);
+                        this._tooltip.remove();
+                    }
+                );
+    
+                return;
+            }
+
+            this._tooltip.remove();
+            this.TriggerEvent('hidden');
         }
+
+        const onKeydown = (e) => {
+            if (e.key === 'Escape') {
+                hideTooltip();
+            }
+        };
+
+        this._show = (e) => {
+            setTimeout(showTooltip, this._config.showDelay);
+        };
+
+        this._hide = (e) => {
+            setTimeout(hideTooltip, this._config.hideDelay);
+        };
 
         this._toggle = (e) => {
             if (this._tooltip.isConnected) {
@@ -223,26 +235,30 @@ class Tooltip extends Component {
             this._show();
         }
 
-        for (let i = 0; i < this._triggers.length; i++) {
-            if (!['click', 'focus', 'hover'].includes(this._triggers[i])) {
+        for (let i = 0; i < this._config.trigger.length; i++) {
+            if (!['click', 'focus', 'hover'].includes(this._config.trigger[i])) {
                 break;
             }
 
-            if (this._triggers[i] == 'click') {
+            if (this._config.trigger[i] == 'click') {
                 this.eventOn(this._element, 'click', this._toggle);
             }
 
-            if (this._triggers[i] == 'hover') {                
+            if (this._config.trigger[i] == 'hover') {                
                 this.eventOn(this._element, 'mouseenter', this._show);
                 this.eventOn(this._element, 'mouseleave', this._hide);
             }
 
-            if (this._triggers[i] == 'focus') {
+            if (this._config.trigger[i] == 'focus') {
                 this.eventOn(this._element, 'focus', this._show);
                 this.eventOn(this._element, 'blur', this._hide);
             }
         }
 
+        // TODO: This causes a bug when using transitions 
+        // where after pressing escape key once, the tooltip with 
+        // transition will automatically hide when hovered
+        // this.eventOn(this._element, 'keydown', onKeydown);
     }
 
     toggle() {
@@ -276,8 +292,10 @@ class Tooltip extends Component {
 
         if (this._element.hasAttribute('data-tooltip-original-title')) {
             this._element.setAttribute('title', this._title);
-            this._element.removeAttribute('data-tooltip-original-title')
+            this._element.removeAttribute('data-tooltip-original-title');
         }
+
+        this._element.removeAttribute('aria-describedby');
 
         super.destroy();
     }

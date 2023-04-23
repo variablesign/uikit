@@ -101,14 +101,14 @@ class Dropdown extends Component {
             }
         };
     
-        this._onKeydownHide = (e) => {
+        this._onKeydown = (e) => {
             if (e.key === 'Escape' && this._config.autoClose != false) {
                 this.hide();
             }
         };
 
         this.eventOn(this._element, 'click', this._onClickToggle);
-        this.eventOn(this._element, 'keydown', this._onKeydownHide);
+        this.eventOn(this._element, 'keydown', this._onKeydown);
         this.eventOn(document, 'click', this._onClickHide);
     }
 
