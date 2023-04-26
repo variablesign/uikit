@@ -1,7 +1,7 @@
 import * as util from '../utils.js';
 import uk from '../uikit.js';
 import Component from '../component.js';
-import { computePosition, offset, inline, flip, shift, arrow, autoUpdate } from '@floating-ui/dom';
+import { computePosition, offset, inline, flip, shift, limitShift, arrow, autoUpdate } from '@floating-ui/dom';
 
 const _component = 'tooltip';
 const _defaults = {
@@ -27,6 +27,8 @@ class Tooltip extends Component {
     }
 
     init () {
+        if (!this._element) return;
+
         this._config.trigger = typeof this._config.trigger == 'string' 
             ? [this._config.trigger] 
             : this._config.trigger;
@@ -41,6 +43,7 @@ class Tooltip extends Component {
         this._id = 'tooltip-' + util.randomNumber(4);
         this._originalTitle = null;
         this._title = this._config.title; 
+        this.timeout = null;
 
         if (this._element.title.length > 0) {
             this._title = this._element.title;
@@ -103,11 +106,12 @@ class Tooltip extends Component {
                     inline(),
                     flip(),
                     shift({ 
-                        padding: this._config.shift 
+                        padding: this._config.shift,
+                        limiter: limitShift()
                     }),
                     arrow({ 
                         element: this._arrow,
-                        //padding: 6
+                        padding: 6
                     })
                 ]
             }).then(({ x, y, placement, middlewareData }) => {
@@ -140,73 +144,77 @@ class Tooltip extends Component {
         };
 
         const showTooltip = () => {
+            const self = this;
             this.TriggerEvent('show');
             this._element.after(this._tooltip);
             this._autoUpdatePosition = this._updatePosition();
             
             if (!this._hasAnimation(this._tooltip)) {
                 util.addClass(this._tooltip, this._config.animationStartClass);
-                util.show(this._tooltip);
             }
 
             if (this._config.animationStartClass) {
-                this._animation(
-                    this._tooltip, 
-                    () => {   
-                        if (this._hasAnimation(this._tooltip)) {
-                            util.show(this._tooltip);
-                            util.addClass(this._tooltip, this._config.animationStartClass);
+                this._animation({
+                    target: this._tooltip,
+                    start() { 
+                        util.show(self._tooltip);
+
+                        if (self._hasAnimation(self._tooltip)) {
+                            util.addClass(self._tooltip, self._config.animationStartClass);
     
                             return;
                         }
     
-                        util.removeClass(this._tooltip, this._config.animationStartClass);
-                        util.addClass(this._tooltip, this._config.animationEndClass);
+                        util.removeClass(self._tooltip, self._config.animationStartClass);
+                        util.addClass(self._tooltip, self._config.animationEndClass);
                     },
-                    (e) => {
-                        this.TriggerEvent('shown');
+                    end(e) {
+                        self.TriggerEvent('shown');
                     }
-                );
+                });
     
                 return;
             }
 
+            util.show(this._tooltip);
             this.TriggerEvent('shown');
         }
 
         const hideTooltip = () => {
+            const self = this;
             this.TriggerEvent('hide');
 
             if (this._config.animationEndClass) {
-                this._animation(
-                    this._tooltip, 
-                    () => {
-                        if (this._hasAnimation(this._tooltip)) {
-                            util.removeClass(this._tooltip, this._config.animationStartClass);
-                            util.addClass(this._tooltip, this._config.animationEndClass);
+                this._animation({
+                    target: this._tooltip,
+                    start() {
+                        if (self._hasAnimation(self._tooltip)) {
+                            util.removeClass(self._tooltip, self._config.animationStartClass);
+                            util.addClass(self._tooltip, self._config.animationEndClass);
     
                             return;
                         }
     
-                        util.removeClass(this._tooltip, this._config.animationEndClass);
-                        util.addClass(this._tooltip, this._config.animationStartClass);
+                        util.removeClass(self._tooltip, self._config.animationEndClass);
+                        util.addClass(self._tooltip, self._config.animationStartClass);
                     },
-                    (e) => {
-                        this.TriggerEvent('hidden');
-                        this._autoUpdatePosition();
+                    end(e) {
+                        self.TriggerEvent('hidden');
+                        self._autoUpdatePosition();
                         
-                        if (this._hasAnimation(this._tooltip)) {
-                            util.hide(this._tooltip);
-                            util.removeClass(this._tooltip, this._config.animationEndClass);
+                        if (self._hasAnimation(self._tooltip)) {
+                            util.removeClass(self._tooltip, self._config.animationEndClass);
                         }
-
-                        this._tooltip.remove();
+                        
+                        util.hide(self._tooltip);
+                        self._tooltip.remove();
                     }
-                );
+                });
     
                 return;
             }
 
+            util.hide(this._tooltip);
             this._tooltip.remove();
             this.TriggerEvent('hidden');
         }
@@ -218,11 +226,13 @@ class Tooltip extends Component {
         };
 
         this._show = (e) => {
-            setTimeout(showTooltip, this._config.showDelay);
+            clearTimeout(this.timeout);
+            this.timeout = setTimeout(showTooltip, this._config.showDelay);
         };
 
         this._hide = (e) => {
-            setTimeout(hideTooltip, this._config.hideDelay);
+            clearTimeout(this.timeout);
+            this.timeout = setTimeout(hideTooltip, this._config.hideDelay);
         };
 
         this._toggle = (e) => {
@@ -259,6 +269,8 @@ class Tooltip extends Component {
         // where after pressing escape key once, the tooltip with 
         // transition will automatically hide when hovered
         // this.eventOn(this._element, 'keydown', onKeydown);
+
+        this.TriggerEvent('initialize');
     }
 
     toggle() {
@@ -284,11 +296,6 @@ class Tooltip extends Component {
 
     destroy() {
         this._hide();
-        this.eventOff(this._element, 'click', this._toggle);
-        this.eventOff(this._element, 'mouseenter', this._show);
-        this.eventOff(this._element, 'mouseleave', this._hide);
-        this.eventOff(this._element, 'focus', this._show);
-        this.eventOff(this._element, 'blur', this._hide);
 
         if (this._element.hasAttribute('data-tooltip-original-title')) {
             this._element.setAttribute('title', this._title);
@@ -296,7 +303,6 @@ class Tooltip extends Component {
         }
 
         this._element.removeAttribute('aria-describedby');
-
         super.destroy();
     }
 }

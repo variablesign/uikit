@@ -1,7 +1,7 @@
 import * as util from '../utils.js';
 import uk from '../uikit.js';
 import Component from '../component.js';
-import { computePosition, offset, flip, shift, autoUpdate } from '@floating-ui/dom';
+import { computePosition, offset, flip, shift, limitShift, autoUpdate } from '@floating-ui/dom';
 
 const _component = 'dropdown';
 const _defaults = {
@@ -14,7 +14,12 @@ const _defaults = {
     placement: 'bottom-start',
     autoPlacement: true,
     offset: 8,
-    shift: 8
+    shift: 8,
+    onInitialize: null,
+    onShow: null,
+    onShown: null,
+    onHide: null,
+    onHidden: null
 };
 
 class Dropdown extends Component {
@@ -24,6 +29,8 @@ class Dropdown extends Component {
     }
 
     init () {
+        if (!this._element) return;
+
         this._isOpened = false;
 
         this._dropdown = this._config.target 
@@ -47,15 +54,16 @@ class Dropdown extends Component {
                     offset(this._config.offset),
                     flip(),
                     shift({ 
-                        padding: this._config.shift 
+                        padding: this._config.shift,
+                        limiter: limitShift()
                     })
                 ]
             }).then(({ x, y, placement, middlewareData }) => {
-                const { offset, flip, shift } = middlewareData;
+                const { offset, flip, shift, hide } = middlewareData;
 
                 Object.assign(this._dropdown.style, {
                     left: `${x}px`,
-                    top: `${y}px`,
+                    top: `${y}px`
                 });
             });
         };
@@ -70,8 +78,7 @@ class Dropdown extends Component {
         };
 
         this._eventData = {
-            dropdown: this._dropdown,
-            reference: this._reference
+            dropdown: this._dropdown
         };
 
         this._onClickToggle = (e) => {
@@ -110,6 +117,8 @@ class Dropdown extends Component {
         this.eventOn(this._element, 'click', this._onClickToggle);
         this.eventOn(this._element, 'keydown', this._onKeydown);
         this.eventOn(document, 'click', this._onClickHide);
+
+        this.TriggerEvent('initialize');
     }
 
     toggle() {
@@ -123,6 +132,7 @@ class Dropdown extends Component {
     }
 
     show() {
+        const self = this;
         this._autoUpdatePosition = this._updatePosition();
         this.TriggerEvent('show', this._eventData);
         this._isOpened = true;
@@ -133,23 +143,23 @@ class Dropdown extends Component {
         }
 
         if (this._config.animationStartClass) {
-            this._animation(
-                this._dropdown, 
-                () => {
-                    if (this._hasAnimation(this._dropdown)) {
-                        util.removeClass(this._dropdown, this._config.hideClass);
-                        util.addClass(this._dropdown, this._config.animationStartClass);
+            this._animation({
+                target: this._dropdown, 
+                start() {
+                    if (self._hasAnimation(self._dropdown)) {
+                        util.removeClass(self._dropdown, self._config.hideClass);
+                        util.addClass(self._dropdown, self._config.animationStartClass);
 
                         return;
                     }
 
-                    util.removeClass(this._dropdown, this._config.animationStartClass);
-                    util.addClass(this._dropdown, this._config.animationEndClass);
+                    util.removeClass(self._dropdown, self._config.animationStartClass);
+                    util.addClass(self._dropdown, self._config.animationEndClass);
                 },
-                (e) => {
-                    this.TriggerEvent('shown', this._eventData);
+                end(e) {
+                    self.TriggerEvent('shown', self._eventData);
                 }
-            );
+            });
 
             return;
         }
@@ -158,34 +168,35 @@ class Dropdown extends Component {
     }
 
     hide() {
+        const self = this;
         this.TriggerEvent('hide', this._eventData);
 
         if (this._config.animationEndClass) {
-            this._animation(
-                this._dropdown, 
-                () => {
-                    if (this._hasAnimation(this._dropdown)) {
-                        util.removeClass(this._dropdown, this._config.animationStartClass);
-                        util.addClass(this._dropdown, this._config.animationEndClass);
+            this._animation({
+                target: this._dropdown, 
+                start() {
+                    if (self._hasAnimation(self._dropdown)) {
+                        util.removeClass(self._dropdown, self._config.animationStartClass);
+                        util.addClass(self._dropdown, self._config.animationEndClass);
 
                         return;
                     }
 
-                    util.removeClass(this._dropdown, this._config.animationEndClass);
-                    util.addClass(this._dropdown, this._config.animationStartClass);
+                    util.removeClass(self._dropdown, self._config.animationEndClass);
+                    util.addClass(self._dropdown, self._config.animationStartClass);
                 },
-                (e) => {
-                    this.TriggerEvent('hidden', this._eventData);
-                    this._autoUpdatePosition();
-                    this._resetPositionStyles();
-                    util.addClass(this._dropdown, this._config.hideClass);
-                    this._isOpened = false;
+                end(e) {
+                    self.TriggerEvent('hidden', self._eventData);
+                    self._autoUpdatePosition();
+                    self._resetPositionStyles();
+                    util.addClass(self._dropdown, self._config.hideClass);
+                    self._isOpened = false;
 
-                    if (this._hasAnimation(this._dropdown)) {
-                        util.removeClass(this._dropdown, this._config.animationEndClass);
+                    if (self._hasAnimation(self._dropdown)) {
+                        util.removeClass(self._dropdown, self._config.animationEndClass);
                     }
                 }
-            );
+            });
 
             return;
         }
@@ -199,9 +210,6 @@ class Dropdown extends Component {
 
     destroy() {
         this.hide();
-        this.eventOff(this._element, 'click', this._onClickToggle);
-        this.eventOff(this._element, 'keydown', this._onKeydownHide);
-        this.eventOff(document, 'click', this._onClickHide);
         super.destroy();
     }
 }

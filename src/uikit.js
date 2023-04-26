@@ -16,37 +16,35 @@ UIkit.setConfig = (options, component) => {
     UIkit.config = util.extendObjects(config, options);
 };
 
-UIkit.autoload = (context = null) => {
+UIkit.autoload = (context = null, filter = []) => {
     context = context ?? document;
+    const targets = context.querySelectorAll('[data-' + getConfig('prefix') + ']');
+    filter = filter instanceof Array && filter.length > 0 ? filter : [];
 
-    context.querySelectorAll('[data-' + getConfig('prefix') + ']').forEach((element) => {
-        
-        // Convert to array
-        const types = typeof(element.dataset[getConfig('prefix')]) == 'object' 
-            ? element.dataset[getConfig('prefix')] 
-            : element.dataset[getConfig('prefix')].replaceAll(' ', '').split(',');
+    for (let i = 0; i < targets.length; i++) {
 
-        // Load single or multiple component types 
-        // E.g. elements with multiple component types such as data-uk="component1, component2"
-        types.forEach((type) => {
+        const components = targets[i].dataset[getConfig('prefix')] instanceof Array 
+            ? targets[i].dataset[getConfig('prefix')] 
+            : [targets[i].dataset[getConfig('prefix')]];
 
-            // Convert component name (example-component) to camel case (exampleComponent)
-            const name = type ? type.replace(/-([a-z])/g, (x, up) => up.toUpperCase()) : '';
+        for (let x = 0; x < components.length; x++) {
+            const name = components[x].replace(/-([a-z])/g, (x, up) => up.toUpperCase());
+
+            if (filter.length > 0 && !filter.includes(name)) {
+                continue;
+            }
 
             try {
-                // Load all data attributes of the element as options and rename valid ones
-                // E.g. <div data-uk="image-resize" data-image-resize-width="100"></div>
-                // Returns { width: 100 } without the component name
-                const options = util.replaceObjectKeys(element.dataset, name);
-                
-                window.UIkit[name](element, options);
+                const config = util.replaceObjectKeys(targets[i].dataset, name);
+                window.UIkit[name](targets[i], config);
 
             } catch (error) {
                 console.error(`"${name}" is not a function or does not exist.`);
                 console.error(error);
             }
-        });
-    });
+        }
+
+    }
 };
 
 const getConfig = (key) => {

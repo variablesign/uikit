@@ -9,7 +9,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@floating-ui/dom": "^1.2.6",
-    "@popperjs/core": "^2.11.7"
+    "@floating-ui/dom": "^1.2.6"
   }
 }
