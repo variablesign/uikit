@@ -143,7 +143,10 @@ class Tooltip extends Component {
             return autoUpdate(this._element, this._tooltip, this._setPosition);
         };
 
+        this._isAnimating = false;
+
         const showTooltip = () => {
+            console.log('mouseenter :-->');
             const self = this;
             this.TriggerEvent('show');
             this._element.after(this._tooltip);
@@ -154,23 +157,36 @@ class Tooltip extends Component {
             }
 
             if (this._config.animationStartClass) {
-                this._animation({
-                    target: this._tooltip,
-                    start() { 
-                        util.show(self._tooltip);
+                // this._animation({
+                //     target: this._tooltip,
+                //     start() { 
+                //         util.show(self._tooltip);
 
-                        if (self._hasAnimation(self._tooltip)) {
-                            util.addClass(self._tooltip, self._config.animationStartClass);
+                //         if (self._hasAnimation(self._tooltip)) {
+                //             util.addClass(self._tooltip, self._config.animationStartClass);
     
-                            return;
-                        }
+                //             return;
+                //         }
     
-                        util.removeClass(self._tooltip, self._config.animationStartClass);
-                        util.addClass(self._tooltip, self._config.animationEndClass);
-                    },
-                    end(e) {
-                        self.TriggerEvent('shown');
-                    }
+                //         util.removeClass(self._tooltip, self._config.animationStartClass);
+                //         util.addClass(self._tooltip, self._config.animationEndClass);
+                //     },
+                //     end(e) {
+                //         self.TriggerEvent('shown');
+                //     }
+                // });
+
+                this._isAnimating = true;
+                util.show(self._tooltip);
+                setTimeout(() => {
+                    util.removeClass(self._tooltip, self._config.animationStartClass);
+                    util.addClass(self._tooltip, self._config.animationEndClass);
+                });
+
+                this._tooltip.addEventListener('transitionend', function _handler(e) {
+                    self.TriggerEvent('shown');
+                    this.removeEventListener('transitionend', _handler);
+                    this._isAnimating = false;
                 });
     
                 return;
@@ -181,34 +197,50 @@ class Tooltip extends Component {
         }
 
         const hideTooltip = () => {
+            console.log('<--: mouseleave');
             const self = this;
             this.TriggerEvent('hide');
 
             if (this._config.animationEndClass) {
-                this._animation({
-                    target: this._tooltip,
-                    start() {
-                        if (self._hasAnimation(self._tooltip)) {
-                            util.removeClass(self._tooltip, self._config.animationStartClass);
-                            util.addClass(self._tooltip, self._config.animationEndClass);
+                // this._animation({
+                //     target: this._tooltip,
+                //     start() {
+                //         if (self._hasAnimation(self._tooltip)) {
+                //             util.removeClass(self._tooltip, self._config.animationStartClass);
+                //             util.addClass(self._tooltip, self._config.animationEndClass);
     
-                            return;
-                        }
+                //             return;
+                //         }
     
-                        util.removeClass(self._tooltip, self._config.animationEndClass);
-                        util.addClass(self._tooltip, self._config.animationStartClass);
-                    },
-                    end(e) {
-                        self.TriggerEvent('hidden');
-                        self._autoUpdatePosition();
+                //         util.removeClass(self._tooltip, self._config.animationEndClass);
+                //         util.addClass(self._tooltip, self._config.animationStartClass);
+                //     },
+                //     end(e) {
+                //         self.TriggerEvent('hidden');
+                //         self._autoUpdatePosition();
                         
-                        if (self._hasAnimation(self._tooltip)) {
-                            util.removeClass(self._tooltip, self._config.animationEndClass);
-                        }
+                //         if (self._hasAnimation(self._tooltip)) {
+                //             util.removeClass(self._tooltip, self._config.animationEndClass);
+                //         }
                         
-                        util.hide(self._tooltip);
-                        self._tooltip.remove();
-                    }
+                //         util.hide(self._tooltip);
+                //         self._tooltip.remove();
+                //     }
+                // });
+
+                this._isAnimating = true;
+                setTimeout(() => {
+                    util.removeClass(self._tooltip, self._config.animationEndClass);
+                    util.addClass(self._tooltip, self._config.animationStartClass);
+                });
+
+                this._tooltip.addEventListener('transitionend', function _handler(e) {
+                    self.TriggerEvent('hidden');
+                    self._autoUpdatePosition();
+                    util.hide(self._tooltip);
+                    self._tooltip.remove();
+                    this.removeEventListener('transitionend', _handler);
+                    this._isAnimating = false;
                 });
     
                 return;
