@@ -1,5 +1,9 @@
 import * as util from "./utils.js";
 
+UIkit.trash = {
+    eventListeners: {}
+};
+
 UIkit.setConfig = (options, component) => {
     options = typeof options === 'object' ? options : null;
 

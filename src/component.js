@@ -18,7 +18,6 @@ export default class Component {
 
         this._animation = (options) => {
             options = util.extendObjects({
-                name: null,
                 target: null,
                 timeout: 0,
                 start() { void 0 },
@@ -31,10 +30,7 @@ export default class Component {
             
             setTimeout(options.start, options.timeout);
 
-            options.target.addEventListener(eventName, function _handler(e) {
-                options.end(e);
-                options.target.removeEventListener(eventName, _handler);
-            });
+            this.eventOn(options.target, eventName, options.end);
         };
 
         this.getParameters = (params) => {
@@ -51,6 +47,18 @@ export default class Component {
                 listener: handler,
                 target: target
             }, options);
+
+            if (target === window || target === document) {
+                if (!UIkit.trash.eventListeners[eventName]) {
+                    UIkit.trash.eventListeners[eventName] = [ eventItem ];
+    
+                    return;
+                }
+    
+                UIkit.trash.eventListeners[eventName].push(eventItem);
+
+                return;
+            }
 
             if (!this._eventListeners[eventName]) {
                 this._eventListeners[eventName] = [ eventItem ];
@@ -101,17 +109,21 @@ export default class Component {
         uk.removeInstance(this._element, this._component);
     }
 
-    eventOn(target, type, handler, options = false) {
-        target.addEventListener(type, handler, options);
-        this.storeEventListener(target, type, handler, options);
+    eventOn(target, eventName, handler, options = false) {
+        target.addEventListener(eventName, handler, options);
+        this.storeEventListener(target, eventName, handler, options);
     }
 
-    eventOff(target, type, handler, options = false) {
-        target.removeEventListener(type, handler, options);
+    eventOff(target, eventName, handler, options = false) {
+        if (handler === undefined && options === false) {
+            this.removeStoredEventListeners(eventName);
+        }
+
+        target.removeEventListener(eventName, handler, options);
     }
 
-    eventOne(target, type, handler) {
-        target.removeEventListener(type, handler, { once : true });
+    eventOne(target, eventName, handler) {
+        target.removeEventListener(eventName, handler, { once : true });
     }
 
     on(eventName, handler, options = false) {

@@ -44,6 +44,7 @@ class Tooltip extends Component {
         this._originalTitle = null;
         this._title = this._config.title; 
         this.timeout = null;
+        this._isAnimating = false;
 
         if (this._element.title.length > 0) {
             this._title = this._element.title;
@@ -143,10 +144,31 @@ class Tooltip extends Component {
             return autoUpdate(this._element, this._tooltip, this._setPosition);
         };
 
-        this._isAnimating = false;
+        const transShowEnd = () => {
+            this.TriggerEvent('shown');
+            this._isAnimating = false;
+            this._tooltip.removeEventListener('transitionend', transShowEnd);
+        };
+
+        const transHideEnd = () => {
+            this.TriggerEvent('hidden');
+            this._autoUpdatePosition();
+            util.hide(this._tooltip);
+            this._tooltip.remove();
+            this._isAnimating = false;
+            this._tooltip.removeEventListener('transitionend', transHideEnd);
+        };
 
         const showTooltip = () => {
+            if (this._isAnimating) {
+                util.hide(this._tooltip);
+                this._tooltip.remove();
+                this._isAnimating = false;
+                console.log('(`.`) bug fixed');
+                this._tooltip.removeEventListener('transitionend', transHideEnd);
+            }
             console.log('mouseenter :-->');
+            console.log('Show 1: is animating... ' + this._isAnimating);
             const self = this;
             this.TriggerEvent('show');
             this._element.after(this._tooltip);
@@ -182,13 +204,8 @@ class Tooltip extends Component {
                     util.removeClass(self._tooltip, self._config.animationStartClass);
                     util.addClass(self._tooltip, self._config.animationEndClass);
                 });
-
-                this._tooltip.addEventListener('transitionend', function _handler(e) {
-                    self.TriggerEvent('shown');
-                    this.removeEventListener('transitionend', _handler);
-                    this._isAnimating = false;
-                });
-    
+                console.log('Show 2: is animating... ' + this._isAnimating);
+                this._tooltip.addEventListener('transitionend', transShowEnd);
                 return;
             }
 
@@ -197,7 +214,14 @@ class Tooltip extends Component {
         }
 
         const hideTooltip = () => {
+            if (this._isAnimating) {
+                util.hide(this._tooltip);
+                this._tooltip.remove();
+                this._isAnimating = false;
+                console.log('(`.`) bug fixed');
+            }
             console.log('<--: mouseleave');
+            console.log('Hide 1: is animating... ' + this._isAnimating);
             const self = this;
             this.TriggerEvent('hide');
 
@@ -233,16 +257,8 @@ class Tooltip extends Component {
                     util.removeClass(self._tooltip, self._config.animationEndClass);
                     util.addClass(self._tooltip, self._config.animationStartClass);
                 });
-
-                this._tooltip.addEventListener('transitionend', function _handler(e) {
-                    self.TriggerEvent('hidden');
-                    self._autoUpdatePosition();
-                    util.hide(self._tooltip);
-                    self._tooltip.remove();
-                    this.removeEventListener('transitionend', _handler);
-                    this._isAnimating = false;
-                });
-    
+                console.log('Hide 2: is animating... ' + this._isAnimating);
+                this._tooltip.addEventListener('transitionend', transHideEnd);
                 return;
             }
 
@@ -300,7 +316,7 @@ class Tooltip extends Component {
         // TODO: This causes a bug when using transitions 
         // where after pressing escape key once, the tooltip with 
         // transition will automatically hide when hovered
-        // this.eventOn(this._element, 'keydown', onKeydown);
+        this.eventOn(document, 'keydown', onKeydown);
 
         this.TriggerEvent('initialize');
     }
