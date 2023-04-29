@@ -9,29 +9,8 @@ export default class Component {
         this._element = util.getElement(element);
         this._extendOptions();
         this._eventListeners = {};
-
-        this._hasAnimation = (element) => {
-            return parseFloat(window.getComputedStyle(element).animationDuration) > 0 
-                ? true 
-                : false;
-        };
-
-        this._animation = (options) => {
-            options = util.extendObjects({
-                target: null,
-                timeout: 0,
-                start() { void 0 },
-                end(e) { void 0 }
-            }, options);
-
-            const eventName = this._hasAnimation(options.target)
-                ? 'animationend'
-                : 'transitionend';
-            
-            setTimeout(options.start, options.timeout);
-
-            this.eventOn(options.target, eventName, options.end);
-        };
+        this._hasAnimation = this._config.transition ? false : true;
+        this._animationEvent = this._config.transition ? 'transitionend' : 'animationend';
 
         this.getParameters = (params) => {
             return Object.values(params || {});
@@ -47,18 +26,6 @@ export default class Component {
                 listener: handler,
                 target: target
             }, options);
-
-            if (target === window || target === document) {
-                if (!UIkit.trash.eventListeners[eventName]) {
-                    UIkit.trash.eventListeners[eventName] = [ eventItem ];
-    
-                    return;
-                }
-    
-                UIkit.trash.eventListeners[eventName].push(eventItem);
-
-                return;
-            }
 
             if (!this._eventListeners[eventName]) {
                 this._eventListeners[eventName] = [ eventItem ];
