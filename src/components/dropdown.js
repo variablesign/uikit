@@ -45,9 +45,9 @@ class Dropdown extends Component {
             ? this._reference 
             : this._element;
             
-        this._autoUpdatePosition = () => void 0;
+        let autoUpdatePosition = () => void 0;
 
-        this._setPosition = () => {
+        const setPosition = () => {
             computePosition(this._reference, this._dropdown, {
                 placement: this._config.placement,
                 middleware: [ 
@@ -68,27 +68,27 @@ class Dropdown extends Component {
             });
         };
 
-        this._updatePosition = () => { 
-            return autoUpdate(this._reference, this._dropdown, this._setPosition);
+        const updatePosition = () => { 
+            return autoUpdate(this._reference, this._dropdown, setPosition);
         };
 
-        this._resetPositionStyles = () => {
+        const resetPositionStyles = () => {
             this._dropdown.style.top = null;
             this._dropdown.style.left = null;
         };
 
-        this._eventData = {
+        const eventData = {
             dropdown: this._dropdown
         };
 
-        this._onClickToggle = (e) => {
+        const onClickToggle = (e) => {
             e.preventDefault();
             this.toggle();
     
             return;
         };
     
-        this._onClickHide = (e) => {
+        const onClickHide = (e) => {
             const clicked = e.target;
     
             if (this._element.contains(clicked)) {
@@ -108,104 +108,106 @@ class Dropdown extends Component {
             }
         };
     
-        this._onKeydown = (e) => {
+        const onKeydown = (e) => {
             if (e.key === 'Escape' && this._config.autoClose != false) {
                 this.hide();
             }
         };
 
-        this.eventOn(this._element, 'click', this._onClickToggle);
-        this.eventOn(this._element, 'keydown', this._onKeydown);
-        this.eventOn(document, 'click', this._onClickHide);
+        const onShowAnimationEnd = () => {
+            this.TriggerEvent('shown', eventData);
+            this.eventOff(this._dropdown, this._animationEvent, onShowAnimationEnd);
+        };
+
+        const onHideAnimationEnd = () => {
+            this.TriggerEvent('hidden', eventData);
+            autoUpdatePosition();
+            resetPositionStyles();
+            util.addClass(this._dropdown, this._config.hideClass);
+            util.removeClass(this._dropdown, this._config.animationEndClass);
+            this._isOpened = false;
+            this.eventOff(this._dropdown, this._animationEvent, onHideAnimationEnd);
+        };
+
+        this._show = (e) => {
+            autoUpdatePosition = updatePosition();
+            this.TriggerEvent('show', eventData);
+            this._isOpened = true;
+    
+            if (!this._hasAnimation) {
+                util.addClass(this._dropdown, this._config.animationStartClass);
+                util.removeClass(this._dropdown, this._config.hideClass);
+            }
+    
+
+            if (this._config.animationStartClass) {
+                setTimeout(() => {
+                    if (this._hasAnimation) {
+                        util.removeClass(this._dropdown, this._config.hideClass);
+                        util.addClass(this._dropdown, this._config.animationStartClass);
+                    } else {
+                        util.removeClass(this._dropdown, this._config.animationStartClass);
+                        util.addClass(this._dropdown, this._config.animationEndClass);
+                    }
+                });
+
+                this.eventOn(this._dropdown, this._animationEvent, onShowAnimationEnd);
+
+                return;
+            }
+    
+            this.TriggerEvent('shown', eventData);
+        };
+
+        this._hide = (e) => {
+            this.TriggerEvent('hide', eventData);
+    
+            if (this._config.animationEndClass) {
+                if (this._hasAnimation) {
+                    setTimeout(() => {                        
+                        util.removeClass(this._dropdown, this._config.animationStartClass);
+                        util.addClass(this._dropdown, this._config.animationEndClass);
+                    });
+                } else {
+                    util.removeClass(this._dropdown, this._config.animationEndClass);
+                    util.addClass(this._dropdown, this._config.animationStartClass);
+                }
+
+                this.eventOn(this._dropdown, this._animationEvent, onHideAnimationEnd);
+
+                return;
+            }
+    
+            util.addClass(this._dropdown, this._config.hideClass);
+            this._isOpened = false;
+            autoUpdatePosition();
+            resetPositionStyles();
+            this.TriggerEvent('hidden', eventData);
+        };
+
+        this.eventOn(this._element, 'click', onClickToggle);
+        this.eventOn(this._element, 'keydown', onKeydown);
+        this.eventOn(document, 'click', onClickHide);
 
         this.TriggerEvent('initialize');
     }
 
     toggle() {
         if (this._isOpened) {
-            this.hide();
+            this._hide();
 
             return;
         }
 
-        this.show();
+        this._show();
     }
 
     show() {
-        const self = this;
-        this._autoUpdatePosition = this._updatePosition();
-        this.TriggerEvent('show', this._eventData);
-        this._isOpened = true;
-
-        if (!this._hasAnimation(this._dropdown)) {
-            util.addClass(this._dropdown, this._config.animationStartClass);
-            util.removeClass(this._dropdown, this._config.hideClass);
-        }
-
-        if (this._config.animationStartClass) {
-            this._animation({
-                target: this._dropdown, 
-                start() {
-                    if (self._hasAnimation(self._dropdown)) {
-                        util.removeClass(self._dropdown, self._config.hideClass);
-                        util.addClass(self._dropdown, self._config.animationStartClass);
-
-                        return;
-                    }
-
-                    util.removeClass(self._dropdown, self._config.animationStartClass);
-                    util.addClass(self._dropdown, self._config.animationEndClass);
-                },
-                end(e) {
-                    self.TriggerEvent('shown', self._eventData);
-                }
-            });
-
-            return;
-        }
-
-        this.TriggerEvent('shown', this._eventData);
+        this._show();
     }
 
     hide() {
-        const self = this;
-        this.TriggerEvent('hide', this._eventData);
-
-        if (this._config.animationEndClass) {
-            this._animation({
-                target: this._dropdown, 
-                start() {
-                    if (self._hasAnimation(self._dropdown)) {
-                        util.removeClass(self._dropdown, self._config.animationStartClass);
-                        util.addClass(self._dropdown, self._config.animationEndClass);
-
-                        return;
-                    }
-
-                    util.removeClass(self._dropdown, self._config.animationEndClass);
-                    util.addClass(self._dropdown, self._config.animationStartClass);
-                },
-                end(e) {
-                    self.TriggerEvent('hidden', self._eventData);
-                    self._autoUpdatePosition();
-                    self._resetPositionStyles();
-                    util.addClass(self._dropdown, self._config.hideClass);
-                    self._isOpened = false;
-
-                    if (self._hasAnimation(self._dropdown)) {
-                        util.removeClass(self._dropdown, self._config.animationEndClass);
-                    }
-                }
-            });
-
-            return;
-        }
-
-        util.addClass(this._dropdown, this._config.hideClass);
-        this._isOpened = false;
-        this._autoUpdatePosition();
-        this._resetPositionStyles();
-        this.TriggerEvent('hidden', this._eventData);
+        this._hide();
     }
 
     destroy() {

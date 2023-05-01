@@ -3,14 +3,22 @@ import uk from "./uikit.js";
 
 export default class Component {
     constructor(element, config, defaults, component) {
-        this._config = config;
-        this._defaults = defaults;
         this._component = component;
         this._element = util.getElement(element);
-        this._extendOptions();
+        this._config = util.extendObjects(
+            defaults, 
+            config, 
+            util.replaceObjectKeys(this._element ? this._element.dataset : {}, this._component)
+        );
         this._eventListeners = {};
-        this._hasAnimation = this._config.transition ? false : true;
-        this._animationEvent = this._config.transition ? 'transitionend' : 'animationend';
+
+        this._hasAnimation = this._config.transition 
+            ? false 
+            : this._config.animationStartClass ? true : false;
+
+        this._animationEvent = this._config.transition 
+            ? 'transitionend' 
+            : 'animationend';
 
         this.getParameters = (params) => {
             return Object.values(params || {});
@@ -57,14 +65,6 @@ export default class Component {
                 }
             }
         };
-    }
-
-    _extendOptions() {
-        this._config = util.extendObjects(
-            this._defaults, 
-            this._config, 
-            util.replaceObjectKeys(this._element ? this._element.dataset : {}, this._component)
-        );
     }
 
     _prefixedEventName(eventName) {

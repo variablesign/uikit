@@ -57,52 +57,43 @@ class Tooltip extends Component {
             this._element.removeAttribute('title');
         }
 
-        this._tooltipElement = () => {
-            const type = this._config.html ? 'innerHTML' : 'innerText'
-            const tooltip = document.createElement('div');
-            tooltip.id = this._id;
-            tooltip.style.display = 'none';
-            tooltip.style.position = 'absolute';
-            tooltip.style.top = 0;
-            tooltip.style.left = 0;
-            tooltip.style.zIndex = '1000';
-            tooltip.className = this._config.class ? this._config.class : '';
-            tooltip.setAttribute('role', 'tooltip');
+        // Create tooltip
+        const type = this._config.html ? 'innerHTML' : 'innerText'
+        const tooltip = document.createElement('div');
+        tooltip.id = this._id;
+        tooltip.style.display = 'none';
+        tooltip.style.position = 'absolute';
+        tooltip.style.top = 0;
+        tooltip.style.left = 0;
+        tooltip.style.zIndex = '1000';
+        tooltip.className = this._config.class ? this._config.class : '';
+        tooltip.setAttribute('role', 'tooltip');
 
-            const tooltipContent = document.createElement('div');
-            tooltipContent[type] = this._title;
-            tooltipContent.setAttribute('data-tooltip-content', '');
-            tooltip.appendChild(tooltipContent);
+        const tooltipContent = document.createElement('div');
+        tooltipContent[type] = this._title;
+        tooltipContent.setAttribute('data-tooltip-content', '');
+        tooltip.appendChild(tooltipContent);
 
-            return tooltip;
-        };
+        const tooltipArrow = document.createElement('div');
+        tooltipArrow.style.position = 'absolute';
+        tooltipArrow.style.transform = 'rotate(45deg)';
+        tooltipArrow.style.backgroundColor = 'inherit';
+        tooltipArrow.style.width = '8px';
+        tooltipArrow.style.height = '8px';
+        tooltipArrow.style.zIndex = '-1';
+        tooltipArrow.className = this._config.arrowClass ? this._config.arrowClass : '';
 
-        this._tooltip = this._tooltipElement();
-        this._tooltipContent = this._tooltip.querySelector('[data-tooltip-content]');
-        this._arrowElement = () => {
-            const arrow = document.createElement('div');
-            arrow.style.position = 'absolute';
-            arrow.style.transform = 'rotate(45deg)';
-            arrow.style.backgroundColor = 'inherit';
-            arrow.style.width = '8px';
-            arrow.style.height = '8px';
-            arrow.style.zIndex = '-1';
-            arrow.className = this._config.arrowClass ? this._config.arrowClass : '';
+        if (this._config.showArrow) {
+            tooltipArrow.setAttribute('data-tooltip-arrow', '');
+            tooltip.appendChild(tooltipArrow);
+        }
 
-            if (this._config.showArrow) {
-                arrow.setAttribute('data-tooltip-arrow', '');
-                this._tooltip.appendChild(arrow);
-            }
+        this._tooltip = tooltip;
+        this._tooltipContent = tooltipContent;
 
-            return arrow;
-        };
+        let autoUpdatePosition = () => void 0;
 
-        this._arrow = this._arrowElement();
-        this._autoUpdatePosition = () => void 0;
-        this.hasAnimation = this._hasAnimation;
-        this.animationEvent = this._hasAnimation;
-
-        this._setPosition = () => {
+        const setPosition = () => {
             computePosition(this._element, this._tooltip, {
                 placement: this._config.placement,
                 middleware: [ 
@@ -114,7 +105,7 @@ class Tooltip extends Component {
                         limiter: limitShift()
                     }),
                     arrow({ 
-                        element: this._arrow,
+                        element: tooltipArrow,
                         padding: 6
                     })
                 ]
@@ -133,7 +124,7 @@ class Tooltip extends Component {
                     left: 'right',
                 }[placement.split('-')[0]];
 
-                Object.assign(this._arrow.style, {
+                Object.assign(tooltipArrow.style, {
                     left: arrow.x != null ? `${arrow.x}px` : '',
                     top: arrow.y != null ? `${arrow.y}px` : '',
                     right: '',
@@ -143,24 +134,24 @@ class Tooltip extends Component {
             });
         };
 
-        this._updatePosition = () => { 
-            return autoUpdate(this._element, this._tooltip, this._setPosition);
+        const updatePosition = () => { 
+            return autoUpdate(this._element, this._tooltip, setPosition);
         };
 
-        this._onShowAnimationEnd = () => {
+        const onShowAnimationEnd = () => {
             this._isAnimating = false;
             this.TriggerEvent('shown');
-            this.eventOff(this._tooltip, this._animationEvent, this._onShowAnimationEnd);
+            this.eventOff(this._tooltip, this._animationEvent, onShowAnimationEnd);
         };
 
-        this._onHideAnimationEnd = () => {
+        const onHideAnimationEnd = () => {
             this._isAnimating = false;
             this.TriggerEvent('hidden');
-            this._autoUpdatePosition();
+            autoUpdatePosition();
             util.hide(this._tooltip);
             util.removeClass(this._tooltip, this._config.animationEndClass);
             this._tooltip.remove();
-            this.eventOff(this._tooltip, this._animationEvent, this._onHideAnimationEnd);
+            this.eventOff(this._tooltip, this._animationEvent, onHideAnimationEnd);
         };
 
         this._show = (e) => {
@@ -175,12 +166,12 @@ class Tooltip extends Component {
                     }
     
                     this._tooltip.remove();
-                    this.eventOff(this._tooltip, this._animationEvent, this._onHideAnimationEnd);
+                    this.eventOff(this._tooltip, this._animationEvent, onHideAnimationEnd);
                 }
     
                 this.TriggerEvent('show');
                 this._element.after(this._tooltip);
-                this._autoUpdatePosition = this._updatePosition();
+                autoUpdatePosition = updatePosition();
                 
                 if (!this._hasAnimation) {
                     util.addClass(this._tooltip, this._config.animationStartClass);
@@ -200,7 +191,7 @@ class Tooltip extends Component {
                         }
                     });
     
-                    this.eventOn(this._tooltip, this._animationEvent, this._onShowAnimationEnd);
+                    this.eventOn(this._tooltip, this._animationEvent, onShowAnimationEnd);
     
                     return;
                 }
@@ -217,7 +208,7 @@ class Tooltip extends Component {
                     this._isAnimating = false;
                     util.hide(this._tooltip);
                     this._tooltip.remove();
-                    this.eventOff(this._tooltip, this._animationEvent, this._onHideAnimationEnd);
+                    this.eventOff(this._tooltip, this._animationEvent, onHideAnimationEnd);
                 }
     
                 this.TriggerEvent('hide');
@@ -235,7 +226,7 @@ class Tooltip extends Component {
                         util.addClass(this._tooltip, this._config.animationStartClass);
                     }
     
-                    this.eventOn(this._tooltip, this._animationEvent, this._onHideAnimationEnd);
+                    this.eventOn(this._tooltip, this._animationEvent, onHideAnimationEnd);
     
                     return;
                 }
@@ -256,7 +247,7 @@ class Tooltip extends Component {
             this._show();
         }
 
-        this._onKeydown = (e) => {
+        const onKeydown = (e) => {
             if (e.key === 'Escape') {
                 this._hide();
             }
@@ -282,7 +273,7 @@ class Tooltip extends Component {
             }
         }
 
-        this.eventOn(document, 'keydown', this._onKeydown);
+        this.eventOn(document, 'keydown', onKeydown);
 
         this.TriggerEvent('initialize');
     }
@@ -299,9 +290,9 @@ class Tooltip extends Component {
         this._hide();
     }
 
-    title(title) {
-        title = title || '';
-        this._tooltipContent.textContent = title;
+    title(content) {
+        content = content || '';
+        this._tooltipContent.textContent = content;
     }
 
     reset() {
@@ -317,7 +308,6 @@ class Tooltip extends Component {
         }
 
         this._element.removeAttribute('aria-describedby');
-        this.eventOff(document, 'keydown', this._onKeydown);
         super.destroy();
     }
 }
