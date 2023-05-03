@@ -8,6 +8,7 @@ const _defaults = {
     root: document,
     rootMargin: '0px',
     threshold: 0,
+    offset: 0,
     trigger: null,
     target: null,
     activeClass: null,
@@ -23,12 +24,23 @@ class Scrollspy extends Component {
     init () {
         this._triggers = document.querySelectorAll(this._config.trigger);
         this._targets = document.querySelectorAll(this._config.target);
-        const callback = {};
-        let initialScrollPosition = window.scrollY;
+        this._activeNav = null;
+        let navigationTimeout;
 
-        this._setActiveNavState = (id) => {
+        this._scroller = this._config.root == window || this._config.root == document
+            ? window 
+            : document.querySelector(this._config.root);
+
+        this._config.root = this._scroller == window 
+            ? document.documentElement 
+            : this._scroller;
+
+        const callback = {};
+        let initialScrollPosition = this._config.root.scrollTop;
+
+        this._setActiveNavState = () => {
             for (const target of this._targets) {
-                if (target.hash == '#' + id) {
+                if (target.hash == '#' + this._activeNav) {
                     util.removeClass(target, this._config.inactiveClass);
                     util.addClass(target, this._config.activeClass);
                 } else {
@@ -38,8 +50,35 @@ class Scrollspy extends Component {
             }
         };
 
+        this._onScrollNavigation = (e) => {
+            clearTimeout(navigationTimeout);
+            navigationTimeout = setTimeout(() => {  
+                const scrollPosition = this._config.root.scrollTop;
+
+                if (this._triggers.length > 0) {      
+                    if (scrollPosition < (this._triggers[0].offsetTop - this._config.offset)) {
+                        this._activeNav = null;
+                        this._setActiveNavState();
+                    } else {
+                        for (const trigger of this._triggers) {
+                            if (scrollPosition >= (trigger.offsetTop - this._config.offset)) {
+                                this._activeNav = trigger.id;
+                                this._setActiveNavState();
+                            }
+                        }
+                    }
+                }
+
+            });
+        };
+
+        // Type: Navigation
+        if (this._config.type === 'navigation') {    
+            this._eventOn(this._scroller, 'scroll', this._onScrollNavigation);
+        }
+
         // Navigation callback
-        callback.navigation = (entries, observer) => {
+        /* callback.navigation = (entries, observer) => {
             const skippedEntries = entries.filter(entry => entry.boundingClientRect.top < 0);
             const skippedEntriesTop = skippedEntries.map(entry => entry.boundingClientRect.top);
             const lastSkippedEntry = Math.max(...skippedEntriesTop);
@@ -52,6 +91,7 @@ class Scrollspy extends Component {
                 // On load
                 if (currentScrollPosition == initialScrollPosition) {
                     let initialEntry = null;
+
 
                     for (const loadedEntry of entries) {
                         if (loadedEntry.isIntersecting) {
@@ -97,14 +137,14 @@ class Scrollspy extends Component {
 
         this._triggers.forEach((item) => {
             this._observer.observe(item);
-        });
+        }); */
     }
 
     destroy() {
-        this._setActiveNavState();
-        this._triggers.forEach((item) => {
-            this._observer.unobserve(item);
-        });
+        // this._setActiveNavState();
+        // this._triggers.forEach((item) => {
+        //     this._observer.unobserve(item);
+        // });
         super.destroy();
     }
 }

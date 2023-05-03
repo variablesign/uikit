@@ -20,11 +20,7 @@ export default class Component {
             ? 'transitionend' 
             : 'animationend';
 
-        this.getParameters = (params) => {
-            return Object.values(params || {});
-        }; 
-
-        this.storeEventListener = (target, eventName, handler, options) => {
+        this._storeEventListener = (target, eventName, handler, options) => {
             options = typeof options === 'boolean' ? { useCapture: options } : options;
             const eventItem = util.extendObjects({
                 once: false,
@@ -44,7 +40,7 @@ export default class Component {
             this._eventListeners[eventName].push(eventItem);
         };
 
-        this.removeStoredEventListeners = (eventName = null) => {
+        this._removeStoredEventListeners = (eventName = null) => {
             for (const name in this._eventListeners) {
 
                 if (eventName !== null && eventName !== name) {
@@ -52,7 +48,7 @@ export default class Component {
                 }
 
                 for (const item of this._eventListeners[name]) {
-                    this.eventOff(
+                    this._eventOff(
                         item.target, 
                         item.type, 
                         item.listener,
@@ -72,36 +68,36 @@ export default class Component {
     }
 
     destroy() {
-        this.removeStoredEventListeners();
+        this._removeStoredEventListeners();
         uk.removeInstance(this._element, this._component);
     }
 
-    eventOn(target, eventName, handler, options = false) {
+    _eventOn(target, eventName, handler, options = false) {
         target.addEventListener(eventName, handler, options);
-        this.storeEventListener(target, eventName, handler, options);
+        this._storeEventListener(target, eventName, handler, options);
     }
 
-    eventOff(target, eventName, handler, options = false) {
+    _eventOff(target, eventName, handler, options = false) {
         if (handler === undefined && options === false) {
-            this.removeStoredEventListeners(eventName);
+            this._removeStoredEventListeners(eventName);
         }
 
         target.removeEventListener(eventName, handler, options);
     }
 
-    eventOne(target, eventName, handler) {
+    _eventOne(target, eventName, handler) {
         target.removeEventListener(eventName, handler, { once : true });
     }
 
     on(eventName, handler, options = false) {
         this._element.addEventListener(this._prefixedEventName(eventName), handler, options);
-        this.storeEventListener(this._element, this._prefixedEventName(eventName), handler, options);
+        this._storeEventListener(this._element, this._prefixedEventName(eventName), handler, options);
     }
 
     off(eventName, handler, options = false) {
 
         if (handler === undefined && options === false) {
-            this.removeStoredEventListeners(this._prefixedEventName(eventName));
+            this._removeStoredEventListeners(this._prefixedEventName(eventName));
         }
 
         this._element.removeEventListener(this._prefixedEventName(eventName), handler, options);
@@ -111,7 +107,7 @@ export default class Component {
         this._element.addEventListener(this._prefixedEventName(eventName), handler, { once : true });
     }
 
-    TriggerEvent = (eventName, detail = null, context = null) => {
+    _triggerEvent = (eventName, detail = null, context = null) => {
         const element = context || this._element;
         const callbackName = 'on' + util.capitalize(eventName);
         const callback = this._config[callbackName];
