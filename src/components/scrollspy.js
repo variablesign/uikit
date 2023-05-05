@@ -73,7 +73,8 @@ class Scrollspy extends Component {
         };
 
         // Type: Navigation
-        if (this._config.type === 'navigation') {    
+        if (this._config.type === 'navigation') { 
+            this._onScrollNavigation();   
             this._eventOn(this._scroller, 'scroll', this._onScrollNavigation);
         }
 

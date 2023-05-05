@@ -5,7 +5,8 @@ import { computePosition, offset, inline, flip, shift, limitShift, arrow, autoUp
 
 const _component = 'tooltip';
 const _defaults = {
-    title: '',
+    target: null,
+    content: '',
     placement: 'top',
     offset: 8,
     shift: 8,
@@ -13,7 +14,8 @@ const _defaults = {
     hideDelay: 0,
     trigger: ['hover', 'focus'],
     class: null,
-    showArrow: true,
+    hideClass: null,
+    arrow: true,
     html: false,
     arrowClass: null,
     animationStartClass: null,
@@ -30,6 +32,10 @@ class Tooltip extends Component {
     init () {
         if (!this._element) return;
 
+        this._config.target = typeof this._config.target == 'string'
+            ? document.querySelector(this._config.target)
+            : null;
+
         this._config.trigger = typeof this._config.trigger == 'string' 
             ? [this._config.trigger] 
             : this._config.trigger;
@@ -43,53 +49,76 @@ class Tooltip extends Component {
         this._config.hideDelay = parseInt(this._config.hideDelay);
         this._id = 'tooltip-' + util.randomNumber(4);
         this._originalTitle = null;
-        this._title = this._config.title; 
+        this._content = this._config.content; 
+        this._contentType = 'innerText';
         this._isAnimating = false;
-        let timeout;
+        let tooltip, tooltipContent, tooltipArrow, timeout;
 
         if (this._element.title.length > 0) {
-            this._title = this._element.title;
+            this._content = this._element.title;
             this._originalTitle = this._element.title;
-            util.setAttributes(this._element, {
-                'data-tooltip-original-title': this._element.title,
-                'aria-describedby': this._id
-            });
+            this._element.setAttribute('data-tooltip-original-title', this._element.title);
             this._element.removeAttribute('title');
         }
 
         // Create tooltip
-        const type = this._config.html ? 'innerHTML' : 'innerText'
-        const tooltip = document.createElement('div');
-        tooltip.id = this._id;
-        tooltip.style.display = 'none';
-        tooltip.style.position = 'absolute';
-        tooltip.style.top = 0;
-        tooltip.style.left = 0;
-        tooltip.style.zIndex = '1000';
-        tooltip.className = this._config.class ? this._config.class : '';
-        tooltip.setAttribute('role', 'tooltip');
+        if (this._config.target) {
+            tooltip = this._config.target;
 
-        const tooltipContent = document.createElement('div');
-        tooltipContent[type] = this._title;
-        tooltipContent.setAttribute('data-tooltip-content', '');
-        tooltip.appendChild(tooltipContent);
+            this._id = tooltip.hasAttribute('id') ? tooltip.id : this._id;
+            tooltip.setAttribute('id', this._id);
+            tooltip.style.display = 'none';
+            util.removeClass(tooltip, this._config.hideClass);
 
-        const tooltipArrow = document.createElement('div');
-        tooltipArrow.style.position = 'absolute';
-        tooltipArrow.style.transform = 'rotate(45deg)';
-        tooltipArrow.style.backgroundColor = 'inherit';
-        tooltipArrow.style.width = '8px';
-        tooltipArrow.style.height = '8px';
-        tooltipArrow.style.zIndex = '-1';
-        tooltipArrow.className = this._config.arrowClass ? this._config.arrowClass : '';
+            tooltipContent = tooltip.querySelector('[data-content]');
+            tooltipArrow = tooltip.querySelector('[data-arrow]');
 
-        if (this._config.showArrow) {
-            tooltipArrow.setAttribute('data-tooltip-arrow', '');
-            tooltip.appendChild(tooltipArrow);
+            if (!this._config.arrow && tooltipArrow) {
+                tooltipArrow.style.display = 'none';
+            }
+
+            this._content = tooltipContent.innerHTML || this._content; 
+            this._contentType = 'innerHTML';
+            tooltip.remove();
+        } else {
+            const type = this._config.html ? 'innerHTML' : 'innerText'
+            this._contentType = type;
+            tooltip = document.createElement('div');
+            tooltip.id = this._id;
+            tooltip.style.display = 'none';
+            tooltip.style.position = 'absolute';
+            tooltip.style.top = 0;
+            tooltip.style.left = 0;
+            tooltip.style.zIndex = '1000';
+            tooltip.className = this._config.class ? this._config.class : '';
+            tooltip.setAttribute('role', 'tooltip');
+
+            tooltipContent = document.createElement('div');
+            tooltipContent[type] = this._content;
+            tooltipContent.setAttribute('data-content', '');
+            tooltip.appendChild(tooltipContent);
+
+            tooltipArrow = document.createElement('div');
+            tooltipArrow.style.position = 'absolute';
+            tooltipArrow.style.transform = 'rotate(45deg)';
+            tooltipArrow.style.backgroundColor = 'inherit';
+            tooltipArrow.style.width = '8px';
+            tooltipArrow.style.height = '8px';
+            tooltipArrow.style.zIndex = '-1';
+            tooltipArrow.className = this._config.arrowClass ? this._config.arrowClass : '';
+
+            if (this._config.arrow) {
+                tooltipArrow.setAttribute('data-arrow', '');
+                tooltip.appendChild(tooltipArrow);
+            }
         }
 
         this._tooltip = tooltip;
         this._tooltipContent = tooltipContent;
+        this._tooltipArrow = tooltipArrow;
+
+        // Add aria-describedby attribute 
+        this._element.setAttribute('aria-describedby', this._id);
 
         let autoUpdatePosition = () => void 0;
 
@@ -105,7 +134,7 @@ class Tooltip extends Component {
                         limiter: limitShift()
                     }),
                     arrow({ 
-                        element: tooltipArrow,
+                        element: this._tooltipArrow,
                         padding: 6
                     })
                 ]
@@ -124,13 +153,15 @@ class Tooltip extends Component {
                     left: 'right',
                 }[placement.split('-')[0]];
 
-                Object.assign(tooltipArrow.style, {
-                    left: arrow.x != null ? `${arrow.x}px` : '',
-                    top: arrow.y != null ? `${arrow.y}px` : '',
-                    right: '',
-                    bottom: '',
-                    [staticSide]: '-4px',
-                });
+                if (this._tooltipArrow) {                    
+                    Object.assign(this._tooltipArrow.style, {
+                        left: arrow.x != null ? `${arrow.x}px` : '',
+                        top: arrow.y != null ? `${arrow.y}px` : '',
+                        right: '',
+                        bottom: '',
+                        [staticSide]: `${-this._tooltipArrow.offsetHeight / 2}px`,
+                    });
+                }
             });
         };
 
@@ -290,20 +321,20 @@ class Tooltip extends Component {
         this._hide();
     }
 
-    title(content) {
+    content(content) {
         content = content || '';
-        this._tooltipContent.textContent = content;
+        this._tooltipContent[this._contentType] = content;
     }
 
     reset() {
-        this._tooltipContent.textContent = this._title;
+        this._tooltipContent[this._contentType] = this._content;
     }
 
     destroy() {
         this._hide();
 
         if (this._element.hasAttribute('data-tooltip-original-title')) {
-            this._element.setAttribute('title', this._title);
+            this._element.setAttribute('title', this._content);
             this._element.removeAttribute('data-tooltip-original-title');
         }
 
