@@ -11,7 +11,7 @@ class Highlight extends Component {
         this.init();
     }
 
-    init () {
+    init() {
         // Prevent highlighting twice
         if (this._element.classList.contains('hljs')) {
             return;
@@ -30,3 +30,7 @@ class Highlight extends Component {
 }
 
 uk.registerComponent(_component, Highlight);
+
+export {
+    Highlight
+};

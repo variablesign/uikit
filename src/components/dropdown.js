@@ -28,7 +28,7 @@ class Dropdown extends Component {
         this.init();
     }
 
-    init () {
+    init() {
         if (!this._element) return;
 
         this._isOpened = false;
@@ -46,6 +46,8 @@ class Dropdown extends Component {
             : this._element;
             
         let autoUpdatePosition = () => void 0;
+
+        this._element.setAttribute('aria-expanded', this._isOpened);
 
         const setPosition = () => {
             computePosition(this._reference, this._dropdown, {
@@ -133,6 +135,7 @@ class Dropdown extends Component {
             autoUpdatePosition = updatePosition();
             this._triggerEvent('show', eventData);
             this._isOpened = true;
+            this._element.setAttribute('aria-expanded', this._isOpened);
     
             if (!this._hasAnimation) {
                 util.addClass(this._dropdown, this._config.animationStartClass);
@@ -161,6 +164,8 @@ class Dropdown extends Component {
 
         this._hide = (e) => {
             this._triggerEvent('hide', eventData);
+            this._isOpened = false;
+            this._element.setAttribute('aria-expanded', this._isOpened);
     
             if (this._config.animationEndClass) {
                 if (this._hasAnimation) {
@@ -179,7 +184,6 @@ class Dropdown extends Component {
             }
     
             util.addClass(this._dropdown, this._config.hideClass);
-            this._isOpened = false;
             autoUpdatePosition();
             resetPositionStyles();
             this._triggerEvent('hidden', eventData);
@@ -217,3 +221,7 @@ class Dropdown extends Component {
 }
 
 uk.registerComponent(_component, Dropdown);
+
+export {
+    Dropdown
+};

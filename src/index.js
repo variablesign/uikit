@@ -1,4 +1,6 @@
 import './index.core.js';
+import './components/theme.js';
+import './components/close.js';
 import './components/dropdown.js';
 import './components/tooltip.js';
 import './components/tab.js';

@@ -19,7 +19,7 @@ class Theme extends Component {
         this.init();
     }
 
-    init () {
+    init() {
         this._theme = this._config.theme;
         this._target = this._config.target instanceof HTMLElement ? this._config.target : document.querySelector(this._config.target);
 
@@ -107,3 +107,7 @@ document.addEventListener(uk.getConfig('prefix') + '.theme.broadcast', (e) => {
 themeChannel.addEventListener('message', (e) => {
     theme.theme(e.data);
 });
+
+export {
+    Theme
+};

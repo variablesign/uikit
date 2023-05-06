@@ -16,6 +16,7 @@ const _defaults = {
     class: null,
     hideClass: null,
     arrow: true,
+    arrowPadding: 8,
     html: false,
     arrowClass: null,
     animationStartClass: null,
@@ -29,7 +30,7 @@ class Tooltip extends Component {
         this.init();
     }
 
-    init () {
+    init() {
         if (!this._element) return;
 
         this._config.target = typeof this._config.target == 'string'
@@ -44,7 +45,7 @@ class Tooltip extends Component {
             ? this._config.trigger 
             : [];
 
-        this._config.placement = this._config.placement.replace('-start', '').replace('-end', '');
+        // this._config.placement = this._config.placement.replace('-start', '').replace('-end', '');
         this._config.showDelay = parseInt(this._config.showDelay);
         this._config.hideDelay = parseInt(this._config.hideDelay);
         this._id = 'tooltip-' + util.randomNumber(4);
@@ -117,7 +118,6 @@ class Tooltip extends Component {
         this._tooltipContent = tooltipContent;
         this._tooltipArrow = tooltipArrow;
 
-        // Add aria-describedby attribute 
         this._element.setAttribute('aria-describedby', this._id);
 
         let autoUpdatePosition = () => void 0;
@@ -135,7 +135,7 @@ class Tooltip extends Component {
                     }),
                     arrow({ 
                         element: this._tooltipArrow,
-                        padding: 6
+                        padding: this._config.arrowPadding
                     })
                 ]
             }).then(({ x, y, placement, middlewareData }) => {
@@ -344,3 +344,7 @@ class Tooltip extends Component {
 }
 
 uk.registerComponent(_component, Tooltip);
+
+export {
+    Tooltip
+};

@@ -21,7 +21,7 @@ class Scrollspy extends Component {
         this.init();
     }
 
-    init () {
+    init() {
         this._triggers = document.querySelectorAll(this._config.trigger);
         this._targets = document.querySelectorAll(this._config.target);
         this._activeNav = null;
@@ -151,3 +151,7 @@ class Scrollspy extends Component {
 }
 
 uk.registerComponent(_component, Scrollspy);
+
+export {
+    Scrollspy
+};

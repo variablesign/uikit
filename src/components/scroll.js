@@ -11,7 +11,7 @@ class Scroll extends Component {
         this.init();
     }
 
-    init () {
+    init() {
         // your awesome code
     }
 
@@ -21,3 +21,7 @@ class Scroll extends Component {
 }
 
 uk.registerComponent(_component, Scroll);
+
+export {
+    Scroll
+};

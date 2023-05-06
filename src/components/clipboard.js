@@ -19,7 +19,7 @@ class Clipboard extends Component {
         this.init();
     }
 
-    init () {
+    init() {
         if (!this._element || typeof ClipboardJS !== 'function') return;
 
         this._target = null;
@@ -90,3 +90,7 @@ class Clipboard extends Component {
 }
 
 uk.registerComponent(_component, Clipboard);
+
+export {
+    Clipboard
+};

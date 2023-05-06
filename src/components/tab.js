@@ -11,7 +11,7 @@ class Tab extends Component {
         this.init();
     }
 
-    init () {
+    init() {
         // your awesome code
     }
 
@@ -21,3 +21,7 @@ class Tab extends Component {
 }
 
 uk.registerComponent(_component, Tab);
+
+export {
+    Tab
+};
