@@ -5,7 +5,8 @@ import Component from '../component.js';
 const _component = 'toggle';
 const _defaults = {
     addClass: null,
-    removeClass: null
+    removeClass: null,
+    target: null
 };
 
 class Toggle extends Component {
@@ -15,6 +16,12 @@ class Toggle extends Component {
     }
 
     init() {
+        const customToggles = this._createConfig(['sidebar'], [
+            'addClass', 
+            'removeClass', 
+            'target'
+        ]);
+        console.log(customToggles);
         // your awesome code
     }
 

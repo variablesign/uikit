@@ -61,10 +61,37 @@ export default class Component {
                 }
             }
         };
-    }
 
-    _prefixedEventName(eventName) {
-        return uk.getConfig('prefix') + '.' + this._component + '.' + eventName;
+        this._prefixedEventName = (eventName) => {
+            return uk.getConfig('prefix') + '.' + this._component + '.' + eventName;
+        };
+
+        this._createConfig = (configNames = [], allowedOptions = []) => {
+            configNames = configNames instanceof Array ? configNames : [];
+            allowedOptions = allowedOptions instanceof Array ? allowedOptions : [];
+            configNames.push('');
+            const config = {};
+            const items = {};
+
+            for (let name of configNames) {
+                name = name.replace(/[^a-z0-9]/gi, '').toLowerCase().trim();
+                items[name] = {};
+
+                for (let option of allowedOptions) {
+                    const newOption = util.capitalize(option);
+
+                    config[name + newOption] = null;
+                    items[name][option] = name == '' ? option : name + newOption;
+                }
+            }
+
+            this._config = util.extendObjects(
+                config,
+                util.replaceObjectKeys(this._element ? this._element.dataset : {}, this._component)
+            );
+
+            return items;
+        };
     }
 
     destroy() {
