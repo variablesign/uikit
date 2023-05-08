@@ -87,6 +87,8 @@ export default class Component {
 
             this._config = util.extendObjects(
                 config,
+                this._config,
+                { create: [] },
                 util.replaceObjectKeys(this._element ? this._element.dataset : {}, this._component)
             );
 
