@@ -11,6 +11,7 @@ const _defaults = {
     hideClass: null,
     animationStartClass: null,
     animationEndClass: null,
+    transition: false,
     placement: 'bottom-start',
     autoPlacement: true,
     offset: 8,
