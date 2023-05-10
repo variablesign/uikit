@@ -40,7 +40,7 @@ export default class Component {
             this._eventListeners[eventName].push(eventItem);
         };
 
-        this._removeStoredEventListeners = (eventName = null) => {
+        this._removeStoredEventListeners = (eventName = null, target = null) => {
             for (const name in this._eventListeners) {
 
                 if (eventName !== null && eventName !== name) {
@@ -48,16 +48,20 @@ export default class Component {
                 }
 
                 for (const item of this._eventListeners[name]) {
-                    this._eventOff(
-                        item.target, 
-                        item.type, 
-                        item.listener,
-                        {
-                            once: item.once,
-                            passive: item.passive,
-                            useCapture: item.useCapture
+
+                    item.target.removeEventListener(item.type, item.listener, {
+                        once: item.once,
+                        passive: item.passive,
+                        useCapture: item.useCapture
+                    });
+
+                    if (target !== null && target === item.target) {
+                        this._eventListeners[name].splice(this._eventListeners[name].indexOf(item), 1);
+
+                        if (this._eventListeners[name].length === 0) {
+                            delete this._eventListeners[name];
                         }
-                    );
+                    }
                 }
             }
         };
@@ -87,8 +91,6 @@ export default class Component {
 
             this._config = util.extendObjects(
                 config,
-                this._config,
-                { create: [] },
                 util.replaceObjectKeys(this._element ? this._element.dataset : {}, this._component)
             );
 
@@ -107,10 +109,7 @@ export default class Component {
     }
 
     _eventOff(target, eventName, handler, options = false) {
-        if (handler === undefined && options === false) {
-            this._removeStoredEventListeners(eventName);
-        }
-
+        this._removeStoredEventListeners(eventName, target);
         target.removeEventListener(eventName, handler, options);
     }
 

@@ -6,10 +6,7 @@ const _component = 'toggle';
 const _defaults = {
     addClass: null,
     removeClass: null,
-    target: null,
-    animationStartClass: null,
-    animationEndClass: null,
-    transition: false,
+    target: null
 };
 
 class Toggle extends Component {
@@ -19,13 +16,12 @@ class Toggle extends Component {
     }
 
     init() {
+        if (!this._element) return;
+
         const toggles = this._createConfig(this._config.create, [
             'addClass', 
             'removeClass', 
-            'target',
-            'animationStartClass',
-            'animationEndClass',
-            'transition'
+            'target'
         ]);
 
         this._toggled = false;
@@ -34,66 +30,50 @@ class Toggle extends Component {
             'role': 'button'
         });
 
-        // const toggleAnimationEnd = () => {
-        //     this._triggerEvent('shown', eventData);
-        //     this._eventOff(this._dropdown, this._animationEvent, toggleAnimationEnd);
-        // };
-
-        // const toggledAnimationEnd = () => {
-        //     this._triggerEvent('hidden', eventData);
-        //     autoUpdatePosition();
-        //     resetPositionStyles();
-        //     util.addClass(this._dropdown, this._config.hideClass);
-        //     util.removeClass(this._dropdown, this._config.animationEndClass);
-        //     this._isOpened = false;
-        //     this._eventOff(this._dropdown, this._animationEvent, toggledAnimationEnd);
-        // };
-
         const toggleState = (options) => {
             options.targets.forEach((target) => {
+                const eventName = parseFloat(window.getComputedStyle(target).animationDuration) > 0
+                    ? 'animationend'
+                    : parseFloat(window.getComputedStyle(target).transitionDuration) > 0
+                        ? 'transitionend'
+                        : null;
+
+                this._triggerEvent('toggle', { toggled: this._toggled }, target);
+
                 if (target.dataset.toggled == 'true') {
                     this._toggled = false;
                     this._element.setAttribute('aria-pressed', this._toggled);
                     target.setAttribute('data-toggled', false);
-                    util.removeClass(target, options.addClass);
                     util.addClass(target, options.removeClass);
+                    util.removeClass(target, options.addClass);
                 } else {
                     this._toggled = true;
                     this._element.setAttribute('aria-pressed', this._toggled);
                     target.setAttribute('data-toggled', true);
-
-                    if (options.animationStartClass) {
-                        setTimeout(() => {
-                            util.removeClass(target, options.removeClass);
-                            util.addClass(target, options.addClass);
-                            util.addClass(target, this._config.animationStartClass);
-                        });
-        
-                        this._eventOn(target, this._animationEvent, onShowAnimationEnd);
-        
-                        return;
-                    }
-
                     util.removeClass(target, options.removeClass);
                     util.addClass(target, options.addClass);
                 }
-            });
 
-            console.log('toggled');
-            this._triggerEvent('toggled');
+                const handler = () => {
+                    this._triggerEvent('toggled', { toggled: this._toggled }, target);
+                    this._eventOff(target, eventName, handler);
+                };
+
+                if (eventName) {  
+                    this._eventOn(target, eventName, handler);
+
+                    return;
+                }
+
+                this._triggerEvent('toggled', { toggled: this._toggled }, target);
+            });    
         };
         
         this._toggle = () => {
-            console.log('toggle');
-            this._triggerEvent('toggle');
-
             for (const key in toggles) {
                 const options = {
                     addClass: this._config[toggles[key]['addClass']],
                     removeClass: this._config[toggles[key]['removeClass']],
-                    animationStartClass: this._config[toggles[key]['animationStartClass']],
-                    animationEndClass: this._config[toggles[key]['animationEndClass']],
-                    transition: this._config[toggles[key]['transition']],
                     targets: this._config[toggles[key]['target']] 
                         ? document.querySelectorAll(this._config[toggles[key]['target']])
                         : [ this._element ]
@@ -111,6 +91,10 @@ class Toggle extends Component {
         this._eventOn(this._element, 'click', toggle);
 
         this._triggerEvent('initialize');
+    }
+
+    toggle() {
+        this._toggle();
     }
 
     destroy() {

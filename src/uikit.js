@@ -22,10 +22,11 @@ UIkit.autoload = (context = null, filter = []) => {
     filter = filter instanceof Array && filter.length > 0 ? filter : [];
 
     for (let i = 0; i < targets.length; i++) {
+        let dataset = util.extendObjects(targets[i].dataset || {});
 
-        const components = targets[i].dataset[getConfig('prefix')] instanceof Array 
-            ? targets[i].dataset[getConfig('prefix')] 
-            : [targets[i].dataset[getConfig('prefix')]];
+        const components = dataset[getConfig('prefix')] instanceof Array 
+            ? dataset[getConfig('prefix')]
+            : [dataset[getConfig('prefix')]];
 
         for (let x = 0; x < components.length; x++) {
             const name = components[x].replace(/-([a-z])/g, (x, up) => up.toUpperCase());

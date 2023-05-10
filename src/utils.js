@@ -39,14 +39,14 @@ export const parseNestedDataset = (dataset) => {
 /**
  * Merge objects into one
  */
-export const extendObjects = (...options) => {
-	let option;
+export const extendObjects = (...objects) => {
+	let obj;
 	let item;
-	let optionList = [];
+	let objectsList = [];
 
-	for (let index in options) {
-		item = options[index] ? parseNestedDataset(options[index]) : {};
-		option = Object.fromEntries(
+	for (let index in objects) {
+		item = objects[index] ? parseNestedDataset(objects[index]) : {};
+		obj = Object.fromEntries(
 			Object.entries(item).map(([key, value]) => {
 				try {
 					value = JSON.parse(value);
@@ -57,10 +57,10 @@ export const extendObjects = (...options) => {
 			})
 		);
 		
-		optionList.push(option);
+		objectsList.push(obj);
 	}
 
-	return Object.assign(...optionList);
+	return Object.assign(...objectsList);
 }
 
 /**
