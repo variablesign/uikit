@@ -61,7 +61,7 @@ class Tooltip extends Component {
             this._element.setAttribute('data-tooltip-original-title', this._element.title);
             this._element.removeAttribute('title');
         }
-
+        
         // Create tooltip
         if (this._config.target) {
             tooltip = this._config.target;
