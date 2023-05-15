@@ -33,6 +33,14 @@ class Tab extends Component {
         const panels = this._element.querySelectorAll(`[${this._config.panel}]`);
         this._lastIndex = tabs.length > 0 ? tabs.length - 1 : 0; 
 
+        const eventData = (index) => {
+            return {
+                index: index,
+                tab: this._data[index].tab,
+                panel: this._data[index].panel
+            };
+        };
+
         /**
          * 
          * @param {string} name 
@@ -113,42 +121,90 @@ class Tab extends Component {
         };
 
         /**
-         * Show a tab 
-         * 
-         * @param {number} index 
+         * hide all tabs 
          */
-        this._show = (index, focus = false) => {
-            const current = index;
-
-            if (this._data[current].disabled) {
-                return;
-            }
-
+        this._hide = () => {
             this._data.forEach((data, index) => {
+                const previous = data.selected ? data.current : null;
+
+                if (previous !== null) {
+                    this._triggerEvent('hide', eventData(index));
+                }
+
                 util.removeClass(data.tab, this._config.activeClass);
                 util.addClass(data.tab, this._config.inactiveClass);
                 util.addClass(data.panel, this._config.hideClass);
+                util.removeClass(data.panel, this._config.animationStartClass);
+                util.removeClass(data.panel, this._config.animationEndClass);
+
                 data.selected = false;
                 util.setAttributes(data.tab, {
                     tabindex: -1,
                     'aria-selected': false
                 });
 
-                if (current == index) {
-                    util.removeClass(data.tab, this._config.inactiveClass);
-                    util.addClass(data.tab, this._config.activeClass);
-                    util.removeClass(data.panel, this._config.hideClass);
-                    data.selected = true;
-                    util.setAttributes(data.tab, {
-                        tabindex: 0,
-                        'aria-selected': true
-                    });
-
-                    if (focus) {
-                        data.tab.focus();
-                    }
+                if (previous !== null) {
+                    this._triggerEvent('hidden', eventData(index));
                 }
             });
+        };
+
+        /**
+         * Show a tab 
+         * 
+         * @param {number} index 
+         * @param {boolean} focus
+         */
+        this._show = (index, focus = false) => {
+            const data = this._data[index];
+
+            if (data.disabled) {
+                return;
+            }
+
+            this._hide();
+
+            this._triggerEvent('show', eventData(index));
+
+            util.removeClass(data.tab, this._config.inactiveClass);
+            util.addClass(data.tab, this._config.activeClass);
+            util.removeClass(data.panel, this._config.hideClass);
+
+            if (!this._hasAnimation) {
+                util.addClass(data.panel, this._config.animationStartClass);
+            }
+
+            if (this._hasAnimation) {
+                data.panel.style.visibility = 'hidden';
+            }
+
+            data.selected = true;
+            util.setAttributes(data.tab, {
+                tabindex: 0,
+                'aria-selected': true
+            });
+
+            if (focus) {
+                data.tab.focus();
+            }
+
+            if (this._config.animationStartClass) {
+                setTimeout(() => {
+                    if (this._hasAnimation) {
+                        data.panel.style.visibility = 'visible';
+                        util.addClass(data.panel, this._config.animationStartClass);
+                    } else {
+                        util.removeClass(data.panel, this._config.animationStartClass);
+                        util.addClass(data.panel, this._config.animationEndClass);
+                    }
+                });
+
+                this._eventOn(data.panel, this._animationEvent, data.onShowAnimationEnd);
+
+                return;
+            }
+
+            this._triggerEvent('shown', eventData(index));
         };
 
         /**
@@ -277,22 +333,28 @@ class Tab extends Component {
                     e.preventDefault();
                     this._show(index);
                 },
+                onShowAnimationEnd: (e) => {
+                    this._triggerEvent('shown', eventData(index));
+                    this._eventOff(panel, this._animationEvent, this._data[index].onShowAnimationEnd);
+                },
                 onKeydown: (e) => {
-                    e.preventDefault();
-
                     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                        e.preventDefault();
                         this._show(this._next(), true);
                     }
             
                     if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                        e.preventDefault();
                         this._show(this._previous(), true);
                     }
 
                     if (e.key === 'Home') {
+                        e.preventDefault();
                         this._show(0, true);
                     }
 
                     if (e.key === 'End') {
+                        e.preventDefault();
                         this._show(this._lastIndex, true);
                     }
                 }
