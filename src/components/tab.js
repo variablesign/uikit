@@ -281,6 +281,7 @@ class Tab extends Component {
 
         // Set attributes and states for tabs and panels
         tabs.forEach((tab, index) => {
+            const panelSuffix = '-pane';
             const name = tab.getAttribute(this._config.tab) == '' 
                 ?   `${id}-${index}` 
                 : tab.getAttribute(this._config.tab);
@@ -289,7 +290,7 @@ class Tab extends Component {
                 role: 'tab',
                 id: name,
                 tabindex: -1,
-                'aria-controls': name + '-pane',
+                'aria-controls': name + panelSuffix,
                 'aria-selected': tab.hasAttribute(this._config.selected) ? true : false,
                 'aria-disabled': tab.hasAttribute(this._config.disabled) ? true : false,
                 'data-index': index
@@ -310,7 +311,7 @@ class Tab extends Component {
 
             util.setAttributes(panel, {
                 role: 'tabpanel',
-                id: name + '-pane',
+                id: name + panelSuffix,
                 tabindex: 0,
                 'aria-labelledby': name,
                 'data-index': index
@@ -335,6 +336,7 @@ class Tab extends Component {
                 },
                 onShowAnimationEnd: (e) => {
                     this._triggerEvent('shown', eventData(index));
+                    util.removeClass(panel, this._config.animationStartClass);
                     this._eventOff(panel, this._animationEvent, this._data[index].onShowAnimationEnd);
                 },
                 onKeydown: (e) => {

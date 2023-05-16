@@ -111,6 +111,12 @@ class Dropdown extends Component {
             }
         };
     
+        const onFocusOut = (e) => {
+            if ([true, 'outside'].includes(this._config.autoClose) && !this._dropdown.contains(e.relatedTarget)) {
+                this.hide();
+            }
+        };
+
         const onKeydown = (e) => {
             if (e.key === 'Escape' && this._config.autoClose != false) {
                 this.hide();
@@ -192,6 +198,8 @@ class Dropdown extends Component {
 
         this._eventOn(this._element, 'click', onClickToggle);
         this._eventOn(this._element, 'keydown', onKeydown);
+        this._eventOn(this._element, 'focusout', onFocusOut);
+        this._eventOn(this._dropdown, 'focusout', onFocusOut);
         this._eventOn(document, 'click', onClickHide);
 
         this._triggerEvent('initialize');
