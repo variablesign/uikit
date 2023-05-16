@@ -3,7 +3,11 @@ import uk from '../uikit.js';
 import Component from '../component.js';
 
 const _component = 'scroll';
-const _defaults = {};
+const _defaults = {
+    trigger: 'auto',
+    target: null,
+    container: null
+};
 
 class Scroll extends Component {
     constructor(element, config) {
@@ -12,7 +16,18 @@ class Scroll extends Component {
     }
 
     init() {
-        // your awesome code
+        const handler = {};
+        const container = this._config.container ? document.querySelector(this._config.container) : this._element;
+        const target = container.querySelector(this._config.target);
+
+        handler['auto'] = () => {
+            if (target) {
+                const middle = container.offsetHeight / 2;
+                container.scrollTop = target.offsetTop - middle;
+            }
+        };
+
+        handler[this._config.trigger]();
     }
 
     destroy() {

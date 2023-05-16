@@ -122,6 +122,13 @@ export const trimHtml = (html) => {
 }
 
 /**
+ * Checks if value is a number
+ */
+export const isNumber = (value) => {
+    return !isNaN(parseFloat(value)) && isFinite(value);
+}
+
+/**
  * Show element
  */
 export const show = (element, display = 'block') => {
