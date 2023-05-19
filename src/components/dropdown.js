@@ -198,8 +198,8 @@ class Dropdown extends Component {
 
         this._eventOn(this._element, 'click', onClickToggle);
         this._eventOn(this._element, 'keydown', onKeydown);
-        this._eventOn(this._element, 'focusout', onFocusOut);
-        this._eventOn(this._dropdown, 'focusout', onFocusOut);
+        // this._eventOn(this._element, 'focusout', onFocusOut);
+        // this._eventOn(this._dropdown, 'focusout', onFocusOut);
         this._eventOn(document, 'click', onClickHide);
 
         this._triggerEvent('initialize');

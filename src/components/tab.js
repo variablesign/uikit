@@ -32,10 +32,14 @@ class Tab extends Component {
         const tabs = this._element.querySelectorAll(`[${this._config.tab}]`);
         const panels = this._element.querySelectorAll(`[${this._config.panel}]`);
         this._lastIndex = tabs.length > 0 ? tabs.length - 1 : 0; 
+        this._totalTabs = tabs.length;
 
         const eventData = (index) => {
             return {
                 index: index,
+                total: this._totalTabs,
+                next: this._data[index].active.next,
+                previous: this._data[index].active.previous,
                 tab: this._data[index].tab,
                 panel: this._data[index].panel
             };
@@ -60,79 +64,77 @@ class Tab extends Component {
         };
 
         /**
+         * Remove disabled tabs
+         * 
+         * @returns {array}
+         */
+        const filter = () => {
+            return this._data.map((data) => {
+                if (data.disabled) {
+                    return;
+                }
+
+                return data.current;
+            }).filter(data => data !== undefined);
+        };
+
+        /**
          * Get the next tab index
          * 
+         * @param {number} index
          * @returns {number}
          */
-        this._next = () => {
-            let index = 0;
-    
-            for (let i = 0; i < this._data.length; i++) {
+        this._next = (index = null) => {
+            const filtered = filter();
+            index = index ? index : this._selectedIndex;
 
-                if (this._data[i].disabled) {
-                    continue;
-                }
-    
-                if (this._data[i].selected) {
-                    let next = this._data[i].next;
-    
-                    if (this._data[next].disabled) {
-                        continue;
-                    }
-    
-                    index = next;
-                    break;
-                }
-    
-                index = i;
+            if (filtered.includes(index)) {
+                return index < (filtered.length - 1) 
+                    ? filtered[filtered.indexOf(index) + 1] 
+                    : 0;
             }
-    
+
             return index;
         };
     
         /**
          * Get the previous tab index
          * 
+         * @param {number} index
          * @returns {number}
          */
-        this._previous = () => {
-            let index = this._data.length - 1;
-    
-            for (let i = index; i >= 0; i--) { 
-                if (this._data[i].disabled) {
-                    continue;
-                }
-    
-                if (this._data[i].selected) {
-                    let previous = this._data[i].previous;
-    
-                    if (this._data[previous].disabled) {
-                        continue;
-                    }
-    
-                    index = previous;
-                    break;
-                }
-    
-                index = i;
+        this._previous = (index = null) => {
+            const filtered = filter();
+            index = index ? index : this._selectedIndex;
+
+            if (filtered.includes(index)) {
+                return index > 0
+                    ? filtered[filtered.indexOf(index) - 1] 
+                    : filtered[filtered.length - 1];
             }
-    
+
             return index;
         };
 
         /**
          * hide all tabs 
          */
-        this._hide = () => {
+        const hideAll = () => {
             this._data.forEach((data, index) => {
                 const previous = data.selected ? data.current : null;
 
                 if (previous !== null) {
                     this._triggerEvent('hide', eventData(index));
                 }
-
+                
+                if (data.tab.disabled) {
+                    util.removeClass(data.tab, this._config.inactiveClass);
+                    util.addClass(data.tab, this._config.disabledClass);
+                } else {
+                    util.addClass(data.tab, this._config.inactiveClass);
+                }
+                
                 util.removeClass(data.tab, this._config.activeClass);
-                util.addClass(data.tab, this._config.inactiveClass);
                 util.addClass(data.panel, this._config.hideClass);
                 util.removeClass(data.panel, this._config.animationStartClass);
                 util.removeClass(data.panel, this._config.animationEndClass);
@@ -157,12 +159,12 @@ class Tab extends Component {
          */
         this._show = (index, focus = false) => {
             const data = this._data[index];
-
-            if (data.disabled) {
+            
+            if (!data || data.disabled) {
                 return;
             }
 
-            this._hide();
+            hideAll();
 
             this._triggerEvent('show', eventData(index));
 
@@ -179,6 +181,7 @@ class Tab extends Component {
             }
 
             data.selected = true;
+            this._selectedIndex = index;
             util.setAttributes(data.tab, {
                 tabindex: 0,
                 'aria-selected': true
@@ -222,7 +225,7 @@ class Tab extends Component {
                     'aria-disabled': true
                 });
 
-                if (data.tab.disabled != undefined) {
+                if (data.tab.disabled !== undefined) {
                     data.tab.disabled = true;
                 }
             };
@@ -252,7 +255,7 @@ class Tab extends Component {
                     'aria-disabled': false
                 });
 
-                if (data.tab.disabled != undefined) {
+                if (data.tab.disabled !== undefined) {
                     data.tab.disabled = false;
                 }
 
@@ -300,6 +303,10 @@ class Tab extends Component {
                 util.setAttributes(tab, {
                     'aria-disabled': tab.disabled
                 });
+            }
+
+            if (tab.disabled === false && tab.hasAttribute(this._config.disabled)) {
+                tab.disabled = true;
             }
 
             if (tab.getAttribute('aria-selected') == 'true') {
@@ -363,9 +370,13 @@ class Tab extends Component {
             });
         });
 
-        // Set the default tab 
+        // After the data object is created, do the following
         tabs.forEach((tab, index) => {
-            this._data[index]['selected'] = this._selectedIndex == index ? true : false;
+            this._data[index]['selected'] = this._selectedIndex == index ? true : false;  
+            this._data[index]['active'] = {
+                next: !this._data[index]['disabled'] ? this._next(index) : -1,
+                previous: !this._data[index]['disabled'] ? this._previous(index) : -1
+            };
         });
 
         // Add events
