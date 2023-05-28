@@ -185,7 +185,7 @@ class Tooltip extends Component {
             this._eventOff(this._tooltip, this._animationEvent, onHideAnimationEnd);
         };
 
-        this._show = (e) => {
+        this._show = () => {
             clearTimeout(timeout);
             timeout = setTimeout(() => {
                 if (this._isAnimating) {
@@ -232,7 +232,7 @@ class Tooltip extends Component {
             }, this._config.showDelay);
         };
 
-        this._hide = (e) => {
+        this._hide = () => {
             clearTimeout(timeout);
             timeout = setTimeout(() => {
                 if (this._isAnimating) {

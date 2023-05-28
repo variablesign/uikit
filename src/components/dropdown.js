@@ -87,10 +87,8 @@ class Dropdown extends Component {
         const onClickToggle = (e) => {
             e.preventDefault();
             this.toggle();
-    
-            return;
         };
-    
+
         const onClickHide = (e) => {
             const clicked = e.target;
     
@@ -111,12 +109,6 @@ class Dropdown extends Component {
             }
         };
     
-        const onFocusOut = (e) => {
-            if ([true, 'outside'].includes(this._config.autoClose) && !this._dropdown.contains(e.relatedTarget)) {
-                this.hide();
-            }
-        };
-
         const onKeydown = (e) => {
             if (e.key === 'Escape' && this._config.autoClose != false) {
                 this.hide();
@@ -138,7 +130,7 @@ class Dropdown extends Component {
             this._eventOff(this._dropdown, this._animationEvent, onHideAnimationEnd);
         };
 
-        this._show = (e) => {
+        this._show = () => {
             autoUpdatePosition = updatePosition();
             this._triggerEvent('show', eventData);
             this._isOpened = true;
@@ -169,7 +161,7 @@ class Dropdown extends Component {
             this._triggerEvent('shown', eventData);
         };
 
-        this._hide = (e) => {
+        this._hide = () => {
             this._triggerEvent('hide', eventData);
             this._isOpened = false;
             this._element.setAttribute('aria-expanded', this._isOpened);
@@ -196,10 +188,8 @@ class Dropdown extends Component {
             this._triggerEvent('hidden', eventData);
         };
 
-        this._eventOn(this._element, 'click', onClickToggle);
-        this._eventOn(this._element, 'keydown', onKeydown);
-        // this._eventOn(this._element, 'focusout', onFocusOut);
-        // this._eventOn(this._dropdown, 'focusout', onFocusOut);
+        this._eventOn(this._reference, 'click', onClickToggle);
+        this._eventOn(this._reference, 'keydown', onKeydown);
         this._eventOn(document, 'click', onClickHide);
 
         this._triggerEvent('initialize');

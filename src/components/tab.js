@@ -46,6 +46,7 @@ class Tab extends Component {
         };
 
         /**
+         * Get a tab panel by name 
          * 
          * @param {string} name 
          * @returns {null|object}
