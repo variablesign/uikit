@@ -8,10 +8,7 @@ const _defaults = {
     target: null,
     reference: null,
     autoClose: true,
-    hideClass: null,
-    animationStartClass: null,
-    animationEndClass: null,
-    transition: false,
+    displayClass: null,
     placement: 'bottom-start',
     autoPlacement: true,
     offset: 8,
@@ -26,6 +23,7 @@ const _defaults = {
 class Dropdown extends Component {
     constructor(element, config) {
         super(element, config, _defaults, _component);
+        this._useTransitions();
         this.init();
     }
 
@@ -115,46 +113,18 @@ class Dropdown extends Component {
             }
         };
 
-        const onShowAnimationEnd = () => {
-            this._triggerEvent('shown', eventData);
-            this._eventOff(this._dropdown, this._animationEvent, onShowAnimationEnd);
-        };
-
-        const onHideAnimationEnd = () => {
-            this._triggerEvent('hidden', eventData);
-            autoUpdatePosition();
-            resetPositionStyles();
-            util.addClass(this._dropdown, this._config.hideClass);
-            util.removeClass(this._dropdown, this._config.animationEndClass);
-            this._isOpened = false;
-            this._eventOff(this._dropdown, this._animationEvent, onHideAnimationEnd);
-        };
-
         this._show = () => {
             autoUpdatePosition = updatePosition();
-            this._triggerEvent('show', eventData);
             this._isOpened = true;
+            this._triggerEvent('show', eventData);
             this._element.setAttribute('aria-expanded', this._isOpened);
-    
-            if (!this._hasAnimation) {
-                util.addClass(this._dropdown, this._config.animationStartClass);
-                util.removeClass(this._dropdown, this._config.hideClass);
-            }
-    
+            util.removeClass(this._dropdown, this._config.displayClass);
 
-            if (this._config.animationStartClass) {
-                setTimeout(() => {
-                    if (this._hasAnimation) {
-                        util.removeClass(this._dropdown, this._config.hideClass);
-                        util.addClass(this._dropdown, this._config.animationStartClass);
-                    } else {
-                        util.removeClass(this._dropdown, this._config.animationStartClass);
-                        util.addClass(this._dropdown, this._config.animationEndClass);
-                    }
-                });
+            const transitioned = this._transition('transitionEnter', this._dropdown, (e) => {
+                this._triggerEvent('shown', eventData);
+            });
 
-                this._eventOn(this._dropdown, this._animationEvent, onShowAnimationEnd);
-
+            if (transitioned) {
                 return;
             }
     
@@ -162,27 +132,23 @@ class Dropdown extends Component {
         };
 
         this._hide = () => {
-            this._triggerEvent('hide', eventData);
             this._isOpened = false;
+            this._triggerEvent('hide', eventData);
             this._element.setAttribute('aria-expanded', this._isOpened);
-    
-            if (this._config.animationEndClass) {
-                if (this._hasAnimation) {
-                    setTimeout(() => {                        
-                        util.removeClass(this._dropdown, this._config.animationStartClass);
-                        util.addClass(this._dropdown, this._config.animationEndClass);
-                    });
-                } else {
-                    util.removeClass(this._dropdown, this._config.animationEndClass);
-                    util.addClass(this._dropdown, this._config.animationStartClass);
-                }
 
-                this._eventOn(this._dropdown, this._animationEvent, onHideAnimationEnd);
+            const transitioned = this._transition('transitionLeave', this._dropdown, (e) => {
+                this._isOpened = false;
+                this._triggerEvent('hidden', eventData);
+                autoUpdatePosition();
+                resetPositionStyles();
+                util.addClass(this._dropdown, this._config.displayClass);
+            });
 
+            if (transitioned) {
                 return;
             }
     
-            util.addClass(this._dropdown, this._config.hideClass);
+            util.addClass(this._dropdown, this._config.displayClass);
             autoUpdatePosition();
             resetPositionStyles();
             this._triggerEvent('hidden', eventData);

@@ -5,14 +5,13 @@ import Component from '../component.js';
 const _component = 'close';
 const _defaults = {
     target: null,
-    remove: true,
-    animationEndClass: null,
-    transition: false
+    remove: true
 };
 
 class Close extends Component {
     constructor(element, config) {
         super(element, config, _defaults, _component);
+        this._useTransitions();
         this.init();
     }
 
@@ -31,24 +30,16 @@ class Close extends Component {
             }
         };
 
-        const onCloseAnimationEnd = () => {
-            this._triggerEvent('hidden', eventData);
-            util.hide(this._target);
-            util.removeClass(this._target, this._config.animationEndClass);
-            removeTarget();
-            this._eventOff(this._target, this._animationEvent, onCloseAnimationEnd);
-        };
-
         this._close = () => {
             this._triggerEvent('hide', eventData);
 
-            if (this._config.animationEndClass) {
-                setTimeout(() => {                        
-                    util.addClass(this._target, this._config.animationEndClass);
-                });
+            const transitioned = this._transition('transitionLeave', this._target, (e) => {
+                this._triggerEvent('hidden', eventData);
+                util.hide(this._target);
+                removeTarget();
+            });
 
-                this._eventOn(this._target, this._animationEvent, onCloseAnimationEnd);
-
+            if (transitioned) {
                 return;
             }
 

@@ -12,13 +12,84 @@ export default class Component {
         );
         this._eventListeners = {};
 
-        this._hasAnimation = this._config.transition 
-            ? false 
-            : this._config.animationStartClass ? true : false;
-
         this._animationEvent = this._config.transition 
             ? 'transitionend' 
             : 'animationend';
+
+        this._useTransitions = (enter = true, leave = true) => {
+            const config = {};
+
+            if (enter) {
+                config.transitionEnter = this._config.transitionEnter || null;
+                config.transitionEnterStart = this._config.transitionEnterStart || null;
+                config.transitionEnterEnd = this._config.transitionEnterEnd || null;
+            }
+
+            if (leave) {
+                config.transitionLeave = this._config.transitionLeave || this._config.transitionEnter || null;
+                config.transitionLeaveStart = this._config.transitionLeaveStart || null;
+                config.transitionLeaveEnd = this._config.transitionLeaveEnd || null;
+            }
+
+            this._config = util.extendObjects(this._config, config);
+        };
+
+        const transitionCleanup = (element) => {
+            const transitions = ['transitionEnter', 'transitionLeave'];
+
+            for (const transition of transitions) {
+                util.removeClass(element, this._config[`${transition}`]);
+                util.removeClass(element, this._config[`${transition}Start`]);
+                util.removeClass(element, this._config[`${transition}End`]);
+            }
+        };
+
+        this._transitioning = false;
+
+        this._transition = (type, element, callback) => {
+            let transitionEvent = 'transitionend';
+            callback =  typeof callback === 'function' ? callback : () => void 0;
+
+            if (!this._config[`${type}`]) {
+                return false;
+            }
+
+            transitionCleanup(element);
+            
+            util.addClass(element, this._config[`${type}`]);
+            util.addClass(element, this._config[`${type}Start`]);
+
+            window.requestAnimationFrame(() => {
+                util.removeClass(element, this._config[`${type}Start`]);
+                util.addClass(element, this._config[`${type}End`]);
+            });
+
+            let animationDuration = parseFloat(window.getComputedStyle(element).animationDuration);
+
+            transitionEvent = isNaN(animationDuration) || animationDuration <= 0 
+                ? transitionEvent 
+                : 'animationend';
+
+            const _handler = (e) => {
+                this._transitioning = false;
+                callback(e);
+                util.removeClass(element, this._config[`${type}`]);
+                util.removeClass(element, this._config[`${type}End`]);
+                this._eventOff(element, transitionEvent, _handler);
+            }
+
+            if (this._transitioning) {
+                this._transitioning = false;
+                this._removeStoredEventListeners(transitionEvent, element);
+
+                return true;
+            }
+
+            this._eventOn(element, transitionEvent, _handler);
+            this._transitioning = true;
+
+            return true;
+        };
 
         this._storeEventListener = (target, eventName, handler, options) => {
             options = typeof options === 'boolean' ? { useCapture: options } : options;

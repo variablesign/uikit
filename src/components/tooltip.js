@@ -14,19 +14,17 @@ const _defaults = {
     hideDelay: 0,
     trigger: ['hover', 'focus'],
     class: null,
-    hideClass: null,
+    displayClass: null,
     arrow: true,
     arrowPadding: 8,
     html: false,
     arrowClass: null,
-    animationStartClass: null,
-    animationEndClass: null,
-    transition: false
 };
 
 class Tooltip extends Component {
     constructor(element, config) {
         super(element, config, _defaults, _component);
+        this._useTransitions();
         this.init();
     }
 
@@ -45,14 +43,17 @@ class Tooltip extends Component {
             ? this._config.trigger 
             : [];
 
+        this._generateId = () => {
+            return 'tooltip-' + util.randomNumber(4);
+        };
+
         // this._config.placement = this._config.placement.replace('-start', '').replace('-end', '');
         this._config.showDelay = parseInt(this._config.showDelay);
         this._config.hideDelay = parseInt(this._config.hideDelay);
-        this._id = 'tooltip-' + util.randomNumber(4);
+        this._id = this._generateId();
         this._originalTitle = null;
         this._content = this._config.content; 
         this._contentType = 'innerText';
-        this._isAnimating = false;
         let tooltip, tooltipContent, tooltipArrow, timeout;
 
         if (this._element.title.length > 0) {
@@ -69,7 +70,7 @@ class Tooltip extends Component {
             this._id = tooltip.hasAttribute('id') ? tooltip.id : this._id;
             tooltip.setAttribute('id', this._id);
             tooltip.style.display = 'none';
-            util.removeClass(tooltip, this._config.hideClass);
+            util.removeClass(tooltip, this._config.displayClass);
 
             tooltipContent = tooltip.querySelector('[data-content]');
             tooltipArrow = tooltip.querySelector('[data-arrow]');
@@ -169,102 +170,55 @@ class Tooltip extends Component {
             return autoUpdate(this._element, this._tooltip, setPosition);
         };
 
-        const onShowAnimationEnd = () => {
-            this._isAnimating = false;
-            this._triggerEvent('shown');
-            this._eventOff(this._tooltip, this._animationEvent, onShowAnimationEnd);
-        };
-
-        const onHideAnimationEnd = () => {
-            this._isAnimating = false;
-            this._triggerEvent('hidden');
-            autoUpdatePosition();
-            util.hide(this._tooltip);
-            util.removeClass(this._tooltip, this._config.animationEndClass);
-            this._tooltip.remove();
-            this._eventOff(this._tooltip, this._animationEvent, onHideAnimationEnd);
-        };
-
         this._show = () => {
             clearTimeout(timeout);
             timeout = setTimeout(() => {
-                if (this._isAnimating) {
-                    this._isAnimating = false;
-                    util.hide(this._tooltip);
-    
-                    if (this._hasAnimation) {
-                        util.removeClass(this._tooltip, this._config.animationEndClass);
-                    }
-    
-                    this._tooltip.remove();
-                    this._eventOff(this._tooltip, this._animationEvent, onHideAnimationEnd);
-                }
     
                 this._triggerEvent('show');
                 this._element.after(this._tooltip);
                 autoUpdatePosition = updatePosition();
-                
-                if (!this._hasAnimation) {
-                    util.addClass(this._tooltip, this._config.animationStartClass);
-                    util.show(this._tooltip);
-                }
-    
-                if (this._config.animationStartClass) {
-                    this._isAnimating = true;
-       
-                    setTimeout(() => {
-                        if (this._hasAnimation) {
-                            util.show(this._tooltip);
-                            util.addClass(this._tooltip, this._config.animationStartClass);
-                        } else {
-                            util.removeClass(this._tooltip, this._config.animationStartClass);
-                            util.addClass(this._tooltip, this._config.animationEndClass);
-                        }
-                    });
-    
-                    this._eventOn(this._tooltip, this._animationEvent, onShowAnimationEnd);
-    
+                util.show(this._tooltip);
+
+                const transitioned = this._transition('transitionEnter', this._tooltip, (e) => {
+                    this._triggerEvent('shown');
+                });
+
+                if (transitioned) {
                     return;
                 }
     
                 util.show(this._tooltip);
                 this._triggerEvent('shown');
+
             }, this._config.showDelay);
         };
 
         this._hide = () => {
+            
+            if (this._transitioning) {
+                this._tooltip.remove();
+            }
+
             clearTimeout(timeout);
             timeout = setTimeout(() => {
-                if (this._isAnimating) {
-                    this._isAnimating = false;
-                    util.hide(this._tooltip);
-                    this._tooltip.remove();
-                    this._eventOff(this._tooltip, this._animationEvent, onHideAnimationEnd);
-                }
     
                 this._triggerEvent('hide');
-    
-                if (this._config.animationEndClass) {
-                    this._isAnimating = true;
-    
-                    if (this._hasAnimation) {
-                        setTimeout(() => {                        
-                            util.removeClass(this._tooltip, this._config.animationStartClass);
-                            util.addClass(this._tooltip, this._config.animationEndClass);
-                        });
-                    } else {
-                        util.removeClass(this._tooltip, this._config.animationEndClass);
-                        util.addClass(this._tooltip, this._config.animationStartClass);
-                    }
-    
-                    this._eventOn(this._tooltip, this._animationEvent, onHideAnimationEnd);
-    
+
+                const transitioned = this._transition('transitionLeave', this._tooltip, (e) => {
+                    this._triggerEvent('hidden');
+                    autoUpdatePosition();
+                    util.hide(this._tooltip);
+                    this._tooltip.remove();
+                });
+
+                if (transitioned) {
                     return;
                 }
     
                 util.hide(this._tooltip);
                 this._tooltip.remove();
                 this._triggerEvent('hidden');
+
             }, this._config.hideDelay);
         };
 
