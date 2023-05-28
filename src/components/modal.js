@@ -70,6 +70,11 @@ class Modal extends Component {
             }
         };
 
+        const onShowAnimationEnd = () => {
+            // this._triggerEvent('shown', eventData);
+            this._eventOff(this._dialog, this._animationEvent, onShowAnimationEnd);
+        };
+
         const setFocus = (e, reverse = false) => {
             let focusable = this._content.querySelectorAll('*');
             focusable = [...focusable].filter(node => node.tabIndex >= 0);
@@ -97,6 +102,7 @@ class Modal extends Component {
             }
         };
 
+        // Create backdrop element
         this._backdrop = document.createElement('div');
         this._backdrop.style.position = 'fixed';
         this._backdrop.style.top = 0;
@@ -141,8 +147,25 @@ class Modal extends Component {
         this._show = () => {
             this._isOpened = true;
             showBackdrop();
+            util.addClass(this._dialog, this._config.animationStartClass);
             util.removeClass(this._modal, this._config.hideClass);
             this._modal.focus();
+
+            if (this._config.animationStartClass) {
+                setTimeout(() => {
+                    if (this._hasAnimation) {
+                        // util.removeClass(this._dropdown, this._config.hideClass);
+                        util.addClass(this._dialog, this._config.animationStartClass);
+                    } else {
+                        util.removeClass(this._dialog, this._config.animationStartClass);
+                        util.addClass(this._dialog, this._config.animationEndClass);
+                    }
+                });
+
+                this._eventOn(this._dialog, this._animationEvent, onShowAnimationEnd);
+
+                return;
+            }
         };
 
         this._hide = () => {
