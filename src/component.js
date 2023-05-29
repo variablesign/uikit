@@ -12,10 +12,6 @@ export default class Component {
         );
         this._eventListeners = {};
 
-        this._animationEvent = this._config.transition 
-            ? 'transitionend' 
-            : 'animationend';
-
         this._useTransitions = (enter = true, leave = true) => {
             const config = {};
 

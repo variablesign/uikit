@@ -9,10 +9,7 @@ const _defaults = {
     activeClass: null,
     inactiveClass: null,
     disabledClass: null,
-    hideClass: null,
-    animationStartClass: null,
-    animationEndClass: null,
-    transition: false,
+    displayClass: null,
     selected: 'data-selected',
     disabled: 'data-disabled',
 };
@@ -20,6 +17,7 @@ const _defaults = {
 class Tab extends Component {
     constructor(element, config) {
         super(element, config, _defaults, _component);
+        this._useTransitions(true, false);
         this.init();
     }
 
@@ -136,9 +134,7 @@ class Tab extends Component {
                 }
                 
                 util.removeClass(data.tab, this._config.activeClass);
-                util.addClass(data.panel, this._config.hideClass);
-                util.removeClass(data.panel, this._config.animationStartClass);
-                util.removeClass(data.panel, this._config.animationEndClass);
+                util.addClass(data.panel, this._config.displayClass);
 
                 data.selected = false;
                 util.setAttributes(data.tab, {
@@ -169,18 +165,6 @@ class Tab extends Component {
 
             this._triggerEvent('show', eventData(index));
 
-            util.removeClass(data.tab, this._config.inactiveClass);
-            util.addClass(data.tab, this._config.activeClass);
-            util.removeClass(data.panel, this._config.hideClass);
-
-            if (!this._hasAnimation) {
-                util.addClass(data.panel, this._config.animationStartClass);
-            }
-
-            if (this._hasAnimation) {
-                data.panel.style.visibility = 'hidden';
-            }
-
             data.selected = true;
             this._selectedIndex = index;
             util.setAttributes(data.tab, {
@@ -192,19 +176,13 @@ class Tab extends Component {
                 data.tab.focus();
             }
 
-            if (this._config.animationStartClass) {
-                setTimeout(() => {
-                    if (this._hasAnimation) {
-                        data.panel.style.visibility = 'visible';
-                        util.addClass(data.panel, this._config.animationStartClass);
-                    } else {
-                        util.removeClass(data.panel, this._config.animationStartClass);
-                        util.addClass(data.panel, this._config.animationEndClass);
-                    }
-                });
+            util.removeClass(data.tab, this._config.inactiveClass);
+            util.addClass(data.tab, this._config.activeClass);
+            util.removeClass(data.panel, this._config.displayClass);
 
-                this._eventOn(data.panel, this._animationEvent, data.onShowAnimationEnd);
+            const transitioned = this._transition('transitionEnter', data.panel, data.onTransitionEnterEnd);
 
+            if (transitioned) {
                 return;
             }
 
@@ -342,10 +320,8 @@ class Tab extends Component {
                     e.preventDefault();
                     this._show(index);
                 },
-                onShowAnimationEnd: (e) => {
+                onTransitionEnterEnd: (e) => {
                     this._triggerEvent('shown', eventData(index));
-                    util.removeClass(panel, this._config.animationStartClass);
-                    this._eventOff(panel, this._animationEvent, this._data[index].onShowAnimationEnd);
                 },
                 onKeydown: (e) => {
                     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {

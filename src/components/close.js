@@ -11,7 +11,7 @@ const _defaults = {
 class Close extends Component {
     constructor(element, config) {
         super(element, config, _defaults, _component);
-        this._useTransitions();
+        this._useTransitions(false);
         this.init();
     }
 
