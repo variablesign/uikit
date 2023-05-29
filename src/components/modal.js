@@ -8,10 +8,8 @@ const _defaults = {
     keyboard: true,
     backdrop: 'dynamic',
     backdropClass: null,
-    hideClass: null,
-    animationStartClass: null,
-    animationEndClass: null,
-    transition: false,
+    backdropFadeDuration: 150,
+    displayClass: null,
     dialog: 'data-dialog',
     content: 'data-content',
     close: 'data-close'
@@ -20,6 +18,7 @@ const _defaults = {
 class Modal extends Component {
     constructor(element, config) {
         super(element, config, _defaults, _component);
+        this._useTransitions();
         this.init();
     }
 
@@ -31,6 +30,7 @@ class Modal extends Component {
         this._dialog = this._modal.querySelector(`[${this._config.dialog}]`);
         this._content = this._modal.querySelector(`[${this._config.content}]`);
         this._close = this._modal.querySelectorAll(`[${this._config.close}]`);
+        this._config.backdropFadeDuration = parseInt(this._config.backdropFadeDuration) / 1000;
         const id = this._modal.id !== '' ? this._modal.id : 'modal-' + util.randomNumber(4);
 
         util.setAttributes(this._modal, {
@@ -70,11 +70,6 @@ class Modal extends Component {
             }
         };
 
-        const onShowAnimationEnd = () => {
-            // this._triggerEvent('shown', eventData);
-            this._eventOff(this._dialog, this._animationEvent, onShowAnimationEnd);
-        };
-
         const setFocus = (e, reverse = false) => {
             let focusable = this._content.querySelectorAll('*');
             focusable = [...focusable].filter(node => node.tabIndex >= 0);
@@ -110,7 +105,7 @@ class Modal extends Component {
         this._backdrop.style.bottom = 0;
         this._backdrop.style.left = 0;
         this._backdrop.style.opacity = 0;
-        this._backdrop.style.transition = 'opacity 0.15s linear';
+        this._backdrop.style.transition = `opacity ${this._config.backdropFadeDuration}s linear`;
 
         if (!this._config.backdropClass) {        
             this._backdrop.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
@@ -148,13 +143,13 @@ class Modal extends Component {
             this._isOpened = true;
             showBackdrop();
             util.addClass(this._dialog, this._config.animationStartClass);
-            util.removeClass(this._modal, this._config.hideClass);
+            util.removeClass(this._modal, this._config.displayClass);
             this._modal.focus();
 
             if (this._config.animationStartClass) {
                 setTimeout(() => {
                     if (this._hasAnimation) {
-                        // util.removeClass(this._dropdown, this._config.hideClass);
+                        // util.removeClass(this._dropdown, this._config.displayClass);
                         util.addClass(this._dialog, this._config.animationStartClass);
                     } else {
                         util.removeClass(this._dialog, this._config.animationStartClass);
@@ -171,7 +166,7 @@ class Modal extends Component {
         this._hide = () => {
             this._isOpened = false;
             hideBackdrop();
-            util.addClass(this._modal, this._config.hideClass);
+            util.addClass(this._modal, this._config.displayClass);
             this._element.focus();
         };
 
