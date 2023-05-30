@@ -139,7 +139,7 @@ class Tab extends Component {
                 data.selected = false;
                 util.setAttributes(data.tab, {
                     tabindex: -1,
-                    'aria-selected': false
+                    ariaSelected: false
                 });
 
                 if (previous !== null) {
@@ -169,7 +169,7 @@ class Tab extends Component {
             this._selectedIndex = index;
             util.setAttributes(data.tab, {
                 tabindex: 0,
-                'aria-selected': true
+                ariaSelected: true
             });
 
             if (focus) {
@@ -201,7 +201,7 @@ class Tab extends Component {
                 util.addClass(data.tab, this._config.disabledClass);
                 util.setAttributes(data.tab, {
                     tabindex: -1,
-                    'aria-disabled': true
+                    ariaDisabled: true
                 });
 
                 if (data.tab.disabled !== undefined) {
@@ -231,7 +231,7 @@ class Tab extends Component {
                 util.addClass(data.tab, this._config.inactiveClass);
                 util.setAttributes(data.tab, {
                     tabindex: 0,
-                    'aria-disabled': false
+                    ariaDisabled: false
                 });
 
                 if (data.tab.disabled !== undefined) {
@@ -272,15 +272,15 @@ class Tab extends Component {
                 role: 'tab',
                 id: name,
                 tabindex: -1,
-                'aria-controls': name + panelSuffix,
-                'aria-selected': tab.hasAttribute(this._config.selected) ? true : false,
-                'aria-disabled': tab.hasAttribute(this._config.disabled) ? true : false,
-                'data-index': index
+                ariaControls: name + panelSuffix,
+                ariaSelected: tab.hasAttribute(this._config.selected) ? true : false,
+                ariaDisabled: tab.hasAttribute(this._config.disabled) ? true : false,
+                dataIndex: index
             });
 
             if (tab.disabled === true && !tab.hasAttribute(this._config.disabled)) {
                 util.setAttributes(tab, {
-                    'aria-disabled': tab.disabled
+                    ariaDisabled: tab.disabled
                 });
             }
 
@@ -299,8 +299,8 @@ class Tab extends Component {
                 role: 'tabpanel',
                 id: name + panelSuffix,
                 tabindex: 0,
-                'aria-labelledby': name,
-                'data-index': index
+                ariaLabelledby: name,
+                dataIndex: index
             });
 
             if (tab.getAttribute('aria-disabled') == 'true') {

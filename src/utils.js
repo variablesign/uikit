@@ -132,6 +132,8 @@ export const isNumber = (value) => {
  * Show element
  */
 export const show = (element, display = 'block') => {
+    if (!element) return;
+    
     element.style.display = display;
 }
 
@@ -139,6 +141,8 @@ export const show = (element, display = 'block') => {
  * Hide element
  */
 export const hide = (element, display = 'none') => {
+    if (!element) return;
+
     element.style.display = display;
 }
 
@@ -146,8 +150,10 @@ export const hide = (element, display = 'none') => {
  * Set multiple attributes on element
  */
 export const setAttributes = (element, attributes = {}) => {
+    if (!element) return;
+
     for (const attribute in attributes) {
-        element.setAttribute(attribute, attributes[attribute]);
+        element.setAttribute(kebabCase(attribute), attributes[attribute]);
     }
 }
 
@@ -155,6 +161,8 @@ export const setAttributes = (element, attributes = {}) => {
  * Remove multiple attributes from element
  */
 export const removeAttributes = (element, attributes = []) => {
+    if (!element) return;
+
     for (const attribute of attributes) {
         element.removeAttribute(attribute);
     }
@@ -164,6 +172,8 @@ export const removeAttributes = (element, attributes = []) => {
  * Add class
  */
 export const addClass = (element, classNames) => {
+    if (!element) return;
+
     classNames = classNames ? classNames.split(' ') : [];
     element.classList.add(...classNames);
 }
@@ -172,6 +182,8 @@ export const addClass = (element, classNames) => {
  * Remove class
  */
 export const removeClass = (element, classNames) => {
+    if (!element) return;
+
     classNames = classNames ? classNames.split(' ') : [];
     element.classList.remove(...classNames);
 }
@@ -237,6 +249,25 @@ export const getElements = (selector, context = document) => {
  */
 export const capitalize = string => {
     return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+/**
+ * Convert string to camel case
+ */
+export const camelCase = string => {
+    return string
+        .replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) => {
+            return index === 0 ? word.toLowerCase() : word.toUpperCase();
+        })
+        .replace(/\s+/g, '');
+}
+
+/**
+ * Convert string to kebab case
+ */
+export const kebabCase = string => {
+    return string
+        .replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
 }
 
 /**

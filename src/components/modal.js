@@ -37,7 +37,14 @@ class Modal extends Component {
             id: id,
             tabindex: -1,
             role: 'dialog',
-            'aria-modal': true
+            ariaModal: true
+        });
+
+        this._close.forEach((close) => {
+            util.setAttributes(close, {
+                role: 'button',
+                ariaLabel: close.innerText.trim()!= '' ? close.innerText.trim() : 'Close'
+            });
         });
 
         const onClickToggle = (e) => {
@@ -52,10 +59,8 @@ class Modal extends Component {
 
         const onClickModalHide = (e) => {
             e.preventDefault();
-
-            if (this._content.contains(e.target)) {
-                return;
-            }
+      
+            if (this._transitioning || this._content.contains(e.target)) return;
     
             this._hide();
         };
@@ -121,60 +126,69 @@ class Modal extends Component {
 
         const showBackdrop = () => {
             document.body.append(this._backdrop);
-            setTimeout(() => {
-                this._backdrop.style.opacity = 1;
+
+            window.requestAnimationFrame(() => {
+                this._backdrop.style.opacity = 1
             });
         };
 
         const hideBackdrop = () => {
-            const self = this;
+            const transitionEndEvent = () => {
+                this._backdrop.remove();
+                this._eventOff(this._backdrop, 'transitionend', transitionEndEvent);
+            };
 
-            setTimeout(() => {
-                self._backdrop.style.opacity = 0;
+            window.requestAnimationFrame(() => {
+                this._backdrop.style.opacity = 0
             });
 
-            self._backdrop.addEventListener('transitionend', function _handler() {
-                self._backdrop.remove();
-                this.removeEventListener('transitionend', _handler);
-            });
+            this._eventOn(this._backdrop, 'transitionend', transitionEndEvent);
         };
 
         this._show = () => {
             this._isOpened = true;
+            this._triggerEvent('show');
             showBackdrop();
-            util.addClass(this._dialog, this._config.animationStartClass);
             util.removeClass(this._modal, this._config.displayClass);
-            this._modal.focus();
-
-            if (this._config.animationStartClass) {
-                setTimeout(() => {
-                    if (this._hasAnimation) {
-                        // util.removeClass(this._dropdown, this._config.displayClass);
-                        util.addClass(this._dialog, this._config.animationStartClass);
-                    } else {
-                        util.removeClass(this._dialog, this._config.animationStartClass);
-                        util.addClass(this._dialog, this._config.animationEndClass);
-                    }
-                });
-
-                this._eventOn(this._dialog, this._animationEvent, onShowAnimationEnd);
-
+            
+            const transitioned = this._transition('transitionEnter', this._dialog, (e) => {
+                this._modal.focus();
+                this._triggerEvent('shown');
+            });
+            
+            if (transitioned) {
                 return;
             }
+            
+            this._modal.focus();
+            this._triggerEvent('shown');
         };
 
         this._hide = () => {
             this._isOpened = false;
+            this._triggerEvent('hide');
             hideBackdrop();
+
+            const transitioned = this._transition('transitionLeave', this._dialog, (e) => {
+                util.addClass(this._modal, this._config.displayClass);
+                this._element.focus();
+                this._triggerEvent('hidden');
+            });
+
+            if (transitioned) {
+                return;
+            }
+
             util.addClass(this._modal, this._config.displayClass);
             this._element.focus();
+            this._triggerEvent('hidden');
         };
 
         this._eventOn(this._element, 'click', onClickToggle);
         this._eventOn(this._modal, 'keydown', onKeydown);
 
         if (this._config.backdrop == 'dynamic') {
-            this._eventOn(this._modal, 'mousedown', onClickModalHide);
+            this._eventOn(this._modal, 'click', onClickModalHide);
         }
 
         for (const close of this._close) {
