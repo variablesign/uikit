@@ -13,17 +13,13 @@ const _defaults = {
     autoPlacement: true,
     offset: 8,
     shift: 8,
-    onInitialize: null,
-    onShow: null,
-    onShown: null,
-    onHide: null,
-    onHidden: null
+    zindex: 1000
 };
 
 class Dropdown extends Component {
     constructor(element, config) {
         super(element, config, _defaults, _component);
-        this._useTransitions();
+        this._component.allowTransitions();
         this.init();
     }
 
@@ -64,7 +60,8 @@ class Dropdown extends Component {
 
                 Object.assign(this._dropdown.style, {
                     left: `${x}px`,
-                    top: `${y}px`
+                    top: `${y}px`,
+                    zIndex: this._config.zindex
                 });
             });
         };
@@ -74,8 +71,11 @@ class Dropdown extends Component {
         };
 
         const resetPositionStyles = () => {
-            this._dropdown.style.top = null;
-            this._dropdown.style.left = null;
+            util.styles(this._dropdown, {
+                top: null,
+                left: null,
+                zIndex: null
+            });
         };
 
         const eventData = {
@@ -116,29 +116,29 @@ class Dropdown extends Component {
         this._show = () => {
             autoUpdatePosition = updatePosition();
             this._isOpened = true;
-            this._triggerEvent('show', eventData);
+            this._component.dispatch('show', eventData);
             this._element.setAttribute('aria-expanded', this._isOpened);
             util.removeClass(this._dropdown, this._config.displayClass);
 
-            const transitioned = this._transition('transitionEnter', this._dropdown, (e) => {
-                this._triggerEvent('shown', eventData);
+            const transitioned = this._component.transition('transitionEnter', this._dropdown, (e) => {
+                this._component.dispatch('shown', eventData);
             });
 
             if (transitioned) {
                 return;
             }
     
-            this._triggerEvent('shown', eventData);
+            this._component.dispatch('shown', eventData);
         };
 
         this._hide = () => {
             this._isOpened = false;
-            this._triggerEvent('hide', eventData);
+            this._component.dispatch('hide', eventData);
             this._element.setAttribute('aria-expanded', this._isOpened);
 
-            const transitioned = this._transition('transitionLeave', this._dropdown, (e) => {
+            const transitioned = this._component.transition('transitionLeave', this._dropdown, (e) => {
                 this._isOpened = false;
-                this._triggerEvent('hidden', eventData);
+                this._component.dispatch('hidden', eventData);
                 autoUpdatePosition();
                 resetPositionStyles();
                 util.addClass(this._dropdown, this._config.displayClass);
@@ -151,14 +151,14 @@ class Dropdown extends Component {
             util.addClass(this._dropdown, this._config.displayClass);
             autoUpdatePosition();
             resetPositionStyles();
-            this._triggerEvent('hidden', eventData);
+            this._component.dispatch('hidden', eventData);
         };
 
-        this._eventOn(this._reference, 'click', onClickToggle);
-        this._eventOn(this._reference, 'keydown', onKeydown);
-        this._eventOn(document, 'click', onClickHide);
+        this._component.on(this._reference, 'click', onClickToggle);
+        this._component.on(this._reference, 'keydown', onKeydown);
+        this._component.on(document, 'click', onClickHide);
 
-        this._triggerEvent('initialize');
+        this._component.dispatch('initialize');
     }
 
     toggle() {

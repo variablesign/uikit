@@ -18,7 +18,7 @@ class Toggle extends Component {
     init() {
         if (!this._element) return;
 
-        const toggles = this._createConfig(this._config.create, [
+        const toggles = this._component.createConfig(this._config.create, [
             'addClass', 
             'removeClass', 
             'target'
@@ -38,7 +38,7 @@ class Toggle extends Component {
                         ? 'transitionend'
                         : null;
 
-                this._triggerEvent('toggle', { toggled: this._toggled }, target);
+                this._component.dispatch('toggle', { toggled: this._toggled }, target);
 
                 if (target.dataset.toggled == 'true') {
                     this._toggled = false;
@@ -55,17 +55,17 @@ class Toggle extends Component {
                 }
 
                 const handler = () => {
-                    this._triggerEvent('toggled', { toggled: this._toggled }, target);
-                    this._eventOff(target, eventName, handler);
+                    this._component.dispatch('toggled', { toggled: this._toggled }, target);
+                    this._component.off(target, eventName, handler);
                 };
 
                 if (eventName) {  
-                    this._eventOn(target, eventName, handler);
+                    this._component.on(target, eventName, handler);
 
                     return;
                 }
 
-                this._triggerEvent('toggled', { toggled: this._toggled }, target);
+                this._component.dispatch('toggled', { toggled: this._toggled }, target);
             });    
         };
         
@@ -88,9 +88,9 @@ class Toggle extends Component {
             this._toggle();
         };
 
-        this._eventOn(this._element, 'click', toggle);
+        this._component.on(this._element, 'click', toggle);
 
-        this._triggerEvent('initialize');
+        this._component.dispatch('initialize');
     }
 
     toggle() {

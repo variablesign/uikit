@@ -35,7 +35,7 @@ class Theme extends Component {
 
                 localStorage.setItem(this._config.storage, this._theme);
                 this._target.setAttribute(this._config.attribute, this._theme);
-                this._triggerEvent('change', { theme: this._theme }, document);
+                this._component.dispatch('change', { theme: this._theme }, document);
 
                 return;
             }
@@ -49,17 +49,17 @@ class Theme extends Component {
             }
 
             localStorage.removeItem(this._config.storage);
-            this._triggerEvent('change', { theme: this._theme }, document);
+            this._component.dispatch('change', { theme: this._theme }, document);
         };
 
         this._onClickChangeTheme = (e) => {
             e.preventDefault();
             this._updateTheme();
-            this._triggerEvent('broadcast', { theme: this._theme }, document);
+            this._component.dispatch('broadcast', { theme: this._theme }, document);
         };
 
         if (this._element) {   
-            this._eventOn(this._element, 'click', this._onClickChangeTheme);
+            this._component.on(this._element, 'click', this._onClickChangeTheme);
         }
     }
 
@@ -76,7 +76,7 @@ class Theme extends Component {
         super.destroy();
 
         if (this._element) {   
-            this._eventOff(this._element, 'click', this._onClickChangeTheme);
+            this._component.off(this._element, 'click', this._onClickChangeTheme);
         }
     }
 }

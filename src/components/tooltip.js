@@ -19,12 +19,13 @@ const _defaults = {
     arrowPadding: 8,
     html: false,
     arrowClass: null,
+    zindex: 1080
 };
 
 class Tooltip extends Component {
     constructor(element, config) {
         super(element, config, _defaults, _component);
-        this._useTransitions();
+        this._component.allowTransitions();
         this.init();
     }
 
@@ -70,6 +71,7 @@ class Tooltip extends Component {
             this._id = tooltip.hasAttribute('id') ? tooltip.id : this._id;
             tooltip.setAttribute('id', this._id);
             tooltip.style.display = 'none';
+            tooltip.style.zIndex = this._config.zindex;
             util.removeClass(tooltip, this._config.displayClass);
 
             tooltipContent = tooltip.querySelector('[data-content]');
@@ -91,7 +93,7 @@ class Tooltip extends Component {
             tooltip.style.position = 'absolute';
             tooltip.style.top = 0;
             tooltip.style.left = 0;
-            tooltip.style.zIndex = '1000';
+            tooltip.style.zIndex = this._config.zindex;
             tooltip.className = this._config.class ? this._config.class : '';
             tooltip.setAttribute('role', 'tooltip');
 
@@ -174,13 +176,13 @@ class Tooltip extends Component {
             clearTimeout(timeout);
             timeout = setTimeout(() => {
     
-                this._triggerEvent('show');
+                this._component.dispatch('show');
                 this._element.after(this._tooltip);
                 autoUpdatePosition = updatePosition();
                 util.show(this._tooltip);
 
-                const transitioned = this._transition('transitionEnter', this._tooltip, (e) => {
-                    this._triggerEvent('shown');
+                const transitioned = this._component.transition('transitionEnter', this._tooltip, (e) => {
+                    this._component.dispatch('shown');
                 });
 
                 if (transitioned) {
@@ -188,24 +190,24 @@ class Tooltip extends Component {
                 }
     
                 util.show(this._tooltip);
-                this._triggerEvent('shown');
+                this._component.dispatch('shown');
 
             }, this._config.showDelay);
         };
 
         this._hide = () => {
             
-            if (this._transitioning) {
+            if (this.isTransitioning) {
                 this._tooltip.remove();
             }
 
             clearTimeout(timeout);
             timeout = setTimeout(() => {
     
-                this._triggerEvent('hide');
+                this._component.dispatch('hide');
 
-                const transitioned = this._transition('transitionLeave', this._tooltip, (e) => {
-                    this._triggerEvent('hidden');
+                const transitioned = this._component.transition('transitionLeave', this._tooltip, (e) => {
+                    this._component.dispatch('hidden');
                     autoUpdatePosition();
                     util.hide(this._tooltip);
                     this._tooltip.remove();
@@ -217,7 +219,7 @@ class Tooltip extends Component {
     
                 util.hide(this._tooltip);
                 this._tooltip.remove();
-                this._triggerEvent('hidden');
+                this._component.dispatch('hidden');
 
             }, this._config.hideDelay);
         };
@@ -244,23 +246,23 @@ class Tooltip extends Component {
             }
 
             if (this._config.trigger[i] == 'click') {
-                this._eventOn(this._element, 'click', this._toggle);
+                this._component.on(this._element, 'click', this._toggle);
             }
 
             if (this._config.trigger[i] == 'hover') {                
-                this._eventOn(this._element, 'mouseenter', this._show);
-                this._eventOn(this._element, 'mouseleave', this._hide);
+                this._component.on(this._element, 'mouseenter', this._show);
+                this._component.on(this._element, 'mouseleave', this._hide);
             }
 
             if (this._config.trigger[i] == 'focus') {
-                this._eventOn(this._element, 'focus', this._show);
-                this._eventOn(this._element, 'blur', this._hide);
+                this._component.on(this._element, 'focus', this._show);
+                this._component.on(this._element, 'blur', this._hide);
             }
         }
 
-        this._eventOn(document, 'keydown', onKeydown);
+        this._component.on(document, 'keydown', onKeydown);
 
-        this._triggerEvent('initialize');
+        this._component.dispatch('initialize');
     }
 
     toggle() {

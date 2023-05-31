@@ -71,7 +71,7 @@ class Clipboard extends Component {
         });
 
         this._clipboard.on('success', (e) => {
-            this._triggerEvent('success', e);
+            this._component.dispatch('success', e);
 
             if (this._config.clearSelection) {
                 e.clearSelection();
@@ -79,7 +79,7 @@ class Clipboard extends Component {
         });
           
         this._clipboard.on('error', (e) => {
-            this._triggerEvent('error');
+            this._component.dispatch('error');
         });
     }
 

@@ -133,7 +133,7 @@ export const isNumber = (value) => {
  */
 export const show = (element, display = 'block') => {
     if (!element) return;
-    
+
     element.style.display = display;
 }
 
@@ -144,6 +144,17 @@ export const hide = (element, display = 'none') => {
     if (!element) return;
 
     element.style.display = display;
+}
+
+/**
+ * Set styles
+ */
+export const styles = (element, styles = {}) => {
+    if (!element) return;
+
+    for (const styleName in styles) {
+        element.style[styleName] = styles[styleName];
+    }
 }
 
 /**

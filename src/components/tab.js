@@ -17,7 +17,7 @@ const _defaults = {
 class Tab extends Component {
     constructor(element, config) {
         super(element, config, _defaults, _component);
-        this._useTransitions(true, false);
+        this._component.allowTransitions(true, false);
         this.init();
     }
 
@@ -123,7 +123,7 @@ class Tab extends Component {
                 const previous = data.selected ? data.current : null;
 
                 if (previous !== null) {
-                    this._triggerEvent('hide', eventData(index));
+                    this._component.dispatch('hide', eventData(index));
                 }
                 
                 if (data.tab.disabled) {
@@ -143,7 +143,7 @@ class Tab extends Component {
                 });
 
                 if (previous !== null) {
-                    this._triggerEvent('hidden', eventData(index));
+                    this._component.dispatch('hidden', eventData(index));
                 }
             });
         };
@@ -163,7 +163,7 @@ class Tab extends Component {
 
             hideAll();
 
-            this._triggerEvent('show', eventData(index));
+            this._component.dispatch('show', eventData(index));
 
             data.selected = true;
             this._selectedIndex = index;
@@ -180,13 +180,13 @@ class Tab extends Component {
             util.addClass(data.tab, this._config.activeClass);
             util.removeClass(data.panel, this._config.displayClass);
 
-            const transitioned = this._transition('transitionEnter', data.panel, data.onTransitionEnterEnd);
+            const transitioned = this._component.transition('transitionEnter', data.panel, data.onTransitionEnterEnd);
 
             if (transitioned) {
                 return;
             }
 
-            this._triggerEvent('shown', eventData(index));
+            this._component.dispatch('shown', eventData(index));
         };
 
         /**
@@ -321,7 +321,7 @@ class Tab extends Component {
                     this._show(index);
                 },
                 onTransitionEnterEnd: (e) => {
-                    this._triggerEvent('shown', eventData(index));
+                    this._component.dispatch('shown', eventData(index));
                 },
                 onKeydown: (e) => {
                     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
@@ -358,14 +358,14 @@ class Tab extends Component {
 
         // Add events
         this._data.forEach((data) => {
-            this._eventOn(data.tab, 'click', data.onClick);
-            this._eventOn(data.tab, 'keydown', data.onKeydown);
+            this._component.on(data.tab, 'click', data.onClick);
+            this._component.on(data.tab, 'keydown', data.onKeydown);
         });
 
         // Select default tab 
         this._show(this._selectedIndex);
 
-        this._triggerEvent('initialize');
+        this._component.dispatch('initialize');
     }
 
     show(index = 0) {

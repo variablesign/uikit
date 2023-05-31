@@ -12,13 +12,15 @@ const _defaults = {
     displayClass: null,
     dialog: 'data-dialog',
     content: 'data-content',
-    close: 'data-close'
+    close: 'data-close',
+    modalZindex: 1055,
+    backdropZindex: 1050
 };
 
 class Modal extends Component {
     constructor(element, config) {
         super(element, config, _defaults, _component);
-        this._useTransitions();
+        this._component.allowTransitions();
         this.init();
     }
 
@@ -29,10 +31,11 @@ class Modal extends Component {
         this._modal = document.querySelector(this._config.target);
         this._dialog = this._modal.querySelector(`[${this._config.dialog}]`);
         this._content = this._modal.querySelector(`[${this._config.content}]`);
-        this._close = this._modal.querySelectorAll(`[${this._config.close}]`);
         this._config.backdropFadeDuration = parseInt(this._config.backdropFadeDuration) / 1000;
         const id = this._modal.id !== '' ? this._modal.id : 'modal-' + util.randomNumber(4);
+        const closeTriggers = this._modal.querySelectorAll(`[${this._config.close}]`);
 
+        // Set modal attributes.
         util.setAttributes(this._modal, {
             id: id,
             tabindex: -1,
@@ -40,31 +43,50 @@ class Modal extends Component {
             ariaModal: true
         });
 
-        this._close.forEach((close) => {
+        // Set modal styles.
+        util.styles(this._modal, {
+            zIndex: this._config.modalZindex
+        });
+
+        // Search for all elements that can close the modal 
+        // and set the following attributes.
+        closeTriggers.forEach((close) => {
             util.setAttributes(close, {
                 role: 'button',
                 ariaLabel: close.innerText.trim()!= '' ? close.innerText.trim() : 'Close'
             });
         });
 
+        /**
+         * Toggle modal when target is clicked.
+         */
         const onClickToggle = (e) => {
             e.preventDefault();
             this.toggle();
         };
 
+        /**
+         * Hide modal when target is clicked.
+         */
         const onClickHide = (e) => {
             e.preventDefault();
             this._hide();
         };
 
+        /**
+         * Hide modal when clicked outside.
+         */
         const onClickModalHide = (e) => {
             e.preventDefault();
-      
-            if (this._transitioning || this._content.contains(e.target)) return;
+
+            if (this.isTransitioning || this._content.contains(e.target)) return;
     
             this._hide();
         };
 
+        /**
+         * Move focus within modal.
+         */
         const onKeydown = (e) => {
             if (e.key === 'Tab' || (e.shiftKey && e.key === 'Tab')) {
                 setFocus(e, e.shiftKey);
@@ -75,6 +97,13 @@ class Modal extends Component {
             }
         };
 
+        /**
+         * Focus on a target element.
+         * 
+         * @param {object} e event object
+         * @param {boolean} reverse 
+         * @returns 
+         */
         const setFocus = (e, reverse = false) => {
             let focusable = this._content.querySelectorAll('*');
             focusable = [...focusable].filter(node => node.tabIndex >= 0);
@@ -102,29 +131,41 @@ class Modal extends Component {
             }
         };
 
-        // Create backdrop element
-        this._backdrop = document.createElement('div');
-        this._backdrop.style.position = 'fixed';
-        this._backdrop.style.top = 0;
-        this._backdrop.style.right = 0;
-        this._backdrop.style.bottom = 0;
-        this._backdrop.style.left = 0;
-        this._backdrop.style.opacity = 0;
-        this._backdrop.style.transition = `opacity ${this._config.backdropFadeDuration}s linear`;
+        /**
+         * Create a backdrop.
+         * 
+         * @returns 
+         */
+        const backdrop = () => {
+            const backdrop = document.createElement('div');
+            
+            if (!this._config.backdropClass) {        
+                backdrop.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            }
+    
+            util.styles(backdrop, {
+                position: 'fixed',
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+                opacity: 0,
+                transition: `opacity ${this._config.backdropFadeDuration}s linear`,
+                zIndex: this._config.backdropZindex
+            });
+    
+            util.addClass(backdrop, this._config.backdropClass);
+            backdrop.setAttribute('data-modal-backdrop', `#${id}`);
 
-        if (!this._config.backdropClass) {        
-            this._backdrop.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-        }
+            return backdrop;
+        };
 
-        util.addClass(this._backdrop, this._config.backdropClass);
-
-        let zIndex = parseInt(window.getComputedStyle(this._modal).zIndex);
-        zIndex = isNaN(zIndex) ? 'auto' : zIndex - 1;
-        this._backdrop.style.zIndex = zIndex;
-
-        this._backdrop.setAttribute('data-modal-backdrop', `#${id}`);
-
+        /**
+         * Show backdrop.
+         */
         const showBackdrop = () => {
+            this._backdrop = backdrop();
+
             document.body.append(this._backdrop);
 
             window.requestAnimationFrame(() => {
@@ -132,28 +173,36 @@ class Modal extends Component {
             });
         };
 
+        /**
+         * Hide and remove backdrop.
+         */
         const hideBackdrop = () => {
+            if (!this._backdrop) return;
+
             const transitionEndEvent = () => {
                 this._backdrop.remove();
-                this._eventOff(this._backdrop, 'transitionend', transitionEndEvent);
+                this._component.off(this._backdrop, 'transitionend', transitionEndEvent);
             };
 
             window.requestAnimationFrame(() => {
                 this._backdrop.style.opacity = 0
             });
 
-            this._eventOn(this._backdrop, 'transitionend', transitionEndEvent);
+            this._component.on(this._backdrop, 'transitionend', transitionEndEvent);
         };
 
+        /**
+         * Show the modal.
+         */
         this._show = () => {
             this._isOpened = true;
-            this._triggerEvent('show');
+            this._component.dispatch('show');
             showBackdrop();
             util.removeClass(this._modal, this._config.displayClass);
             
-            const transitioned = this._transition('transitionEnter', this._dialog, (e) => {
+            const transitioned = this._component.transition('transitionEnter', this._dialog, (e) => {
                 this._modal.focus();
-                this._triggerEvent('shown');
+                this._component.dispatch('shown');
             });
             
             if (transitioned) {
@@ -161,18 +210,21 @@ class Modal extends Component {
             }
             
             this._modal.focus();
-            this._triggerEvent('shown');
+            this._component.dispatch('shown');
         };
 
+        /**
+         * Hide the modal.
+         */
         this._hide = () => {
             this._isOpened = false;
-            this._triggerEvent('hide');
+            this._component.dispatch('hide');
             hideBackdrop();
 
-            const transitioned = this._transition('transitionLeave', this._dialog, (e) => {
+            const transitioned = this._component.transition('transitionLeave', this._dialog, (e) => {
                 util.addClass(this._modal, this._config.displayClass);
                 this._element.focus();
-                this._triggerEvent('hidden');
+                this._component.dispatch('hidden');
             });
 
             if (transitioned) {
@@ -181,31 +233,43 @@ class Modal extends Component {
 
             util.addClass(this._modal, this._config.displayClass);
             this._element.focus();
-            this._triggerEvent('hidden');
+            this._component.dispatch('hidden');
         };
 
-        this._eventOn(this._element, 'click', onClickToggle);
-        this._eventOn(this._modal, 'keydown', onKeydown);
+        /**
+         * Events.
+         */
+        this._component.on(this._element, 'click', onClickToggle);
+        this._component.on(this._modal, 'keydown', onKeydown);
 
         if (this._config.backdrop == 'dynamic') {
-            this._eventOn(this._modal, 'click', onClickModalHide);
+            this._component.on(this._modal, 'click', onClickModalHide);
         }
 
-        for (const close of this._close) {
-            this._eventOn(close, 'click', onClickHide);
+        for (const close of closeTriggers) {
+            this._component.on(close, 'click', onClickHide);
         }
 
-        this._triggerEvent('initialize');
+        this._component.dispatch('initialize');
     }
 
+    /**
+     * Shows the modal.
+     */
     show() {
-
+        this._show();
     }
 
+    /**
+     * Hides the modal.
+     */
     hide() {
-
+        this._hide();
     }
 
+    /**
+     * Shows/hides the modal.
+     */
     toggle() {
         if (this._isOpened) {
             this._hide();
@@ -216,6 +280,9 @@ class Modal extends Component {
         this._show();
     }
 
+    /**
+     * Removes all events and stored data.
+     */
     destroy() {
         super.destroy();
     }

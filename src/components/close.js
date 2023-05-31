@@ -11,7 +11,7 @@ const _defaults = {
 class Close extends Component {
     constructor(element, config) {
         super(element, config, _defaults, _component);
-        this._useTransitions(false);
+        this._component.allowTransitions(false);
         this.init();
     }
 
@@ -31,10 +31,10 @@ class Close extends Component {
         };
 
         this._close = () => {
-            this._triggerEvent('hide', eventData);
+            this._component.dispatch('hide', eventData);
 
-            const transitioned = this._transition('transitionLeave', this._target, (e) => {
-                this._triggerEvent('hidden', eventData);
+            const transitioned = this._component.transition('transitionLeave', this._target, (e) => {
+                this._component.dispatch('hidden', eventData);
                 util.hide(this._target);
                 removeTarget();
             });
@@ -45,7 +45,7 @@ class Close extends Component {
 
             util.hide(this._target);
             removeTarget();
-            this._triggerEvent('hidden', eventData);
+            this._component.dispatch('hidden', eventData);
         };
 
         const onClose = (e) => {
@@ -53,9 +53,9 @@ class Close extends Component {
             this._close(e);
         };
 
-        this._eventOn(this._element, 'click', onClose);
+        this._component.on(this._element, 'click', onClose);
 
-        this._triggerEvent('initialize');
+        this._component.dispatch('initialize');
     }
 
     close() {

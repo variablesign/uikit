@@ -3,16 +3,38 @@ import uk from "./uikit.js";
 
 export default class Component {
     constructor(element, config, defaults, component) {
-        this._component = component;
+
+        /**
+         * The component element.
+         */
         this._element = util.getElement(element);
+
+        /**
+         * Merge all configurations.
+         */
         this._config = util.extendObjects(
             defaults, 
             config, 
-            util.replaceObjectKeys(this._element ? this._element.dataset : {}, this._component)
+            util.replaceObjectKeys(this._element ? this._element.dataset : {}, component)
         );
-        this._eventListeners = {};
 
-        this._useTransitions = (enter = true, leave = true) => {
+        /**
+         * Get the current transition state.
+         */
+        this.isTransitioning = false;
+
+        /**
+         * Events storage.
+         */
+        let events = {};
+
+        /**
+         * Makes the transition options available for the component.
+         * 
+         * @param {boolean} enter allow enter transitions
+         * @param {boolean} leave allow leave transitions
+         */
+        const allowTransitions = (enter = true, leave = true) => {
             const config = {};
 
             if (enter) {
@@ -30,6 +52,11 @@ export default class Component {
             this._config = util.extendObjects(this._config, config);
         };
 
+        /**
+         * Remove leftover transition classes.
+         * 
+         * @param {HTMLElement} element 
+         */
         const transitionCleanup = (element) => {
             const transitions = ['transitionEnter', 'transitionLeave'];
 
@@ -40,9 +67,15 @@ export default class Component {
             }
         };
 
-        this._transitioning = false;
-
-        this._transition = (type, element, callback) => {
+        /**
+         * Run a transition/animation.
+         * 
+         * @param {string} type transitionEnter/transitionLeave
+         * @param {HTMLElement} element 
+         * @param {function} callback 
+         * @returns 
+         */
+         const transition = (type, element, callback) => {
             let transitionEvent = 'transitionend';
             callback =  typeof callback === 'function' ? callback : () => void 0;
 
@@ -67,27 +100,36 @@ export default class Component {
                 : 'animationend';
 
             const _handler = (e) => {
-                this._transitioning = false;
+                this.isTransitioning = false;
                 callback(e);
                 util.removeClass(element, this._config[`${type}`]);
                 util.removeClass(element, this._config[`${type}End`]);
-                this._eventOff(element, transitionEvent, _handler);
+                off(element, transitionEvent, _handler);
             }
 
-            if (this._transitioning) {
-                this._transitioning = false;
-                this._removeStoredEventListeners(transitionEvent, element);
+            if (this.isTransitioning) {
+                this.isTransitioning = false;
+                removeEvent(transitionEvent, element);
 
                 return true;
             }
 
-            this._eventOn(element, transitionEvent, _handler);
-            this._transitioning = true;
+            on(element, transitionEvent, _handler);
+            this.isTransitioning = true;
 
             return true;
         };
 
-        this._storeEventListener = (target, eventName, handler, options) => {
+        /**
+         * Store events.
+         * 
+         * @param {HTMLElement} target 
+         * @param {string} eventName 
+         * @param {function} handler 
+         * @param {boolean|object} options 
+         * @returns 
+         */
+        const storeEvent = (target, eventName, handler, options) => {
             options = typeof options === 'boolean' ? { useCapture: options } : options;
             const eventItem = util.extendObjects({
                 once: false,
@@ -98,23 +140,29 @@ export default class Component {
                 target: target
             }, options);
 
-            if (!this._eventListeners[eventName]) {
-                this._eventListeners[eventName] = [ eventItem ];
+            if (!events[eventName]) {
+                events[eventName] = [ eventItem ];
 
                 return;
             }
 
-            this._eventListeners[eventName].push(eventItem);
+            events[eventName].push(eventItem);
         };
 
-        this._removeStoredEventListeners = (eventName = null, target = null) => {
-            for (const name in this._eventListeners) {
+        /**
+         * Remove stored events.
+         * 
+         * @param {string} eventName 
+         * @param {HTMLElement} target 
+         */
+        const removeEvent = (eventName = null, target = null) => {
+            for (const name in events) {
 
                 if (eventName !== null && eventName !== name) {
                     continue;
                 }
 
-                for (const item of this._eventListeners[name]) {
+                for (const item of events[name]) {
 
                     item.target.removeEventListener(item.type, item.listener, {
                         once: item.once,
@@ -123,21 +171,34 @@ export default class Component {
                     });
 
                     if (target !== null && target === item.target) {
-                        this._eventListeners[name].splice(this._eventListeners[name].indexOf(item), 1);
+                        events[name].splice(events[name].indexOf(item), 1);
 
-                        if (this._eventListeners[name].length === 0) {
-                            delete this._eventListeners[name];
+                        if (events[name].length === 0) {
+                            delete events[name];
                         }
                     }
                 }
             }
         };
 
-        this._prefixedEventName = (eventName) => {
-            return uk.getConfig('prefix') + '.' + this._component + '.' + eventName;
+        /**
+         * Generate a prefixed event name.
+         * 
+         * @param {string} eventName 
+         * @returns 
+         */
+        const prefixedEventName = (eventName) => {
+            return uk.getConfig('prefix') + '.' + component + '.' + eventName;
         };
 
-        this._createConfig = (configNames = [], allowedOptions = []) => {
+        /**
+         * Create new configs to be used by the component.
+         * 
+         * @param {array} configNames 
+         * @param {array} allowedOptions 
+         * @returns 
+         */
+        const createConfig = (configNames = [], allowedOptions = []) => {
             configNames = configNames instanceof Array ? configNames : [];
             allowedOptions = allowedOptions instanceof Array ? allowedOptions : [];
             configNames.push('');
@@ -158,59 +219,128 @@ export default class Component {
 
             this._config = util.extendObjects(
                 config,
-                util.replaceObjectKeys(this._element ? this._element.dataset : {}, this._component)
+                util.replaceObjectKeys(this._element ? this._element.dataset : {}, component)
             );
 
             return items;
         };
+
+        /**
+         * Dispatch custom event.
+         * 
+         * @param {string} eventName 
+         * @param {object} detail 
+         * @param {HTMLElement} context 
+         */
+        const dispatch = (eventName, detail = null, context = null) => {
+            const element = context || this._element;
+            const callbackName = 'on' + util.capitalize(eventName);
+            const callback = this._config[callbackName];
+    
+            if (callback instanceof Function) {
+                callback(detail);
+            }
+    
+            element.dispatchEvent(new CustomEvent(prefixedEventName(eventName), { detail }));
+        }
+
+        /**
+         * Add event listener.
+         * 
+         * @param {HTMLElement} target 
+         * @param {string} eventName 
+         * @param {function} handler 
+         * @param {boolean|object} options 
+         */
+        const on = (target, eventName, handler, options = false) => {
+            target.addEventListener(eventName, handler, options);
+            storeEvent(target, eventName, handler, options);
+        }
+    
+        /**
+         * Remove event listener.
+         * 
+         * @param {HTMLElement} target 
+         * @param {string} eventName 
+         * @param {function} handler 
+         * @param {boolean|object} options 
+         */
+        const off = (target, eventName, handler, options = false) => {
+            removeEvent(eventName, target);
+            target.removeEventListener(eventName, handler, options);
+        }
+    
+        /**
+         * Add event listener to be executed once.
+         * 
+         * @param {HTMLElement} target 
+         * @param {string} eventName 
+         * @param {function} handler 
+         */
+        const one = (target, eventName, handler) => {
+            target.addEventListener(eventName, handler, { once : true });
+        }
+
+        // Component data object
+        this._component = {
+            allowTransitions,
+            transition,
+            prefixedEventName,
+            createConfig,
+            storeEvent,
+            removeEvent,
+            dispatch,
+            on,
+            off,
+            one,
+            events,
+            name: component,
+        };
     }
 
+    /**
+     * Removes all events and stored data.
+     */
     destroy() {
-        this._removeStoredEventListeners();
-        uk.removeInstance(this._element, this._component);
+        this._component.removeEvent();
+        uk.removeInstance(this._element, this._component.name);
     }
 
-    _eventOn(target, eventName, handler, options = false) {
-        target.addEventListener(eventName, handler, options);
-        this._storeEventListener(target, eventName, handler, options);
-    }
-
-    _eventOff(target, eventName, handler, options = false) {
-        this._removeStoredEventListeners(eventName, target);
-        target.removeEventListener(eventName, handler, options);
-    }
-
-    _eventOne(target, eventName, handler) {
-        target.removeEventListener(eventName, handler, { once : true });
-    }
-
+    /**
+     * Add event listener.
+     * 
+     * @param {string} eventName 
+     * @param {function} handler 
+     * @param {boolean|object} options 
+     */
     on(eventName, handler, options = false) {
-        this._element.addEventListener(this._prefixedEventName(eventName), handler, options);
-        this._storeEventListener(this._element, this._prefixedEventName(eventName), handler, options);
+        this._element.addEventListener(this._component.prefixedEventName(eventName), handler, options);
+        this._component.storeEvent(this._element, this._component.prefixedEventName(eventName), handler, options);
     }
 
+    /**
+     * Remove event listener.
+     * 
+     * @param {string} eventName 
+     * @param {function} handler 
+     * @param {boolean|object} options 
+     */
     off(eventName, handler, options = false) {
 
         if (handler === undefined && options === false) {
-            this._removeStoredEventListeners(this._prefixedEventName(eventName));
+            this._component.removeEvent(this._component.prefixedEventName(eventName));
         }
 
-        this._element.removeEventListener(this._prefixedEventName(eventName), handler, options);
+        this._element.removeEventListener(this._component.prefixedEventName(eventName), handler, options);
     }
 
+    /**
+     * Add event listener to be executed once.
+     * 
+     * @param {string} eventName 
+     * @param {function} handler 
+     */
     one(eventName, handler) {
-        this._element.addEventListener(this._prefixedEventName(eventName), handler, { once : true });
-    }
-
-    _triggerEvent = (eventName, detail = null, context = null) => {
-        const element = context || this._element;
-        const callbackName = 'on' + util.capitalize(eventName);
-        const callback = this._config[callbackName];
-
-        if (callback instanceof Function) {
-            callback(detail);
-        }
-
-        element.dispatchEvent(new CustomEvent(this._prefixedEventName(eventName), { detail }));
+        this._element.addEventListener(this._component.prefixedEventName(eventName), handler, { once : true });
     }
 }
