@@ -175,7 +175,7 @@ export const removeAttributes = (element, attributes = []) => {
     if (!element) return;
 
     for (const attribute of attributes) {
-        element.removeAttribute(attribute);
+        element.removeAttribute(kebabCase(attribute));
     }
 }
 

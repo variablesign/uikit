@@ -424,6 +424,13 @@ class Modal extends Component {
      * Removes all events and stored data.
      */
     destroy() {
+        this._hide(this);
+        this._backdrop?.remove();
+        this._component.transitionCleanup(this._dialog);
+        delete UIkit.store.openedModals;
+        util.addClass(this._modal, this._config.displayClass);
+        util.removeAttributes(this._modal, [ 'id', 'tabindex', 'role', 'ariaModal' ]);
+        util.styles(this._modal, { zIndex: null });
         super.destroy();
     }
 }

@@ -285,6 +285,7 @@ export default class Component {
         this._component = {
             allowTransitions,
             transition,
+            transitionCleanup,
             prefixedEventName,
             createConfig,
             storeEvent,
