@@ -79,7 +79,8 @@ class Dropdown extends Component {
         };
 
         const eventData = {
-            dropdown: this._dropdown
+            dropdown: this._dropdown,
+            config: this._config
         };
 
         const onClickToggle = (e) => {

@@ -14,6 +14,7 @@ const _defaults = {
     content: 'data-content',
     close: 'data-close',
     backdrop: 'data-modal-backdrop',
+    autoCloseDelay: 0,
     history: false,
     modalZindex: 1055,
     backdropZindex: 1050
@@ -35,8 +36,11 @@ class Modal extends Component {
         this._dialog = this._modal.querySelector(`[${this._config.dialog}]`);
         this._content = this._modal.querySelector(`[${this._config.content}]`);
         this._config.backdropFadeDuration = parseInt(this._config.backdropFadeDuration) / 1000;
+        this._config.autoCloseDelay = parseInt(this._config.autoCloseDelay);
         const modalId = this._modal.id !== '' ? this._modal.id : 'modal-' + util.randomNumber(4);
         const closeTriggers = this._modal.querySelectorAll(`[${this._config.close}]`);
+        const minimumAutoCloseDelay = 3000;
+        let autoCloseTimer;
 
         // Set modal attributes.
         util.setAttributes(this._modal, {
@@ -60,12 +64,21 @@ class Modal extends Component {
             });
         });
 
+        // Accessible event data
+        const eventData = {
+            trigger: this._element,
+            modal: this._modal,
+            content: this._content,
+            dialog: this._dialog,
+            config: this._config
+        };
+
         /**
-         * Toggle modal when target is clicked.
+         * Show modal when target is clicked.
          */
-        const onClickToggle = (e) => {
+        const onClickShow = (e) => {
             e.preventDefault();
-            this.toggle();
+            this._show(this);
         };
 
         /**
@@ -84,9 +97,27 @@ class Modal extends Component {
             e.preventDefault();
 
             if (this.isTransitioning || this._content.contains(e.target)) return;
+
+            if (!this._config.backdropClose) {
+                this._component.dispatch('hidePrevented', eventData);
+
+                return;
+            }
     
             this._previous = true;
             this._hide(this);
+        };
+
+        /**
+         * Hide modal when clicked outside.
+         */
+        const autoCloseModal = () => {
+            if (this._config.autoCloseDelay >= minimumAutoCloseDelay) {
+                clearTimeout(autoCloseTimer);
+                autoCloseTimer = setTimeout(() => {
+                    this._hide(this);
+                }, this._config.autoCloseDelay);
+            }
         };
 
         /**
@@ -97,7 +128,11 @@ class Modal extends Component {
                 setFocus(e, this, e.shiftKey);
             }
 
-            if (e.key === 'Escape') {
+            if (!this._config.keyboard) {
+                this._component.dispatch('hidePrevented', eventData);
+            }
+
+            if (e.key === 'Escape' && this._config.keyboard) {
                 this._previous = true;
                 this._hide(this);
             }
@@ -284,7 +319,7 @@ class Modal extends Component {
          */
         this._show = (self) => {
             self._isOpened = true;
-            self._component.dispatch('show');
+            self._component.dispatch('show', eventData);
             showBackdrop();
 
             const previousInstance = getPreviousModal(self._modal);
@@ -299,7 +334,8 @@ class Modal extends Component {
             
             const transitioned = self._component.transition('transitionEnter', self._dialog, (e) => {
                 focus(self._modal);
-                self._component.dispatch('shown');
+                self._component.dispatch('shown', eventData);
+                autoCloseModal();
             });
             
             if (transitioned) {
@@ -307,7 +343,8 @@ class Modal extends Component {
             }
             
             focus(self._modal);
-            self._component.dispatch('shown');
+            self._component.dispatch('shown', eventData);
+            autoCloseModal();
         };
 
         /**
@@ -316,7 +353,7 @@ class Modal extends Component {
         this._hide = (self) => {
 
             self._isOpened = false;
-            self._component.dispatch('hide');
+            self._component.dispatch('hide', eventData);
             hideBackdrop();
 
             const previousInstance = getPreviousModal(self._modal);
@@ -334,11 +371,12 @@ class Modal extends Component {
 
             const transitioned = self._component.transition('transitionLeave', self._dialog, (e) => {
                 util.addClass(self._modal, self._config.displayClass);
+                clearTimeout(autoCloseTimer);
 
                 // If last modal is closed
                 if (getTotalModals() < 1) focus(self._element);
 
-                self._component.dispatch('hidden');
+                self._component.dispatch('hidden', eventData);
             });
 
             if (transitioned) {
@@ -346,22 +384,20 @@ class Modal extends Component {
             }
 
             util.addClass(self._modal, self._config.displayClass);
+            clearTimeout(autoCloseTimer);
             
             // If last modal is closed
             if (getTotalModals() < 1) focus(self._element);
 
-            self._component.dispatch('hidden');
+            self._component.dispatch('hidden', eventData);
         };
 
         /**
          * Events.
          */
-        this._component.on(this._element, 'click', onClickToggle);
+        this._component.on(this._element, 'click', onClickShow);
         this._component.on(this._modal, 'keydown', onKeydown);
-
-        if (this._config.backdropClose) {
-            this._component.on(this._modal, 'click', onClickModalHide);
-        }
+        this._component.on(this._modal, 'click', onClickModalHide);
 
         for (const close of closeTriggers) {
             this._component.on(close, 'click', onClickHide);
@@ -382,19 +418,6 @@ class Modal extends Component {
      */
     hide() {
         this._hide(this);
-    }
-
-    /**
-     * Shows/hides the modal.
-     */
-    toggle() {
-        if (this._isOpened) {
-            this._hide(this);
-
-            return;
-        }
-
-        this._show(this);
     }
 
     /**

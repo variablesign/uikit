@@ -38,7 +38,7 @@ class Toggle extends Component {
                         ? 'transitionend'
                         : null;
 
-                this._component.dispatch('toggle', { toggled: this._toggled }, target);
+                this._component.dispatch('toggle', { toggled: this._toggled, config: this._config }, target);
 
                 if (target.dataset.toggled == 'true') {
                     this._toggled = false;
@@ -65,7 +65,7 @@ class Toggle extends Component {
                     return;
                 }
 
-                this._component.dispatch('toggled', { toggled: this._toggled }, target);
+                this._component.dispatch('toggled', { toggled: this._toggled, config: this._config }, target);
             });    
         };
         

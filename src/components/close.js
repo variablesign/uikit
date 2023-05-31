@@ -22,7 +22,10 @@ class Close extends Component {
             ? this._element.closest(this._config.target) 
             : this._element.parentNode;
 
-        const eventData = { target: this._target };
+        const eventData = { 
+            target: this._target, 
+            config: this._config
+        };
 
         const removeTarget = () => {
             if (this._config.remove) {

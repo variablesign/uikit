@@ -39,7 +39,8 @@ class Tab extends Component {
                 next: this._data[index].active.next,
                 previous: this._data[index].active.previous,
                 tab: this._data[index].tab,
-                panel: this._data[index].panel
+                panel: this._data[index].panel,
+                config: this._config
             };
         };
 
