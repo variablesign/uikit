@@ -6,13 +6,15 @@ const _component = 'modal';
 const _defaults = {
     target: null,
     keyboard: true,
-    backdrop: 'dynamic',
     backdropClass: null,
     backdropFadeDuration: 150,
+    backdropClose: true,
     displayClass: null,
     dialog: 'data-dialog',
     content: 'data-content',
     close: 'data-close',
+    backdrop: 'data-modal-backdrop',
+    history: false,
     modalZindex: 1055,
     backdropZindex: 1050
 };
@@ -28,16 +30,17 @@ class Modal extends Component {
         if (!this._element || !this._config.target) return;
 
         this._isOpened = false;
+        this._previous = false;
         this._modal = document.querySelector(this._config.target);
         this._dialog = this._modal.querySelector(`[${this._config.dialog}]`);
         this._content = this._modal.querySelector(`[${this._config.content}]`);
         this._config.backdropFadeDuration = parseInt(this._config.backdropFadeDuration) / 1000;
-        const id = this._modal.id !== '' ? this._modal.id : 'modal-' + util.randomNumber(4);
+        const modalId = this._modal.id !== '' ? this._modal.id : 'modal-' + util.randomNumber(4);
         const closeTriggers = this._modal.querySelectorAll(`[${this._config.close}]`);
 
         // Set modal attributes.
         util.setAttributes(this._modal, {
-            id: id,
+            id: modalId,
             tabindex: -1,
             role: 'dialog',
             ariaModal: true
@@ -70,7 +73,8 @@ class Modal extends Component {
          */
         const onClickHide = (e) => {
             e.preventDefault();
-            this._hide();
+            this._previous = true;
+            this._hide(this);
         };
 
         /**
@@ -81,7 +85,8 @@ class Modal extends Component {
 
             if (this.isTransitioning || this._content.contains(e.target)) return;
     
-            this._hide();
+            this._previous = true;
+            this._hide(this);
         };
 
         /**
@@ -89,11 +94,12 @@ class Modal extends Component {
          */
         const onKeydown = (e) => {
             if (e.key === 'Tab' || (e.shiftKey && e.key === 'Tab')) {
-                setFocus(e, e.shiftKey);
+                setFocus(e, this, e.shiftKey);
             }
 
             if (e.key === 'Escape') {
-                this._hide();
+                this._previous = true;
+                this._hide(this);
             }
         };
 
@@ -104,13 +110,13 @@ class Modal extends Component {
          * @param {boolean} reverse 
          * @returns 
          */
-        const setFocus = (e, reverse = false) => {
-            let focusable = this._content.querySelectorAll('*');
+        const setFocus = (e, self, reverse = false) => {
+            let focusable = self._content.querySelectorAll('*');
             focusable = [...focusable].filter(node => node.tabIndex >= 0);
             const total = focusable.length;
 
             if (total == 0) {
-                this._modal.focus();
+                self._modal.focus();
                 e.preventDefault();
                 
                 return;
@@ -129,6 +135,80 @@ class Modal extends Component {
 
                 return;
             }
+        };
+
+        /**
+         * Stores modal data.
+         * 
+         * @param {object} data 
+         */
+        const storeModal = (data) => {
+
+            if (UIkit.store.openedModals instanceof Array) {
+                UIkit.store.openedModals.push(data);
+
+                return;
+            }
+
+            UIkit.store.openedModals = [data];
+        };
+
+        /**
+         * Remove stored modal data.
+         * 
+         * @param {HTMLElement} modal 
+         */
+        const removeModal = (modal) => {
+            if (UIkit.store.openedModals instanceof Array) {
+                UIkit.store.openedModals.forEach((data, index) => {
+                    if (data._modal == modal) {
+                        UIkit.store.openedModals.splice(index, 1);
+                    }
+                });
+            }
+        };
+
+        /**
+         * Get the total opened modals.
+         */
+        const getTotalModals = () => {
+            return UIkit.store.openedModals ? UIkit.store.openedModals.length : 0;
+        };
+
+        /**
+         * Remove all stored modals.
+         */
+        const clearModals = () => {
+            delete UIkit.store.openedModals;
+        };
+
+        /**
+         * Get previously opened modal.
+         * 
+         * @param {HTMLElement} modal 
+         * @returns
+         */
+        const getPreviousModal = (modal) => {
+            let previousModal = null;
+
+            if (UIkit.store.openedModals instanceof Array && UIkit.store.openedModals.length > 0) {
+                UIkit.store.openedModals.forEach((data, index) => {
+                    if (data._modal == modal) {
+                        previousModal = UIkit.store.openedModals[index - 1];
+                    }
+                });
+            }
+
+            return previousModal;
+        };
+
+        /**
+         * Focus on an element.
+         * 
+         * @param {HTMLElement} element 
+         */
+        const focus = (element) => {
+            element.focus();
         };
 
         /**
@@ -155,7 +235,7 @@ class Modal extends Component {
             });
     
             util.addClass(backdrop, this._config.backdropClass);
-            backdrop.setAttribute('data-modal-backdrop', `#${id}`);
+            backdrop.setAttribute(`${this._config.backdrop}`, '');
 
             return backdrop;
         };
@@ -164,22 +244,30 @@ class Modal extends Component {
          * Show backdrop.
          */
         const showBackdrop = () => {
-            this._backdrop = backdrop();
-
+            this._backdrop = document.querySelector(`[${this._config.backdrop}]`) || backdrop();
             document.body.append(this._backdrop);
 
             window.requestAnimationFrame(() => {
                 this._backdrop.style.opacity = 1
             });
+            
+            if (!this._previous) {
+                storeModal(this);
+            }
         };
 
         /**
          * Hide and remove backdrop.
          */
         const hideBackdrop = () => {
-            if (!this._backdrop) return;
+            if (!this._backdrop || getTotalModals() > 1) {
+                // removeModal(this._modal);
+
+                return;
+            }
 
             const transitionEndEvent = () => {
+                clearModals();
                 this._backdrop.remove();
                 this._component.off(this._backdrop, 'transitionend', transitionEndEvent);
             };
@@ -194,46 +282,75 @@ class Modal extends Component {
         /**
          * Show the modal.
          */
-        this._show = () => {
-            this._isOpened = true;
-            this._component.dispatch('show');
+        this._show = (self) => {
+            self._isOpened = true;
+            self._component.dispatch('show');
             showBackdrop();
-            util.removeClass(this._modal, this._config.displayClass);
+
+            const previousInstance = getPreviousModal(self._modal);
+
+            if (previousInstance && !this._previous) {
+                self._hide(previousInstance);
+            }
+
+            this._previous = false;
+
+            util.removeClass(self._modal, self._config.displayClass);
             
-            const transitioned = this._component.transition('transitionEnter', this._dialog, (e) => {
-                this._modal.focus();
-                this._component.dispatch('shown');
+            const transitioned = self._component.transition('transitionEnter', self._dialog, (e) => {
+                focus(self._modal);
+                self._component.dispatch('shown');
             });
             
             if (transitioned) {
                 return;
             }
             
-            this._modal.focus();
-            this._component.dispatch('shown');
+            focus(self._modal);
+            self._component.dispatch('shown');
         };
 
         /**
          * Hide the modal.
          */
-        this._hide = () => {
-            this._isOpened = false;
-            this._component.dispatch('hide');
+        this._hide = (self) => {
+
+            self._isOpened = false;
+            self._component.dispatch('hide');
             hideBackdrop();
 
-            const transitioned = this._component.transition('transitionLeave', this._dialog, (e) => {
-                util.addClass(this._modal, this._config.displayClass);
-                this._element.focus();
-                this._component.dispatch('hidden');
+            const previousInstance = getPreviousModal(self._modal);
+
+            if (previousInstance && this._previous) {
+                removeModal(self._modal);
+                self._show(previousInstance);
+            }
+
+            this._previous = false;
+
+            if (!self._config.history) {
+                removeModal(self._modal);
+            }
+
+            const transitioned = self._component.transition('transitionLeave', self._dialog, (e) => {
+                util.addClass(self._modal, self._config.displayClass);
+
+                // If last modal is closed
+                if (getTotalModals() < 1) focus(self._element);
+
+                self._component.dispatch('hidden');
             });
 
             if (transitioned) {
                 return;
             }
 
-            util.addClass(this._modal, this._config.displayClass);
-            this._element.focus();
-            this._component.dispatch('hidden');
+            util.addClass(self._modal, self._config.displayClass);
+            
+            // If last modal is closed
+            if (getTotalModals() < 1) focus(self._element);
+
+            self._component.dispatch('hidden');
         };
 
         /**
@@ -242,7 +359,7 @@ class Modal extends Component {
         this._component.on(this._element, 'click', onClickToggle);
         this._component.on(this._modal, 'keydown', onKeydown);
 
-        if (this._config.backdrop == 'dynamic') {
+        if (this._config.backdropClose) {
             this._component.on(this._modal, 'click', onClickModalHide);
         }
 
@@ -257,14 +374,14 @@ class Modal extends Component {
      * Shows the modal.
      */
     show() {
-        this._show();
+        this._show(this);
     }
 
     /**
      * Hides the modal.
      */
     hide() {
-        this._hide();
+        this._hide(this);
     }
 
     /**
@@ -272,12 +389,12 @@ class Modal extends Component {
      */
     toggle() {
         if (this._isOpened) {
-            this._hide();
+            this._hide(this);
 
             return;
         }
 
-        this._show();
+        this._show(this);
     }
 
     /**

@@ -14,3 +14,4 @@ let config = {
 
 UIkit.config = config;
 UIkit.globalConfig = {};
+UIkit.store = {};

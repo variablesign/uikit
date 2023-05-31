@@ -295,6 +295,7 @@ export default class Component {
             one,
             events,
             name: component,
+            storage: {}
         };
     }
 
