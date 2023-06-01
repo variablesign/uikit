@@ -282,6 +282,15 @@ class Modal extends Component {
             this._backdrop = document.querySelector(`[${this._config.backdrop}]`) || backdrop();
             document.body.append(this._backdrop);
 
+            // Hide scrollbar and set right margin
+            if (getTotalModals() == 0) {                
+                const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+                util.styles(document.body, {
+                    overflow: `hidden`,
+                    marginRight: `${scrollBarWidth}px`
+                });
+            }
+
             window.requestAnimationFrame(() => {
                 this._backdrop.style.opacity = 1
             });
@@ -301,7 +310,17 @@ class Modal extends Component {
                 return;
             }
 
-            const transitionEndEvent = () => {
+            const transitionEndEvent = () => { 
+
+                // Hide modal scrollbar
+                this._modal.style.overflow = `hidden`;
+
+                // Restore scrollbar and right margin
+                util.styles(document.body, {
+                    overflow: null,
+                    marginRight: null
+                });
+
                 clearModals();
                 this._backdrop.remove();
                 this._component.off(this._backdrop, 'transitionend', transitionEndEvent);
@@ -375,6 +394,9 @@ class Modal extends Component {
 
                 // If last modal is closed
                 if (getTotalModals() < 1) focus(self._element);
+
+                // Restore modal scrollbar 
+                self._modal.style.overflow = null;
 
                 self._component.dispatch('hidden', eventData);
             });

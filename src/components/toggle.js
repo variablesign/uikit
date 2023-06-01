@@ -26,8 +26,8 @@ class Toggle extends Component {
 
         this._toggled = false;
         util.setAttributes(this._element, {
-            'aria-pressed': this._toggled,
-            'role': 'button'
+            ariaPressed: this._toggled,
+            role: 'button'
         });
 
         const toggleState = (options) => {
@@ -54,13 +54,10 @@ class Toggle extends Component {
                     util.addClass(target, options.addClass);
                 }
 
-                const handler = () => {
-                    this._component.dispatch('toggled', { toggled: this._toggled }, target);
-                    this._component.off(target, eventName, handler);
-                };
-
                 if (eventName) {  
-                    this._component.on(target, eventName, handler);
+                    this._component.one(target, eventName, () => {
+                        this._component.dispatch('toggled', { toggled: this._toggled, config: this._config }, target);
+                    });
 
                     return;
                 }

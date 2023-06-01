@@ -52,16 +52,21 @@ class Tooltip extends Component {
         this._config.showDelay = parseInt(this._config.showDelay);
         this._config.hideDelay = parseInt(this._config.hideDelay);
         this._id = this._generateId();
-        this._originalTitle = null;
+        // this._originalTitle = null;
         this._content = this._config.content; 
         this._contentType = 'innerText';
         let tooltip, tooltipContent, tooltipArrow, timeout;
 
-        if (this._element.title.length > 0) {
+        if (this._element.hasAttribute('title')) {
             this._content = this._element.title;
-            this._originalTitle = this._element.title;
+            // this._originalTitle = this._element.title;
             this._element.setAttribute('data-tooltip-original-title', this._element.title);
             this._element.removeAttribute('title');
+        }
+
+        if (this._element.hasAttribute('aria-label') && !this._element.hasAttribute('title')) {
+            this._content = this._element.getAttribute('aria-label');
+            // this._originalTitle = this._content;
         }
         
         // Create tooltip
@@ -81,7 +86,7 @@ class Tooltip extends Component {
                 tooltipArrow.style.display = 'none';
             }
 
-            this._content = tooltipContent.innerHTML || this._content; 
+            this._content = tooltipContent?.innerHTML || this._content; 
             this._contentType = 'innerHTML';
             tooltip.remove();
         } else {
@@ -116,6 +121,8 @@ class Tooltip extends Component {
                 tooltip.appendChild(tooltipArrow);
             }
         }
+
+        if (this._content.length == 0) return;
 
         this._tooltip = tooltip;
         this._tooltipContent = tooltipContent;
