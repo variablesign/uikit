@@ -6,18 +6,21 @@ const _component = 'modal';
 const _defaults = {
     target: null,
     keyboard: true,
+    focus: false,
     backdropClass: null,
     backdropFadeDuration: 150,
     backdropClose: true,
+    hideBackdrop: false,
     displayClass: null,
     dialog: 'data-dialog',
     content: 'data-content',
     close: 'data-close',
-    backdrop: 'data-modal-backdrop',
+    backdrop: 'data-backdrop',
     autoCloseDelay: 0,
     history: false,
-    modalZindex: 1055,
-    backdropZindex: 1050
+    allowScroll: false,
+    zindex: 1055,
+    storage: 'modal'
 };
 
 class Modal extends Component {
@@ -32,15 +35,20 @@ class Modal extends Component {
 
         this._isOpened = false;
         this._previous = false;
+        this._config.zindex = parseInt(this._config.zindex) || 0;
+        this._config.storage = util.kebabCase(this._config.storage);
         this._modal = document.querySelector(this._config.target);
         this._dialog = this._modal.querySelector(`[${this._config.dialog}]`);
         this._content = this._modal.querySelector(`[${this._config.content}]`);
+        this._initialFocus = this._modal;
+        this._finalFocus = this._element;
         this._config.backdropFadeDuration = parseInt(this._config.backdropFadeDuration) / 1000;
         this._config.autoCloseDelay = parseInt(this._config.autoCloseDelay);
         const modalId = this._modal.id !== '' ? this._modal.id : 'modal-' + util.randomNumber(4);
         const closeTriggers = this._modal.querySelectorAll(`[${this._config.close}]`);
         const minimumAutoCloseDelay = 3000;
         let autoCloseTimer;
+        UIkit.store[this._config.storage] = UIkit.store[this._config.storage] ? UIkit.store[this._config.storage] : {};
 
         // Set modal attributes.
         util.setAttributes(this._modal, {
@@ -52,7 +60,7 @@ class Modal extends Component {
 
         // Set modal styles.
         util.styles(this._modal, {
-            zIndex: this._config.modalZindex
+            zIndex: this._config.zindex
         });
 
         // Search for all elements that can close the modal 
@@ -66,10 +74,7 @@ class Modal extends Component {
 
         // Accessible event data
         const eventData = {
-            trigger: this._element,
-            modal: this._modal,
             content: this._content,
-            dialog: this._dialog,
             config: this._config
         };
 
@@ -139,15 +144,26 @@ class Modal extends Component {
         };
 
         /**
+         * Get all focusable elements.
+         * 
+         * @param {object} self 
+         */
+        const getFocusable = (self) => {
+            const focusable = self._content.querySelectorAll('*');
+
+            return [...focusable].filter(node => node.tabIndex >= 0);
+        };
+
+        /**
          * Focus on a target element.
          * 
          * @param {object} e event object
+         * @param {object} self 
          * @param {boolean} reverse 
          * @returns 
          */
         const setFocus = (e, self, reverse = false) => {
-            let focusable = self._content.querySelectorAll('*');
-            focusable = [...focusable].filter(node => node.tabIndex >= 0);
+            let focusable = getFocusable(self);
             const total = focusable.length;
 
             if (total == 0) {
@@ -179,13 +195,15 @@ class Modal extends Component {
          */
         const storeModal = (data) => {
 
-            if (UIkit.store.openedModals instanceof Array) {
-                UIkit.store.openedModals.push(data);
+            if (UIkit.store[this._config.storage].openedModals instanceof Array) {
+                UIkit.store[this._config.storage].openedModals.push(data);
 
                 return;
             }
 
-            UIkit.store.openedModals = [data];
+            UIkit.store[this._config.storage].openedModals = [data];
+            UIkit.store[this._config.storage].firstModal = data._modal;
+            UIkit.store[this._config.storage].firstModalTrigger = data._element;
         };
 
         /**
@@ -194,10 +212,10 @@ class Modal extends Component {
          * @param {HTMLElement} modal 
          */
         const removeModal = (modal) => {
-            if (UIkit.store.openedModals instanceof Array) {
-                UIkit.store.openedModals.forEach((data, index) => {
+            if (UIkit.store[this._config.storage].openedModals instanceof Array) {
+                UIkit.store[this._config.storage].openedModals.forEach((data, index) => {
                     if (data._modal == modal) {
-                        UIkit.store.openedModals.splice(index, 1);
+                        UIkit.store[this._config.storage].openedModals.splice(index, 1);
                     }
                 });
             }
@@ -207,14 +225,33 @@ class Modal extends Component {
          * Get the total opened modals.
          */
         const getTotalModals = () => {
-            return UIkit.store.openedModals ? UIkit.store.openedModals.length : 0;
+            return UIkit.store[this._config.storage].openedModals ? UIkit.store[this._config.storage].openedModals.length : 0;
+        };
+
+        /**
+         * Check if is the first opened modal.
+         * 
+         * @param {HTMLElement} modal 
+         */
+        const isFirstModal = (modal) => {
+            return UIkit.store[this._config.storage].firstModal == modal;
+        };
+
+        /**
+         * Get the first modal trigger.
+         */
+        const getFirstModalTrigger = () => {
+            return UIkit.store[this._config.storage].firstModalTrigger;
         };
 
         /**
          * Remove all stored modals.
          */
         const clearModals = () => {
-            delete UIkit.store.openedModals;
+            // delete UIkit.store[this._config.storage];
+            delete UIkit.store[this._config.storage].openedModals;
+            delete UIkit.store[this._config.storage].firstModal;
+            delete UIkit.store[this._config.storage].firstModalTrigger;
         };
 
         /**
@@ -226,10 +263,10 @@ class Modal extends Component {
         const getPreviousModal = (modal) => {
             let previousModal = null;
 
-            if (UIkit.store.openedModals instanceof Array && UIkit.store.openedModals.length > 0) {
-                UIkit.store.openedModals.forEach((data, index) => {
+            if (UIkit.store[this._config.storage].openedModals instanceof Array && UIkit.store[this._config.storage].openedModals.length > 0) {
+                UIkit.store[this._config.storage].openedModals.forEach((data, index) => {
                     if (data._modal == modal) {
-                        previousModal = UIkit.store.openedModals[index - 1];
+                        previousModal = UIkit.store[this._config.storage].openedModals[index - 1];
                     }
                 });
             }
@@ -244,6 +281,76 @@ class Modal extends Component {
          */
         const focus = (element) => {
             element.focus();
+        };
+
+        /**
+         * Set opened dialog attribute.
+         */
+        const setOpenedDialogsAttribute = () => {
+            let attributes = document.body.dataset.openedDialogs || '';
+            attributes = attributes.split(',');
+            attributes = attributes.filter(attribute => attribute != '');
+
+            if (attributes.indexOf(this._config.storage) === -1) {
+                attributes.push(this._config.storage);
+                let value = attributes.length > 1 ? attributes.join(',') : this._config.storage;
+                document.body.setAttribute(`data-opened-dialogs`, value);
+            }  
+        };
+
+        /**
+         * Remove opened dialog attribute.
+         */
+        const removeOpenedDialogsAttribute = () => {
+            let attributes = document.body.dataset.openedDialogs || '';
+            attributes = attributes.split(',');
+
+            if (attributes.indexOf(this._config.storage) !== -1) {
+                attributes.splice(attributes.indexOf(this._config.storage), 1);
+
+                if (attributes.length > 0) {                    
+                    let value = attributes.length > 1 ? attributes.join(',') : attributes[0];
+                    document.body.setAttribute(`data-opened-dialogs`, value);
+                } else {
+                    document.body.removeAttribute(`data-opened-dialogs`);
+                }
+            }  
+        };
+
+        /**
+         * Hide scrollbar. 
+         */
+        const hideScrollbar = () => {
+            if (this._config.allowScroll) return;
+            
+            // Hide modal scrollbar
+            this._modal.style.overflow = `hidden`;
+
+            // Restore scrollbar and right margin
+            if (!document.body.dataset.openedDialogs) {                
+                util.styles(document.body, {
+                    overflow: null,
+                    marginRight: null
+                });
+            }
+        };
+
+        /**
+         * Check if document body has overflow and margin styles. 
+         */
+        const hasOverflowMargin = () => {
+            return Boolean(document.body.style.overflow && document.body.style.marginRight);
+        };
+
+        /**
+         * Restore modal scrollbar.
+         * 
+         * @param {object} self 
+         */
+        const restoreModalScrollbar = (self) => {
+            if (self._config.allowScroll) return;
+
+            self._modal.style.overflow = null;
         };
 
         /**
@@ -266,11 +373,13 @@ class Modal extends Component {
                 left: 0,
                 opacity: 0,
                 transition: `opacity ${this._config.backdropFadeDuration}s linear`,
-                zIndex: this._config.backdropZindex
+                zIndex: this._config.zindex - 5
             });
     
             util.addClass(backdrop, this._config.backdropClass);
-            backdrop.setAttribute(`${this._config.backdrop}`, '');
+            util.setAttributes(backdrop, {
+                [`${this._config.backdrop}`]: this._config.storage
+            });
 
             return backdrop;
         };
@@ -279,11 +388,14 @@ class Modal extends Component {
          * Show backdrop.
          */
         const showBackdrop = () => {
-            this._backdrop = document.querySelector(`[${this._config.backdrop}]`) || backdrop();
-            document.body.append(this._backdrop);
+            this._backdrop = document.querySelector(`[${this._config.backdrop}="${this._config.storage}"]`) || backdrop();
+
+            if (!this._config.hideBackdrop) {
+                document.body.append(this._backdrop);
+            }
 
             // Hide scrollbar and set right margin
-            if (getTotalModals() == 0) {                
+            if (getTotalModals() == 0 && !this._config.allowScroll && !hasOverflowMargin()) {                
                 const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
                 util.styles(document.body, {
                     overflow: `hidden`,
@@ -297,6 +409,8 @@ class Modal extends Component {
             
             if (!this._previous) {
                 storeModal(this);
+
+                setOpenedDialogsAttribute();
             }
         };
 
@@ -304,23 +418,16 @@ class Modal extends Component {
          * Hide and remove backdrop.
          */
         const hideBackdrop = () => {
-            if (!this._backdrop || getTotalModals() > 1) {
-                // removeModal(this._modal);
+            if ((!this._backdrop || getTotalModals() > 1) && !this._config.hideBackdrop) return;
 
-                return;
+            removeOpenedDialogsAttribute();
+
+            if (!this._config.history) {
+                this._finalFocus = getFirstModalTrigger();
             }
 
             const transitionEndEvent = () => { 
-
-                // Hide modal scrollbar
-                this._modal.style.overflow = `hidden`;
-
-                // Restore scrollbar and right margin
-                util.styles(document.body, {
-                    overflow: null,
-                    marginRight: null
-                });
-
+                hideScrollbar();
                 clearModals();
                 this._backdrop.remove();
                 this._component.off(this._backdrop, 'transitionend', transitionEndEvent);
@@ -330,11 +437,35 @@ class Modal extends Component {
                 this._backdrop.style.opacity = 0
             });
 
+            if (this._config.hideBackdrop && getTotalModals() == 1) {
+                hideScrollbar();
+                clearModals();
+            }
+
             this._component.on(this._backdrop, 'transitionend', transitionEndEvent);
         };
 
         /**
+         * Forcefully remove backdrop.
+         */
+        const removeBackdrop = () => {
+            const animationDuration = parseFloat(window.getComputedStyle(this._dialog).animationDuration) || 0;
+            const transitionDuration = parseFloat(window.getComputedStyle(this._dialog).transitionDuration) || 0;
+   
+            if (transitionDuration >= this._config.backdropFadeDuration || animationDuration >= this._config.backdropFadeDuration) {
+                return;
+            }
+
+            if ((isFirstModal(this._modal) && this._config.history) || !this._config.history) {
+                clearModals();
+                this._backdrop.remove();
+            }
+        };
+
+        /**
          * Show the modal.
+         * 
+         * @param {object} self 
          */
         this._show = (self) => {
             self._isOpened = true;
@@ -349,10 +480,14 @@ class Modal extends Component {
 
             this._previous = false;
 
+            if (self._config.focus && getFocusable(self).length > 0) {
+                self._initialFocus = getFocusable(self)[0];
+            }
+
             util.removeClass(self._modal, self._config.displayClass);
             
             const transitioned = self._component.transition('transitionEnter', self._dialog, (e) => {
-                focus(self._modal);
+                focus(self._initialFocus);
                 self._component.dispatch('shown', eventData);
                 autoCloseModal();
             });
@@ -361,13 +496,15 @@ class Modal extends Component {
                 return;
             }
             
-            focus(self._modal);
+            focus(self._initialFocus);
             self._component.dispatch('shown', eventData);
             autoCloseModal();
         };
 
         /**
          * Hide the modal.
+         * 
+         * @param {object} self 
          */
         this._hide = (self) => {
 
@@ -393,12 +530,12 @@ class Modal extends Component {
                 clearTimeout(autoCloseTimer);
 
                 // If last modal is closed
-                if (getTotalModals() < 1) focus(self._element);
+                if (getTotalModals() < 1) focus(self._finalFocus);
 
-                // Restore modal scrollbar 
-                self._modal.style.overflow = null;
-
+                restoreModalScrollbar(self);
                 self._component.dispatch('hidden', eventData);
+
+                removeBackdrop();
             });
 
             if (transitioned) {
@@ -409,8 +546,9 @@ class Modal extends Component {
             clearTimeout(autoCloseTimer);
             
             // If last modal is closed
-            if (getTotalModals() < 1) focus(self._element);
+            if (getTotalModals() < 1) focus(self._finalFocus);
 
+            restoreModalScrollbar(self);
             self._component.dispatch('hidden', eventData);
         };
 
@@ -428,23 +566,14 @@ class Modal extends Component {
         this._component.dispatch('initialize');
     }
 
-    /**
-     * Shows the modal.
-     */
     show() {
         this._show(this);
     }
 
-    /**
-     * Hides the modal.
-     */
     hide() {
         this._hide(this);
     }
 
-    /**
-     * Removes all events and stored data.
-     */
     destroy() {
         this._hide(this);
         this._backdrop?.remove();
