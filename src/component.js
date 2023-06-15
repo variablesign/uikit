@@ -3,11 +3,27 @@ import uk from "./uikit.js";
 
 export default class Component {
     constructor(element, config, defaults, component) {
-
+        
         /**
          * The component element.
          */
         this._element = util.getElement(element);
+
+        /**
+         * Get component config from dataset.
+         */
+        const getDatasetConfig = () => {
+            const config = {};
+            const dataset = this._element ? this._element.dataset : {};
+
+            for (const key in dataset) {
+                if (key.substring(0, component.length) === component) {
+                    config[key] = dataset[key];
+                }
+            }
+
+            return util.replaceObjectKeys(config, component);
+        };
 
         /**
          * Merge all configurations.
@@ -15,13 +31,20 @@ export default class Component {
         this._config = util.extendObjects(
             defaults, 
             config, 
-            util.replaceObjectKeys(this._element ? this._element.dataset : {}, component)
+            getDatasetConfig()
         );
 
         /**
          * Get the current transition state.
          */
         this.isTransitioning = false;
+
+        /**
+         * Check if component is using the transition options.
+         */
+        const hasTransition = this._config.transitionEnter || this._config.transitionLeave 
+            ? true 
+            : false;
 
         /**
          * Events storage.
@@ -295,6 +318,7 @@ export default class Component {
             off,
             one,
             events,
+            hasTransition,
             name: component,
             storage: {}
         };

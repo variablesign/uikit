@@ -1,4 +1,4 @@
-import * as util from "./utils.js";
+import * as util from './utils.js';
 
 UIkit.setConfig = (options, component) => {
     options = typeof options === 'object' ? options : null;
@@ -16,37 +16,56 @@ UIkit.setConfig = (options, component) => {
     UIkit.config = util.extendObjects(config, options);
 };
 
-UIkit.autoload = (context = null, filter = []) => {
+UIkit.autoload = (filter = [], context = null) => {
     context = context ?? document;
-    const targets = context.querySelectorAll('[data-' + getConfig('prefix') + ']');
-    filter = filter instanceof Array && filter.length > 0 ? filter : [];
+    const components = filter.length > 0 ? filter : getConfig('autoload');
 
-    for (let i = 0; i < targets.length; i++) {
-        let dataset = util.extendObjects(targets[i].dataset || {});
+    components.forEach((component) => {
+        const componentName = util.kebabCase(component);
+        const elements = context.querySelectorAll(`[data-${getConfig('prefix')}-${componentName}="true"]`);
 
-        const components = dataset[getConfig('prefix')] instanceof Array 
-            ? dataset[getConfig('prefix')]
-            : [dataset[getConfig('prefix')]];
-
-        for (let x = 0; x < components.length; x++) {
-            const name = components[x].replace(/-([a-z])/g, (x, up) => up.toUpperCase());
-
-            if (filter.length > 0 && !filter.includes(name)) {
-                continue;
-            }
-
+        elements.forEach((element) => {
             try {
-                const config = util.replaceObjectKeys(targets[i].dataset, name);
-                window.UIkit[name](targets[i], config);
-
+                window.UIkit[component](element);
             } catch (error) {
-                console.error(`"${name}" is not a function or does not exist.`);
                 console.error(error);
             }
-        }
-
-    }
+        });
+    });
 };
+
+// UIkit.autoload = (context = null, filter = []) => {
+//     context = context ?? document;
+//     const targets = context.querySelectorAll('[data-' + getConfig('prefix') + ']');
+//     filter = filter instanceof Array && filter.length > 0 ? filter : [];
+
+//     for (let i = 0; i < targets.length; i++) {
+//         let dataset = util.extendObjects(targets[i].dataset || {});
+
+//         const components = dataset[getConfig('prefix')] instanceof Array 
+//             ? dataset[getConfig('prefix')]
+//             : [dataset[getConfig('prefix')]];
+
+//         for (let x = 0; x < components.length; x++) {
+//             const name = components[x].replace(/-([a-z])/g, (x, up) => up.toUpperCase());
+
+//             if (filter.length > 0 && !filter.includes(name)) {
+//                 continue;
+//             }
+
+//             try {
+//                 // const config = util.replaceObjectKeys(targets[i].dataset, name);
+//                 // window.UIkit[name](targets[i], config);
+//                 window.UIkit[name](targets[i]);
+
+//             } catch (error) {
+//                 // console.error(`"${name}" is not a function or does not exist.`);
+//                 console.error(error);
+//             }
+//         }
+
+//     }
+// };
 
 const getConfig = (key) => {
     return UIkit.config[key] || null;

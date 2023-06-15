@@ -21,7 +21,7 @@ const _defaults = {
     history: false,
     allowScroll: false,
     zindex: 1045,
-    storage: 'offcanvas'
+    namespace: 'offcanvas'
 };
 
 class Offcanvas extends Component {

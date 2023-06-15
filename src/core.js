@@ -1,3 +1,5 @@
+import config from './config';
+
 window.UIkit = window.UIkit || {};
 
 HTMLElement.prototype.storeUikitInstance = function(component, instance) {
@@ -6,10 +8,6 @@ HTMLElement.prototype.storeUikitInstance = function(component, instance) {
     }
 
     this.uikitInstance[component] = instance;
-};
-
-let config = {
-    prefix: 'uk'
 };
 
 UIkit.config = config;
