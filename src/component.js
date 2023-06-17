@@ -35,6 +35,17 @@ export default class Component {
         );
 
         /**
+         * Lock the listed config to the provided values.
+         * 
+         * @param {object} config
+         */
+        const lockConfig = (config) => {
+            config = config instanceof Object ? config : {};
+
+            this._config = util.extendObjects(this._config, config);
+        };
+
+        /**
          * Get the current transition state.
          */
         this.isTransitioning = false;
@@ -311,6 +322,7 @@ export default class Component {
             transitionCleanup,
             prefixedEventName,
             createConfig,
+            lockConfig,
             storeEvent,
             removeEvent,
             dispatch,

@@ -9,7 +9,7 @@ const _defaults = {
     keyboard: true,
     focus: false,
     backdropClass: null,
-    backdropFadeDuration: 150,
+    backdropFadeDuration: 200,
     backdropClose: true,
     hideBackdrop: false,
     displayClass: null,
@@ -28,6 +28,9 @@ class Offcanvas extends Component {
     constructor(element, config) {
         super(element, config, _defaults, _component);
         this._component.allowTransitions();
+        this._component.lockConfig({
+            autoCloseDelay: 0
+        });
         this.init();
     }
 

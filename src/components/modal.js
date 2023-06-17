@@ -8,7 +8,7 @@ const _defaults = {
     keyboard: true,
     focus: false,
     backdropClass: null,
-    backdropFadeDuration: 150,
+    backdropFadeDuration: 200,
     backdropClose: true,
     hideBackdrop: false,
     displayClass: null,
