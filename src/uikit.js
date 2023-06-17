@@ -1,19 +1,19 @@
 import * as util from './utils.js';
 
-UIkit.setConfig = (options, component) => {
-    options = typeof options === 'object' ? options : null;
+UIkit.setConfig = (options, componentConfig = true) => {
+    options = options instanceof Object ? options : null;
 
     if (!options) {
         return;
     }
 
-    if (component) {
-        UIkit.globalConfig[component] = options;
+    if (componentConfig) {
+        UIkit.globalConfig = util.extendObjects(UIkit.globalConfig, options);
 
         return;
     }
 
-    UIkit.config = util.extendObjects(config, options);
+    UIkit.config = util.extendObjects(UIkit.config, options);
 };
 
 UIkit.autoload = (filter = [], context = null) => {
@@ -33,39 +33,6 @@ UIkit.autoload = (filter = [], context = null) => {
         });
     });
 };
-
-// UIkit.autoload = (context = null, filter = []) => {
-//     context = context ?? document;
-//     const targets = context.querySelectorAll('[data-' + getConfig('prefix') + ']');
-//     filter = filter instanceof Array && filter.length > 0 ? filter : [];
-
-//     for (let i = 0; i < targets.length; i++) {
-//         let dataset = util.extendObjects(targets[i].dataset || {});
-
-//         const components = dataset[getConfig('prefix')] instanceof Array 
-//             ? dataset[getConfig('prefix')]
-//             : [dataset[getConfig('prefix')]];
-
-//         for (let x = 0; x < components.length; x++) {
-//             const name = components[x].replace(/-([a-z])/g, (x, up) => up.toUpperCase());
-
-//             if (filter.length > 0 && !filter.includes(name)) {
-//                 continue;
-//             }
-
-//             try {
-//                 // const config = util.replaceObjectKeys(targets[i].dataset, name);
-//                 // window.UIkit[name](targets[i], config);
-//                 window.UIkit[name](targets[i]);
-
-//             } catch (error) {
-//                 // console.error(`"${name}" is not a function or does not exist.`);
-//                 console.error(error);
-//             }
-//         }
-
-//     }
-// };
 
 const getConfig = (key) => {
     return UIkit.config[key] || null;

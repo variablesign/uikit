@@ -37,7 +37,7 @@ class Tooltip extends Component {
             : null;
 
         this._config.trigger = typeof this._config.trigger == 'string' 
-            ? [this._config.trigger] 
+            ? this._config.trigger.split(' ') 
             : this._config.trigger;
 
         this._config.trigger = this._config.trigger instanceof Array 
@@ -247,8 +247,12 @@ class Tooltip extends Component {
             }
         };
 
+        const onHoverDestroy = (e) => {
+            this.destroy();
+        };
+
         for (let i = 0; i < this._config.trigger.length; i++) {
-            if (!['click', 'focus', 'hover'].includes(this._config.trigger[i])) {
+            if (!['click', 'focus', 'hover', 'once'].includes(this._config.trigger[i])) {
                 break;
             }
 
@@ -265,11 +269,20 @@ class Tooltip extends Component {
                 this._component.on(this._element, 'focus', this._show);
                 this._component.on(this._element, 'blur', this._hide);
             }
+
+            if (i == 0 && this._config.trigger[i] == 'once') {                
+                this._component.on(this._element, 'mouseenter', onHoverDestroy);
+                this._component.on(this._element, 'focus', onHoverDestroy);
+            }
         }
 
         this._component.on(document, 'keydown', onKeydown);
 
         this._component.dispatch('initialize');
+
+        if (this._config.trigger.length == 1 && this._config.trigger[0] == 'once') {                
+            this.show();
+        }
     }
 
     toggle() {
