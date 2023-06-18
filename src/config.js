@@ -11,6 +11,7 @@ const config = {
         'tab',
         'scrollspy',
         'scroll',
+        'date',
         'clipboard',
         'highlight'
     ]
