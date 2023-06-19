@@ -294,7 +294,7 @@
         // Enable keyboard input
         keyboardInput: true,
 
-        // option to prevent calendar from auto-closing after date is selected
+        // option to show calendar title text
         heading: null,
 
         // option to prevent calendar from auto-closing after date is selected
@@ -324,31 +324,15 @@
 
         // Custom additions
         calendarClass: null,
-        titleClass: '',
+        headerClass: '',
         monthClass: '',
         yearClass: '',
-        monthSelectClass: '',
-        yearSelectClass: '',
-        monthArrow: '',
-        yearArrow: '',
-        headingClass: '',
+        titleClass: '',
         previousClass: '',
         nextClass: '',
         weekdayClass: '',
-        dayContainerClass: '',
         daysClass: '',
         dayClass: '',
-        isTodayClass: '',
-        isEmptyClass: '',
-        isOutsideMonthClass: '',
-        isSelectionDisabledClass: '',
-        isDisabledClass: '',
-        isSelectedClass: '',
-        hasEventClass: '',
-        selectedEventClass: '',
-        isInRangeClass: '',
-        isStartRangeClass: '',
-        isEndRangeClass: '',
         buttonsClass: '',
         clearButtonClass: '',
         todayButtonClass: '',
@@ -371,64 +355,58 @@
 
     renderDay = function(opts, self)
     {
-        let dayClass = self.dayClass;
+        let attr = [];
         var arr = [];
         var ariaSelected = 'false';
         if (opts.isEmpty) {
             if (opts.showDaysInNextAndPreviousMonths) {
                 arr.push('is-outside-current-month');
-                dayClass = self.isOutsideMonthClass;
+                attr.push('data-pika-muted');
 
                 if(!opts.enableSelectionDaysInNextAndPreviousMonths) {
                     arr.push('is-selection-disabled');
-                    dayClass = self.isSelectionDisabledClass;
+                    attr.push('disabled');
                 }
 
             } else {
-                return '<td class="is-empty ' + self.isEmptyClass + '"></td>';
+                return `<td class="is-empty ${self.daysClass}"></td>`;
             }
         }
         if (opts.isDisabled) {
             arr.push('is-disabled');
-            dayClass = self.isDisabledClass;
+            attr.push('disabled');
         }
         if (opts.isToday) {
             arr.push('is-today');
-            dayClass = self.isTodayClass;
+            attr.push('data-pika-today');
         }
         if (opts.isSelected) {
             arr.push('is-selected');
+            attr.push('data-pika-selected');
             ariaSelected = 'true';
-            dayClass = self.isSelectedClass;
         }
         if (opts.hasEvent) {
             arr.push('has-event');
-
-            if (opts.isSelected) {
-                dayClass = self.selectedEventClass;
-            } else {
-                dayClass = self.hasEventClass;
-            }
+            attr.push('data-pika-event');
         }
         if (opts.isInRange) {
             arr.push('is-inrange');
-            dayClass = self.isInRangeClass;
+            attr.push('data-pika-range');
         }
         if (opts.isStartRange) {
             arr.push('is-startrange');
-            dayClass = self.isStartRangeClass;
+            attr.push('data-pika-range-start');
         }
         if (opts.isEndRange) {
             arr.push('is-endrange');
-            dayClass = self.isEndRangeClass;
+            attr.push('data-pika-range-end');
         }
      
-        return '<td data-day="' + opts.day + '" class="' + arr.join(' ') + ' ' + self.dayContainerClass + '" aria-selected="' + ariaSelected + '">' +
-                 '<button class="pika-button pika-day ' + dayClass + ' ' + self.daysClass + '" type="button" ' +
-                    'data-pika-year="' + opts.year + '" data-pika-month="' + opts.month + '" data-pika-day="' + opts.day + '">' +
-                        opts.day +
-                 '</button>' +
-               '</td>';
+        return `<td data-day="${opts.day}" class="${arr.join(' ')} ${self.daysClass}" aria-selected="${ariaSelected}">
+                    <button class="pika-button pika-day ${self.dayClass}" type="button" data-pika-year="${opts.year}" data-pika-month="${opts.month}" data-pika-day="${opts.day}" ${attr.join(' ')}>
+                        ${opts.day}
+                    </button>
+                </td>`;
     },
 
     isoWeek = function(date, firstWeekOfYearMinDays) {
@@ -490,7 +468,7 @@
             opts = instance._o,
             isMinYear = year === opts.minYear,
             isMaxYear = year === opts.maxYear,
-            html = '<div id="' + randId + '" class="pika-title ' + opts.titleClass + '" role="heading" aria-live="polite">',
+            html = '<div id="' + randId + '" class="pika-title ' + opts.headerClass + '" role="heading" aria-live="polite">',
             monthHtml,
             yearHtml,
             prev = true,
@@ -503,7 +481,7 @@
                 opts.i18n.months[i] + '</option>');
         }
 
-        monthHtml = '<div class="pika-label ' + opts.monthClass + '">' + opts.i18n.months[month] + opts.monthArrow + '<select class="pika-select pika-select-month ' + opts.monthSelectClass + '" tabindex="-1">' + arr.join('') + '</select></div>';
+        monthHtml = '<div class="pika-label ' + opts.monthClass + '">' + opts.i18n.months[month] + '<select class="pika-select pika-select-month" tabindex="-1">' + arr.join('') + '</select></div>';
         // monthHtml = '<div class="pika-label">' + opts.i18n.months[month] + '<select class="pika-select pika-select-month" tabindex="-1">' + arr.join('') + '</select></div>';
 
         if (isArray(opts.yearRange)) {
@@ -519,7 +497,7 @@
                 arr.push('<option value="' + i + '"' + (i === year ? ' selected="selected"': '') + '>' + (i) + '</option>');
             }
         }
-        yearHtml = '<div class="pika-label ' + opts.yearClass + '">' + year + opts.yearSuffix + opts.yearArrow + '<select class="pika-select pika-select-year ' + opts.yearSelectClass + '" tabindex="-1">' + arr.join('') + '</select></div>';
+        yearHtml = '<div class="pika-label ' + opts.yearClass + '">' + year + opts.yearSuffix + '<select class="pika-select pika-select-year" tabindex="-1">' + arr.join('') + '</select></div>';
         // yearHtml = '<div class="pika-label">' + year + opts.yearSuffix + '<select class="pika-select pika-select-year" tabindex="-1">' + arr.join('') + '</select></div>';
 
         if (isMinYear && (month === 0 || opts.minMonth >= month)) {
@@ -531,7 +509,6 @@
         }
 
         if (c === 0) {
-            // html += '<button class="pika-prev' + (prev ? '' : ' is-disabled') + ' ' + opts.previousClass + '" type="button">' + opts.i18n.previousMonth + '</button>';
             html += `<button class="pika-prev ${prev ? '' : 'is-disabled'} ${opts.previousClass}" type="button" ${prev ? '' : 'disabled'}>${opts.i18n.previousMonth}</button>`;
         }
 
@@ -542,7 +519,6 @@
         }
 
         if (c === (instance._o.numberOfMonths - 1) ) {
-            // html += '<button class="pika-next' + (next ? '' : ' is-disabled') + ' ' + opts.nextClass + '" type="button">' + opts.i18n.nextMonth + '</button>';
             html += `<button class="pika-next ${next ? '' : 'is-disabled'} ${opts.nextClass}" type="button" ${next ? '' : 'disabled'}>${opts.i18n.nextMonth}</button>`;
         }
 
@@ -556,8 +532,8 @@
 
     renderHeading = function(opts)
     {
-        if (opts.heading) {
-            return '<div class="pika-heading ' + opts.headingClass + '">' + opts.heading + '</div>';
+        if (opts.title) {
+            return '<div class="pika-header-title ' + opts.titleClass + '">' + opts.title + '</div>';
         }
 
         return '';
