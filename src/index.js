@@ -10,7 +10,7 @@ import './components/tab.js';
 import './components/scrollspy.js';
 import './components/scroll.js';
 
-import './components/date.js'; 
+import './components/datepicker.js'; 
 
 import './components/clipboard.js';
 import './components/highlight.js'; 

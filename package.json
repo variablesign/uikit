@@ -9,6 +9,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@floating-ui/dom": "^1.2.6"
+    "@floating-ui/dom": "^1.4.1"
   }
 }

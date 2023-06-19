@@ -323,7 +323,7 @@
         applyButton: 'Set Date',
 
         // Custom additions
-        wrapperClass: null,
+        calendarClass: null,
         titleClass: '',
         monthClass: '',
         yearClass: '',
@@ -335,12 +335,13 @@
         previousClass: '',
         nextClass: '',
         weekdayClass: '',
-        allDaysClass: '',
+        dayContainerClass: '',
+        daysClass: '',
         dayClass: '',
         isTodayClass: '',
         isEmptyClass: '',
         isOutsideMonthClass: '',
-        isSelectedDisabledClass: '',
+        isSelectionDisabledClass: '',
         isDisabledClass: '',
         isSelectedClass: '',
         hasEventClass: '',
@@ -380,11 +381,11 @@
 
                 if(!opts.enableSelectionDaysInNextAndPreviousMonths) {
                     arr.push('is-selection-disabled');
-                    dayClass = self.isSelectedDisabledClass;
+                    dayClass = self.isSelectionDisabledClass;
                 }
 
             } else {
-                return '<td class="is-empty"></td>';
+                return '<td class="is-empty ' + self.isEmptyClass + '"></td>';
             }
         }
         if (opts.isDisabled) {
@@ -422,8 +423,8 @@
             dayClass = self.isEndRangeClass;
         }
      
-        return '<td data-day="' + opts.day + '" class="' + arr.join(' ') + '" aria-selected="' + ariaSelected + '">' +
-                 '<button class="pika-button pika-day ' + dayClass + ' ' + self.allDaysClass + '" type="button" ' +
+        return '<td data-day="' + opts.day + '" class="' + arr.join(' ') + ' ' + self.dayContainerClass + '" aria-selected="' + ariaSelected + '">' +
+                 '<button class="pika-button pika-day ' + dayClass + ' ' + self.daysClass + '" type="button" ' +
                     'data-pika-year="' + opts.year + '" data-pika-month="' + opts.month + '" data-pika-day="' + opts.day + '">' +
                         opts.day +
                  '</button>' +
@@ -495,10 +496,6 @@
             prev = true,
             next = true;
 
-        if (c === 0) {
-            html += '<button class="pika-prev' + (prev ? '' : ' is-disabled') + ' ' + opts.previousClass + '" type="button">' + opts.i18n.previousMonth + '</button>';
-        }
-
         for (arr = [], i = 0; i < 12; i++) {
             arr.push('<option value="' + (year === refYear ? i - c : 12 + i - c) + '"' +
                 (i === month ? ' selected="selected"': '') +
@@ -525,12 +522,6 @@
         yearHtml = '<div class="pika-label ' + opts.yearClass + '">' + year + opts.yearSuffix + opts.yearArrow + '<select class="pika-select pika-select-year ' + opts.yearSelectClass + '" tabindex="-1">' + arr.join('') + '</select></div>';
         // yearHtml = '<div class="pika-label">' + year + opts.yearSuffix + '<select class="pika-select pika-select-year" tabindex="-1">' + arr.join('') + '</select></div>';
 
-        if (opts.showMonthAfterYear) {
-            html += yearHtml + monthHtml;
-        } else {
-            html += monthHtml + yearHtml;
-        }
-
         if (isMinYear && (month === 0 || opts.minMonth >= month)) {
             prev = false;
         }
@@ -539,8 +530,20 @@
             next = false;
         }
 
+        if (c === 0) {
+            // html += '<button class="pika-prev' + (prev ? '' : ' is-disabled') + ' ' + opts.previousClass + '" type="button">' + opts.i18n.previousMonth + '</button>';
+            html += `<button class="pika-prev ${prev ? '' : 'is-disabled'} ${opts.previousClass}" type="button" ${prev ? '' : 'disabled'}>${opts.i18n.previousMonth}</button>`;
+        }
+
+        if (opts.showMonthAfterYear) {
+            html += yearHtml + monthHtml;
+        } else {
+            html += monthHtml + yearHtml;
+        }
+
         if (c === (instance._o.numberOfMonths - 1) ) {
-            html += '<button class="pika-next' + (next ? '' : ' is-disabled') + ' ' + opts.nextClass + '" type="button">' + opts.i18n.nextMonth + '</button>';
+            // html += '<button class="pika-next' + (next ? '' : ' is-disabled') + ' ' + opts.nextClass + '" type="button">' + opts.i18n.nextMonth + '</button>';
+            html += `<button class="pika-next ${next ? '' : 'is-disabled'} ${opts.nextClass}" type="button" ${next ? '' : 'disabled'}>${opts.i18n.nextMonth}</button>`;
         }
 
         return html += '</div>';
@@ -703,30 +706,37 @@
         self._onKeyChange = function(e)
         {
             e = e || window.event;
-
+            
             if (self.isVisible()) {
+                e.preventDefault();
 
-                switch(e.keyCode){
-                    case 13:
-                    case 27:
+                switch(e.key){
+                    case 'Enter':
+                    case ' ':
                         if (opts.field) {
                             opts.field.blur();
+                            self.hide();
                         }
                         break;
-                    case 37:
+                    case 'Escape':
+                        if (self.isVisible()) {
+                            self.hide();
+                        }
+                        break;
+                    case 'ArrowLeft':
                         self.adjustDate('subtract', 1);
                         break;
-                    case 38:
+                    case 'ArrowUp':
                         self.adjustDate('subtract', 7);
                         break;
-                    case 39:
+                    case 'ArrowRight':
                         self.adjustDate('add', 1);
                         break;
-                    case 40:
+                    case 'ArrowDown':
                         self.adjustDate('add', 7);
                         break;
-                    case 8:
-                    case 46:
+                    case 'Backspace':
+                    case 'Delete':
                         self.setDate(null);
                         break;
                 }
@@ -821,8 +831,8 @@
         };
 
         self.el = document.createElement('div');
-        let wrapperClass = opts.wrapperClass ? ' ' + opts.wrapperClass : '';
-        self.el.className = 'pika-single' + (opts.isRTL ? ' is-rtl' : '') + (opts.theme ? ' ' + opts.theme : '') + wrapperClass;
+        let calendarClass = opts.calendarClass ? ' ' + opts.calendarClass : '';
+        self.el.className = 'pika-single' + (opts.isRTL ? ' is-rtl' : '') + (opts.theme ? ' ' + opts.theme : '') + calendarClass;
 
         addEvent(self.el, 'mousedown', self._onMouseDown, true);
         addEvent(self.el, 'touchend', self._onMouseDown, true);
