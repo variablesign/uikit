@@ -18,9 +18,8 @@ const _defaults = {
     setDefaultDate: false,
     firstDay: 0,
     yearRange: 10,
-    showWeekNumber: false,
     showOtherDays: false,
-    otherDaysSelection: true,
+    otherDaysSelection: false,
     blurFieldOnSelect : true,
     title: null,
     autoClose: true,
@@ -92,18 +91,28 @@ class Datepicker extends Component {
             if (!isRangePicker()) return;
 
             const date = this._pikaday.getDate();
-            const picker = UIkit.datepicker(this._config.startRangeTarget || this._config.endRangeTarget);
+            const range = UIkit.datepicker(this._config.startRangeTarget || this._config.endRangeTarget);
 
-            if (this._config.endRangeTarget) {        
+            if (this._config.endRangeTarget) {  
+                range.hide();  
                 this._pikaday.setStartRange(date);
-                picker.setStartRange(date);
-                picker.setMinDate(date);
+                range.setStartRange(date);
+                range.setMinDate(date);
+
+                if (range.getDate()) {
+                    this._pikaday.setEndRange(range.getDate());
+                }
             } 
             
             if (this._config.startRangeTarget) {
+                range.hide();
                 this._pikaday.setEndRange(date);
-                picker.setEndRange(date);
-                picker.setMaxDate(date);
+                range.setEndRange(date);
+                range.setMaxDate(date);
+
+                if (range.getDate()) {
+                    this._pikaday.setStartRange(range.getDate());
+                }
             }
         };
         
@@ -149,6 +158,7 @@ class Datepicker extends Component {
         };
 
         config.onBeforeOpen = () => {
+            
             this._pikaday.el.style.display = 'none';
 
             const setPosition = () => {
@@ -180,13 +190,13 @@ class Datepicker extends Component {
             };
 
             autoUpdatePosition = updatePosition();
-
+            updateRangeDate();
             this._component.dispatch('show');
         };
 
         config.onOpen = () => {
             this._pikaday.el.style.display = 'block';
-
+            
             this._component.transition('transitionEnter', this._pikaday.el, (e) => {
                 this._component.dispatch('shown');
             });
@@ -221,10 +231,9 @@ class Datepicker extends Component {
             this._component.dispatch('select');
         };
 
-        if (!this._config.toString) {
+        if (!this._config.toString && this._config.format) {
             this._config.toString = (date, format) => {
-                if (!format) return (new Date()).toDateString();
-     
+
                 let formattedDate = '';
                 const tokens = {
                     ddd: config.i18n.weekdays[date.getDay()].slice(0, 3),
@@ -258,7 +267,7 @@ class Datepicker extends Component {
             };
         }
 
-        if (!this._config.parse) {
+        if (!this._config.parse && this._config.format) {
             this._config.parse = (dateString, format) => {
                 return new Date(Date.parse(dateString));
             }
@@ -266,15 +275,16 @@ class Datepicker extends Component {
 
         config = util.extendObjects(config, this._config);
 
+        // Init Pikaday
         this._pikaday = new Pikaday(config);
     }
 
     toString(format) {
-        this._pikaday.toString(format);
+        return this._pikaday.toString(format);
     }
 
     getMoment() {
-        this._pikaday.getMoment();
+        return this._pikaday.getMoment();
     }
 
     setMoment(date) {
@@ -282,7 +292,7 @@ class Datepicker extends Component {
     }
 
     getDate() {
-        this._pikaday.getDate();
+        return this._pikaday.getDate();
     }
 
     setDate(date) {
