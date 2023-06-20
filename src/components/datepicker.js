@@ -12,12 +12,16 @@ const _defaults = {
     format: null,
     minDate: null,
     maxDate: null,
+    toString: null,
+    parse: null,
+    defaultDate: null,
+    setDefaultDate: false,
     firstDay: 0,
     yearRange: 10,
     showWeekNumber: false,
-    showOtherDays: true,
+    showOtherDays: false,
     otherDaysSelection: true,
-    blurFieldOnSelect : false,
+    blurFieldOnSelect : true,
     title: null,
     autoClose: true,
     showButtons: false,
@@ -25,14 +29,14 @@ const _defaults = {
     previous: 'Previous',
     next: 'Next',
     buttons: ['cancel', 'apply'], // ['clear', 'cancel', 'today', 'apply']
-    clearButton: 'Clear',
-    todayButton: 'Today',
-    cancelButton: 'Cancel',
-    applyButton: 'Set Date',
+    clear: 'Clear',
+    today: 'Today',
+    cancel: 'Cancel',
+    apply: 'Apply',
     offset: 8,
     placement: 'bottom-start',
     weekdays: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
-    events: ['Sat Jun 24 2023'],
+    events: [],
     calendarClass: '',
     headerClass: '',
     titleClass: '',
@@ -44,15 +48,16 @@ const _defaults = {
     monthClass: '',
     yearClass: '',
     buttonsClass: '',
-    clearButtonClass: '',
-    todayButtonClass: '',
-    cancelButtonClass: '',
-    applyButtonClass: '',
+    clearClass: '',
+    todayClass: '',
+    cancelClass: '',
+    applyClass: '',
 };
 
 class Datepicker extends Component {
     constructor(element, config) {
         super(element, config, _defaults, _component);
+        this._component.allowTransitions();
         this.init();
     }
 
@@ -140,10 +145,11 @@ class Datepicker extends Component {
 
 
         config.onInitialize = () => {
-            
+            this._component.dispatch('initialize');
         };
 
-        config.onOpen = () => {
+        config.onBeforeOpen = () => {
+            this._pikaday.el.style.display = 'none';
 
             const setPosition = () => {
                 computePosition(this._element, this._pikaday.el, {
@@ -174,15 +180,89 @@ class Datepicker extends Component {
             };
 
             autoUpdatePosition = updatePosition();
+
+            this._component.dispatch('show');
+        };
+
+        config.onOpen = () => {
+            this._pikaday.el.style.display = 'block';
+
+            this._component.transition('transitionEnter', this._pikaday.el, (e) => {
+                this._component.dispatch('shown');
+            });
+        };
+
+        config.onBeforeClose = () => {
+            this._component.dispatch('hide');
+
+            const transitioned = this._component.transition('transitionLeave', this._pikaday.el, (e) => {
+                this._component.dispatch('hidden');
+                autoUpdatePosition();
+                this._pikaday.el.style.display = 'none';
+            });
+
+            if (!transitioned) {
+                this._pikaday.el.style.display = 'none';
+                this._component.dispatch('hidden');
+                autoUpdatePosition();
+            }
         };
 
         config.onClose = () => {
-            autoUpdatePosition();
+            
+        };
+
+        config.onDraw = () => {
+            this._component.dispatch('draw');
         };
 
         config.onSelect = (e) => {
             updateRangeDate();
+            this._component.dispatch('select');
         };
+
+        if (!this._config.toString) {
+            this._config.toString = (date, format) => {
+                if (!format) return (new Date()).toDateString();
+     
+                let formattedDate = '';
+                const tokens = {
+                    ddd: config.i18n.weekdays[date.getDay()].slice(0, 3),
+                    dddd: config.i18n.weekdays[date.getDay()],
+                    D: date.getDate().toString(),
+                    DD: date.getDate().toString().padStart(2, '0'),
+                    M: (date.getMonth() + 1).toString(),
+                    MM: (date.getMonth() + 1).toString().padStart(2, '0'),
+                    MMM: config.i18n.months[date.getMonth()].slice(0, 3),
+                    MMMM: config.i18n.months[date.getMonth()],
+                    YY: date.getFullYear().toString().slice(2),
+                    YYYY: date.getFullYear().toString()
+                };
+
+                const delimiters = format.trim().match(/\W+/g);
+
+                const parts = format.trim()
+                    .replaceAll(/\W+/g, ' ')
+                    .split(' ')
+                    .filter(str => str.length > 0);
+
+                const replacedParts = parts.map((part) => {
+                     return tokens[part];
+                }).filter(part => part);
+
+                replacedParts.forEach((part, index) => {
+                    formattedDate += part + (delimiters[index] && index < (replacedParts.length - 1) ? delimiters[index] : '');
+                });
+
+                return formattedDate;
+            };
+        }
+
+        if (!this._config.parse) {
+            this._config.parse = (dateString, format) => {
+                return new Date(Date.parse(dateString));
+            }
+        }
 
         config = util.extendObjects(config, this._config);
 

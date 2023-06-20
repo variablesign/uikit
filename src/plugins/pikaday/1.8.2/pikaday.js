@@ -287,7 +287,9 @@
         // callback function
         onInitialize: null,
         onSelect: null,
+        onBeforeOpen: null,
         onOpen: null,
+        onBeforeClose: null,
         onClose: null,
         onDraw: null,
 
@@ -311,16 +313,16 @@
         buttons: ['clear', 'cancel', 'today', 'apply'],
 
         // clear button text or inner html
-        clearButton: 'Clear',
+        clear: 'Clear',
 
         // today button text or inner html
-        todayButton: 'Today',
+        today: 'Today',
 
         // cancel button text or inner html
-        cancelButton: 'Cancel',
+        cancel: 'Cancel',
 
         // apply button text or inner html
-        applyButton: 'Set Date',
+        apply: 'Set Date',
 
         // Custom additions
         calendarClass: null,
@@ -334,10 +336,10 @@
         daysClass: '',
         dayClass: '',
         buttonsClass: '',
-        clearButtonClass: '',
-        todayButtonClass: '',
-        cancelButtonClass: '',
-        applyButtonClass: ''
+        clearClass: '',
+        todayClass: '',
+        cancelClass: '',
+        applyClass: ''
     },
 
 
@@ -360,11 +362,11 @@
         var ariaSelected = 'false';
         if (opts.isEmpty) {
             if (opts.showDaysInNextAndPreviousMonths) {
-                arr.push('is-outside-current-month');
+                // arr.push('is-outside-current-month');
                 attr.push('data-pika-muted');
 
                 if(!opts.enableSelectionDaysInNextAndPreviousMonths) {
-                    arr.push('is-selection-disabled');
+                    // arr.push('is-selection-disabled');
                     attr.push('disabled');
                 }
 
@@ -377,7 +379,7 @@
             attr.push('disabled');
         }
         if (opts.isToday) {
-            arr.push('is-today');
+            // arr.push('is-today');
             attr.push('data-pika-today');
         }
         if (opts.isSelected) {
@@ -386,19 +388,19 @@
             ariaSelected = 'true';
         }
         if (opts.hasEvent) {
-            arr.push('has-event');
+            // arr.push('has-event');
             attr.push('data-pika-event');
         }
         if (opts.isInRange) {
-            arr.push('is-inrange');
+            // arr.push('is-inrange');
             attr.push('data-pika-range');
         }
         if (opts.isStartRange) {
-            arr.push('is-startrange');
+            // arr.push('is-startrange');
             attr.push('data-pika-range-start');
         }
         if (opts.isEndRange) {
-            arr.push('is-endrange');
+            // arr.push('is-endrange');
             attr.push('data-pika-range-end');
         }
      
@@ -543,10 +545,10 @@
     {
         let html = '';
         let buttons = {
-            clear: '<button class="pika-clear ' + opts.clearButtonClass + '" type="button">' + opts.clearButton+ '</button>',
-            cancel: '<button class="pika-cancel ' + opts.cancelButtonClass + '" type="button">' + opts.cancelButton+ '</button>',
-            today: '<button class="pika-today ' + opts.todayButtonClass + '" type="button">' + opts.todayButton + '</button>',
-            apply: '<button class="pika-apply ' + opts.applyButtonClass + '" type="button">' + opts.applyButton + '</button>'
+            clear: '<button class="pika-clear ' + opts.clearClass + '" type="button">' + opts.clear + '</button>',
+            cancel: '<button class="pika-cancel ' + opts.cancelClass + '" type="button">' + opts.cancel + '</button>',
+            today: '<button class="pika-today ' + opts.todayClass + '" type="button">' + opts.today + '</button>',
+            apply: '<button class="pika-apply ' + opts.applyClass + '" type="button">' + opts.apply + '</button>'
         };
         if (opts.showButtons) {
             html += '<div class="pika-buttons ' + opts.buttonsClass + '">';
@@ -1421,11 +1423,14 @@
         {
             if (!this.isVisible()) {
                 this._v = true;
+                if (typeof this._o.onBeforeOpen === 'function') {
+                    this._o.onBeforeOpen.call(this);
+                }
                 this.draw();
                 removeClass(this.el, 'is-hidden');
                 if (this._o.bound) {
                     addEvent(document, 'click', this._onClick);
-                    this.adjustPosition();
+                    // this.adjustPosition();
                 }
                 if (typeof this._o.onOpen === 'function') {
                     this._o.onOpen.call(this);
@@ -1437,15 +1442,19 @@
         {
             var v = this._v;
             if (v !== false) {
+                if (v !== undefined && typeof this._o.onBeforeClose === 'function') {
+                    this._o.onBeforeClose.call(this);
+                }
+                
                 if (this._o.bound) {
                     removeEvent(document, 'click', this._onClick);
                 }
 
                 if (!this._o.container) {
-                    this.el.style.position = 'static'; // reset
-                    this.el.style.left = 'auto';
-                    this.el.style.top = 'auto';
-                    this.el.style.display = 'none';
+                    this.el.style.position = 'absolute'; // reset
+                    // this.el.style.left = 'auto';
+                    // this.el.style.top = 'auto';
+                    // this.el.style.display = 'none';
                 }
                 addClass(this.el, 'is-hidden');
                 this._v = false;
