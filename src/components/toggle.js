@@ -18,6 +18,10 @@ class Toggle extends Component {
     init() {
         if (!this._element) return;
 
+        this._config.create = typeof this._config.create == 'string'
+            ? this._config.create.split(' ')
+            : this._config.create;
+
         const toggles = this._component.createConfig(this._config.create, [
             'addClass', 
             'removeClass', 

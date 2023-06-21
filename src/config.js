@@ -4,6 +4,7 @@ const config = {
         'theme',
         'toggle',
         'close',
+        'datepicker',
         'dropdown',
         'tooltip',
         'modal',
@@ -11,7 +12,6 @@ const config = {
         'tab',
         'scrollspy',
         'scroll',
-        'datepicker',
         'clipboard',
         'highlight'
     ]

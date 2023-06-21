@@ -22,7 +22,7 @@ UIkit.autoload = (filter = [], context = null) => {
 
     components.forEach((component) => {
         const componentName = util.kebabCase(component);
-        const elements = context.querySelectorAll(`[data-${getConfig('prefix')}-${componentName}="true"]`);
+        const elements = context.querySelectorAll(`[data-${getConfig('prefix')}-${componentName}=true]`);
 
         elements.forEach((element) => {
             try {

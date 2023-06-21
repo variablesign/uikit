@@ -79,6 +79,18 @@ class Datepicker extends Component {
             ? this._config.buttons.split(' ')
             : this._config.buttons;
 
+        this._config.minDate = typeof this._config.minDate == 'string'
+            ? new Date(Date.parse(this._config.minDate))
+            : this._config.minDate;
+
+        this._config.maxDate = typeof this._config.maxDate == 'string'
+            ? new Date(Date.parse(this._config.maxDate))
+            : this._config.maxDate;
+
+        this._config.defaultDate = typeof this._config.defaultDate == 'string'
+            ? new Date(Date.parse(this._config.defaultDate))
+            : this._config.defaultDate;
+
         const isRangePicker = () => {
             if (this._config.startRangeTarget || this._config.endRangeTarget) {
                 return true;
