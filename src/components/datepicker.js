@@ -6,7 +6,11 @@ import { computePosition, offset, flip, shift, limitShift, autoUpdate } from '@f
 
 const _component = 'datepicker';
 const _defaults = {
+    bound: undefined,
     trigger: null,
+    container: undefined,
+    startRange: null,
+    endRange: null,
     startRangeTarget: null,
     endRangeTarget: null,
     format: null,
@@ -27,7 +31,7 @@ const _defaults = {
     buttonsPlacement: 'bottom',
     previous: 'Previous',
     next: 'Next',
-    buttons: ['cancel', 'apply'], // ['clear', 'cancel', 'today', 'apply']
+    buttons: ['cancel', 'apply'],
     clear: 'Clear',
     today: 'Today',
     cancel: 'Cancel',
@@ -36,6 +40,7 @@ const _defaults = {
     placement: 'bottom-start',
     weekdays: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
     events: [],
+    disableDay: null,
     calendarClass: '',
     headerClass: '',
     titleClass: '',
@@ -61,11 +66,17 @@ class Datepicker extends Component {
     }
 
     init() {
+        if (!this._element) return;
+
         let autoUpdatePosition = () => void 0;
         
         this._config.trigger = typeof this._config.trigger == 'string'
             ? document.querySelector(this._config.trigger)
             : this._config.trigger;
+        
+        this._config.container = typeof this._config.container == 'string'
+            ? document.querySelector(this._config.container)
+            : this._config.container;
         
         this._config.startRangeTarget = this._config.endRangeTarget == null && typeof this._config.startRangeTarget == 'string'
             ? document.querySelector(this._config.startRangeTarget)
@@ -87,11 +98,19 @@ class Datepicker extends Component {
             ? new Date(Date.parse(this._config.maxDate))
             : this._config.maxDate;
 
+        this._config.yearRange = typeof this._config.yearRange == 'string'
+            ? this._config.yearRange.split(' ')
+            : this._config.yearRange;
+
+        this._config.yearRange = this._config.yearRange instanceof Array
+            ? this._config.yearRange
+            : this._config.yearRange;
+
         this._config.defaultDate = typeof this._config.defaultDate == 'string'
             ? new Date(Date.parse(this._config.defaultDate))
             : this._config.defaultDate;
 
-        const isRangePicker = () => {
+        this._isRangePicker = () => {
             if (this._config.startRangeTarget || this._config.endRangeTarget) {
                 return true;
             }
@@ -100,7 +119,7 @@ class Datepicker extends Component {
         };
 
         const updateRangeDate = () => {
-            if (!isRangePicker()) return;
+            if (!this._isRangePicker()) return;
 
             const date = this._pikaday.getDate();
             const range = UIkit.datepicker(this._config.startRangeTarget || this._config.endRangeTarget);
@@ -134,6 +153,7 @@ class Datepicker extends Component {
             reposition: false,
             showDaysInNextAndPreviousMonths: this._config.showOtherDays,
             enableSelectionDaysInNextAndPreviousMonths: this._config.otherDaysSelection,
+            disableDayFn: this._config.disableDay,
             i18n: {
                 previousMonth: this._config.previous,
                 nextMonth: this._config.next,
@@ -170,8 +190,6 @@ class Datepicker extends Component {
         };
 
         config.onBeforeOpen = () => {
-            
-            this._pikaday.el.style.display = 'none';
 
             const setPosition = () => {
                 computePosition(this._element, this._pikaday.el, {
@@ -196,7 +214,7 @@ class Datepicker extends Component {
             };
     
             const updatePosition = () => { 
-                if (!this._pikaday) return;
+                if (!this._pikaday || this._config.bound == false) return;
 
                 return autoUpdate(this._element, this._pikaday.el, setPosition);
             };
@@ -207,26 +225,28 @@ class Datepicker extends Component {
         };
 
         config.onOpen = () => {
-            this._pikaday.el.style.display = 'block';
-            
-            this._component.transition('transitionEnter', this._pikaday.el, (e) => {
-                this._component.dispatch('shown');
-            });
+            if (this._config.bound != false) {                
+                this._component.transition('transitionEnter', this._pikaday.el, (e) => {
+                    this._component.dispatch('shown');
+                });
+            }
         };
 
         config.onBeforeClose = () => {
             this._component.dispatch('hide');
 
-            const transitioned = this._component.transition('transitionLeave', this._pikaday.el, (e) => {
-                this._component.dispatch('hidden');
-                autoUpdatePosition();
-                this._pikaday.el.style.display = 'none';
-            });
+            if (this._config.bound != false) {
+                const transitioned = this._component.transition('transitionLeave', this._pikaday.el, (e) => {
+                    this._component.dispatch('hidden');
+                    autoUpdatePosition();
+                    this._pikaday.el.style.display = 'none';
+                });
 
-            if (!transitioned) {
-                this._pikaday.el.style.display = 'none';
-                this._component.dispatch('hidden');
-                autoUpdatePosition();
+                if (!transitioned) {
+                    this._pikaday.el.style.display = 'none';
+                    this._component.dispatch('hidden');
+                    autoUpdatePosition();
+                }
             }
         };
 
@@ -272,7 +292,13 @@ class Datepicker extends Component {
                 }).filter(part => part);
 
                 replacedParts.forEach((part, index) => {
-                    formattedDate += part + (delimiters[index] && index < (replacedParts.length - 1) ? delimiters[index] : '');
+                    if (delimiters && delimiters.length > 0) {
+                        formattedDate += part + (delimiters[index] && index < (replacedParts.length - 1) ? delimiters[index] : '');
+
+                        return;
+                    }
+
+                    formattedDate += part;
                 });
 
                 return formattedDate;
@@ -307,8 +333,14 @@ class Datepicker extends Component {
         return this._pikaday.getDate();
     }
 
-    setDate(date) {
-        this._pikaday.setDate(date);
+    setDate(date, silent = false) {
+
+        if (this._isRangePicker()) {
+            this._pikaday._o.minDate = null;
+            this._pikaday._o.maxDate = null;
+        }
+        
+        this._pikaday.setDate(date, silent);
     }
 
     gotoDate(date) {
@@ -365,6 +397,10 @@ class Datepicker extends Component {
 
     clear() {
         this._pikaday.clear();
+    }
+
+    update() {
+        this._pikaday.draw();
     }
 
     destroy() {

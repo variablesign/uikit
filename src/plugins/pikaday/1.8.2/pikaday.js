@@ -743,10 +743,12 @@
             date = self._parseFieldValue();
             if (isDate(date)) {
               self.setDate(date);
+            } else {
+                self.clear();
             }
-            if (!self._v) {
-                self.show();
-            }
+            // if (!self._v) {
+            //     self.show();
+            // }
         };
 
         self._onInputFocus = function()
@@ -812,6 +814,10 @@
         let calendarClass = opts.calendarClass ? ' ' + opts.calendarClass : '';
         self.el.className = 'pika-single' + (opts.isRTL ? ' is-rtl' : '') + (opts.theme ? ' ' + opts.theme : '') + calendarClass;
 
+        if (opts.bound) {
+            self.el.style.display = 'none';
+        }
+        
         addEvent(self.el, 'mousedown', self._onMouseDown, true);
         addEvent(self.el, 'touchend', self._onMouseDown, true);
         addEvent(self.el, 'change', self._onChange);
@@ -1431,6 +1437,7 @@
                 if (this._o.bound) {
                     addEvent(document, 'click', this._onClick);
                     // this.adjustPosition();
+                    this.el.style.display = 'block';
                 }
                 if (typeof this._o.onOpen === 'function') {
                     this._o.onOpen.call(this);
