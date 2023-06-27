@@ -33,6 +33,10 @@ class Close extends Component {
             }
         };
 
+        if (!this._element.hasAttribute('aria-label')) {
+            this._element.setAttribute('aria-label', 'Close');
+        }
+
         this._close = () => {
             this._component.dispatch('hide', eventData);
 
