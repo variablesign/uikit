@@ -24,7 +24,7 @@ const _defaults = {
     yearRange: 10,
     showOtherDays: false,
     otherDaysSelection: false,
-    blurFieldOnSelect : true,
+    focus : false,
     title: null,
     autoClose: true,
     showButtons: false,
@@ -38,10 +38,33 @@ const _defaults = {
     apply: 'Apply',
     offset: 8,
     placement: 'bottom-start',
-    weekdays: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
+    shortWeekdays: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
+    months: [
+        'January', 
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December'
+    ],
+    weekdays: [
+        'Sunday', 
+        'Monday', 
+        'Tuesday', 
+        'Wednesday', 
+        'Thursday', 
+        'Friday', 
+        'Saturday'
+    ],
     events: [],
     disableDay: null,
-    calendarClass: '',
+    class: '',
     headerClass: '',
     titleClass: '',
     weekdayClass: '',
@@ -86,6 +109,18 @@ class Datepicker extends Component {
             ? document.querySelector(this._config.endRangeTarget)
             : this._config.endRangeTarget;
 
+        this._config.shortWeekdays = typeof this._config.shortWeekdays == 'string'
+            ? this._config.shortWeekdays.split(' ')
+            : this._config.shortWeekdays;
+
+        this._config.weekdays = typeof this._config.weekdays == 'string'
+            ? this._config.weekdays.split(' ')
+            : this._config.weekdays;
+
+        this._config.months = typeof this._config.months == 'string'
+            ? this._config.months.split(' ')
+            : this._config.months;
+
         this._config.buttons = typeof this._config.buttons == 'string'
             ? this._config.buttons.split(' ')
             : this._config.buttons;
@@ -109,6 +144,9 @@ class Datepicker extends Component {
         this._config.defaultDate = typeof this._config.defaultDate == 'string'
             ? new Date(Date.parse(this._config.defaultDate))
             : this._config.defaultDate;
+
+        this._hasMoment = typeof moment === 'function';
+        this._hasDayjs = typeof dayjs === 'function';
 
         this._isRangePicker = () => {
             if (this._config.startRangeTarget || this._config.endRangeTarget) {
@@ -146,41 +184,75 @@ class Datepicker extends Component {
                 }
             }
         };
+
+        const getOrdinalNumber = (number) => {
+            const length = number.length - 1;
+            number = parseInt(number).toString();
+            const index = number.substring(length);
+            const ordinals = {
+                1: 'st',
+                2: 'nd',
+                3: 'rd'
+            };
+
+            return ordinals[index] ? number + ordinals[index] : number + 'th';
+        };
         
         // Pikaday config
         let config = {
             field: this._element,
             reposition: false,
+            bound: this._config.bound,
+            trigger: this._config.trigger,
+            container: this._config.container,
+            startRange: this._config.startRange,
+            endRange: this._config.endRange,
+            format: this._config.format,
+            minDate: this._config.minDate,
+            maxDate: this._config.maxDate,
+            toString: this._config.toString,
+            parse: this._config.parse,
+            defaultDate: this._config.defaultDate,
+            setDefaultDate: this._config.setDefaultDate,
+            firstDay: this._config.firstDay,
+            yearRange: this._config.yearRange,
             showDaysInNextAndPreviousMonths: this._config.showOtherDays,
             enableSelectionDaysInNextAndPreviousMonths: this._config.otherDaysSelection,
             disableDayFn: this._config.disableDay,
+            blurFieldOnSelect : !this._config.focus,
+            title: this._config.title,
+            autoClose: this._config.autoClose,
+            showButtons: this._config.showButtons,
+            buttonsPlacement: this._config.buttonsPlacement,
+            previous: this._config.previous,
+            next: this._config.next,
+            buttons: this._config.buttons,
+            clear: this._config.clear,
+            today: this._config.today,
+            cancel: this._config.cancel,
+            apply: this._config.apply,
+            events: this._config.events,
+            calendarClass: this._config.class,
+            headerClass: this._config.headerClass,
+            titleClass: this._config.titleClass,
+            weekdayClass: this._config.weekdayClass,
+            daysClass: this._config.daysClass,
+            dayClass: this._config.dayClass,
+            previousClass: this._config.previousClass,
+            nextClass: this._config.nextClass,
+            monthClass: this._config.monthClass,
+            yearClass: this._config.yearClass,
+            buttonsClass: this._config.buttonsClass,
+            clearClass: this._config.clearClass,
+            todayClass: this._config.todayClass,
+            cancelClass: this._config.cancelClass,
+            applyClass: this._config.applyClass,
             i18n: {
                 previousMonth: this._config.previous,
                 nextMonth: this._config.next,
-                months: [
-                    'January', 
-                    'February',
-                    'March',
-                    'April',
-                    'May',
-                    'June',
-                    'July',
-                    'August',
-                    'September',
-                    'October',
-                    'November',
-                    'December'
-                ],
-                weekdays: [
-                    'Sunday', 
-                    'Monday', 
-                    'Tuesday', 
-                    'Wednesday', 
-                    'Thursday', 
-                    'Friday', 
-                    'Saturday'
-                ],
-                weekdaysShort: this._config.weekdays
+                months: this._config.months,
+                weekdays: this._config.weekdays,
+                weekdaysShort: this._config.shortWeekdays
             }
         }
 
@@ -258,13 +330,13 @@ class Datepicker extends Component {
             this._component.dispatch('draw');
         };
 
-        config.onSelect = (e) => {
+        config.onSelect = (date, hasEvent) => {
             updateRangeDate();
-            this._component.dispatch('select');
+            this._component.dispatch('select', { date, hasEvent, config: this._config });
         };
 
-        if (!this._config.toString && this._config.format) {
-            this._config.toString = (date, format) => {
+        if (!this._config.toString && this._config.format && (!this._hasMoment || !this._hasDayjs)) {
+            config.toString = (date, format) => {
 
                 let formattedDate = '';
                 const tokens = {
@@ -272,6 +344,7 @@ class Datepicker extends Component {
                     dddd: config.i18n.weekdays[date.getDay()],
                     D: date.getDate().toString(),
                     DD: date.getDate().toString().padStart(2, '0'),
+                    Do: getOrdinalNumber(date.getDate().toString()),
                     M: (date.getMonth() + 1).toString(),
                     MM: (date.getMonth() + 1).toString().padStart(2, '0'),
                     MMM: config.i18n.months[date.getMonth()].slice(0, 3),
@@ -305,32 +378,85 @@ class Datepicker extends Component {
             };
         }
 
-        if (!this._config.parse && this._config.format) {
-            this._config.parse = (dateString, format) => {
-                return new Date(Date.parse(dateString));
+        if (!this._config.parse && this._config.format && (!this._hasMoment || !this._hasDayjs)) {
+            config.parse = (dateString, format) => {
+                let day = '', 
+                    month = '', 
+                    year = '';
+
+                let dateParts = dateString.trim()
+                .replaceAll(/\W+/g, ' ')
+                .split(' ')
+                .filter(str => str.length > 0);
+
+                let formatParts = format.trim()
+                .replaceAll(/\W+/g, ' ')
+                .split(' ')
+                .filter(str => str.length > 0)
+                .map(str => str.charAt(0));
+
+                formatParts.forEach((part, index) => {
+                    switch (part) {
+                        case 'Y':
+                            year = dateParts[index] || '';
+                            break;
+                            
+                        case 'M':
+                            if (util.isNumber(dateParts[index])) {
+                                month = dateParts[index] ? parseInt(dateParts[index]) - 1 : dateParts[index];
+                            } else {
+                                month = dateParts[index] || '';
+                            }
+                            break;
+
+                        case 'D':
+                            day = parseInt(dateParts[index]) || '';
+                            break;
+                    }
+                });
+
+                const date = (`${year} ${month} ${day}`).trim();
+
+                return new Date(Date.parse(date));
             }
         }
 
-        config = util.extendObjects(config, this._config);
+        // Day.js toString function
+        if (!this._config.toString && this._config.format && this._hasDayjs) {
+            config.toString = (date, format) => {
+                return dayjs(date).format(format);
+            };
+        }
+
+        // Day.js parse function
+        if (!this._config.parse && this._config.format && this._hasDayjs) {
+            config.parse = (dateString, format) => {
+                return dayjs(dateString, format).toDate();
+            }
+        }
 
         // Init Pikaday
         this._pikaday = new Pikaday(config);
     }
 
     toString(format) {
-        return this._pikaday.toString(format);
-    }
-
-    getMoment() {
-        return this._pikaday.getMoment();
-    }
-
-    setMoment(date) {
-        this._pikaday.setMoment(date);
+        if (this._hasMoment) {
+            return moment(this._pikaday.getDate()).format(format);
+        } else if (this._hasDayjs) {
+            return dayjs(this._pikaday.getDate()).format(format);
+        } else {
+            return this._pikaday.toString(format);
+        }
     }
 
     getDate() {
-        return this._pikaday.getDate();
+        if (this._hasMoment) {
+            return this._pikaday.getDate() ? moment(this._pikaday.getDate()) : null;
+        } else if (this._hasDayjs) {
+            return this._pikaday.getDate() ? dayjs(this._pikaday.getDate()) : null;
+        } else {
+            return this._pikaday.getDate();
+        }
     }
 
     setDate(date, silent = false) {
@@ -340,11 +466,19 @@ class Datepicker extends Component {
             this._pikaday._o.maxDate = null;
         }
         
-        this._pikaday.setDate(date, silent);
+        if (this._hasMoment || this._hasDayjs) {
+            this._pikaday.setDate(date.toDate(), silent);
+        } else {
+            this._pikaday.setDate(date, silent);
+        }
     }
 
     gotoDate(date) {
-        this._pikaday.gotoDate(date);
+        if (this._hasMoment || this._hasDayjs) {
+            this._pikaday.gotoDate(date.toDate());
+        } else {
+            this._pikaday.gotoDate(date);
+        }
     }
 
     gotoToday() {
@@ -352,31 +486,50 @@ class Datepicker extends Component {
     }
 
     gotoMonth(month) {
+        month = parseInt(month) || month;
         this._pikaday.gotoMonth(month);
     }
 
     gotoYear(year) {
+        if (year.toString().length != 4) return;
+
         this._pikaday.gotoYear(year);
     }
 
     setMinDate(date) {
-        this._pikaday.setMinDate(date);
+        if (this._hasMoment || this._hasDayjs) {
+            this._pikaday.setMinDate(date.toDate());
+        } else {
+            date = typeof date == 'string' ? new Date(Date.parse(date)) : date;
+            this._pikaday.setMinDate(date);
+        }
     }
 
     setMaxDate(date) {
-        this._pikaday.setMaxDate(date);
-    }
-
-    setMinDate(date) {
-        this._pikaday.setMinDate(date);
+        if (this._hasMoment || this._hasDayjs) {
+            this._pikaday.setMaxDate(date.toDate());
+        } else {
+            date = typeof date == 'string' ? new Date(Date.parse(date)) : date;
+            this._pikaday.setMaxDate(date);
+        }
     }
 
     setStartRange(date) {
-        this._pikaday.setStartRange(date);
+        if (this._hasMoment || this._hasDayjs) {
+            this._pikaday.setStartRange(date.toDate());
+        } else {
+            date = typeof date == 'string' ? new Date(Date.parse(date)) : date;
+            this._pikaday.setStartRange(date);
+        }
     }
 
     setEndRange(date) {
-        this._pikaday.setEndRange(date);
+        if (this._hasMoment || this._hasDayjs) {
+            this._pikaday.setEndRange(date.toDate());
+        } else {
+            date = typeof date == 'string' ? new Date(Date.parse(date)) : date;
+            this._pikaday.setEndRange(date);
+        }
     }
 
     nextMonth() {

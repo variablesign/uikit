@@ -459,7 +459,7 @@
             arr.push('<th></th>');
         }
         for (i = 0; i < 7; i++) {
-            arr.push('<th scope="col"><div class="' + opts.weekdayClass + '" title="' + renderDayName(opts, i) + '">' + renderDayName(opts, i, true) + '</div></th>');
+            arr.push('<th scope="col"><div class="' + opts.weekdayClass + '" title="' + renderDayName(opts, i) + '" aria-label="' + renderDayName(opts, i) + '">' + renderDayName(opts, i, true) + '</div></th>');
         }
         return '<thead><tr>' + (opts.isRTL ? arr.reverse() : arr).join('') + '</tr></thead>';
     },
@@ -905,6 +905,8 @@
 
             opts.disableDayFn = (typeof opts.disableDayFn) === 'function' ? opts.disableDayFn : null;
 
+            opts.events = opts.events.map((date) => (new Date(Date.parse(date))).toDateString());
+
             var nom = parseInt(opts.numberOfMonths, 10) || 1;
             opts.numberOfMonths = nom > 4 ? 4 : nom;
 
@@ -1030,7 +1032,15 @@
                 fireEvent(this._o.field, 'change', { firedBy: this });
             }
             if (!preventOnSelect && typeof this._o.onSelect === 'function') {
-                this._o.onSelect.call(this, this.getDate());
+                let hasEvent = false;
+
+                for (const event of this._o.events) {
+                    if (event == this.getDate()?.toDateString()) {
+                        hasEvent = true;
+                    }
+                }
+
+                this._o.onSelect.call(this, this.getDate(), hasEvent);
             }
         },
 
