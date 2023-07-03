@@ -2,13 +2,14 @@ import * as util from '../utils.js';
 import uk from '../uikit.js';
 import Component from '../component.js';
 
-const _component = 'close';
+const _component = 'dismiss';
 const _defaults = {
     target: null,
-    remove: true
+    remove: false,
+    delay: 0
 };
 
-class Close extends Component {
+class Dismiss extends Component {
     constructor(element, config) {
         super(element, config, _defaults, _component);
         this._component.allowTransitions(false);
@@ -18,8 +19,15 @@ class Close extends Component {
     init() {
         if (!this._element) return;
         
-        this._target = this._config.target 
+        let timeout;
+        this._config.delay = parseInt(this._config.delay);
+
+        this._config.target = typeof this._config.target == 'string'
             ? this._element.closest(this._config.target) 
+            : this._config.target;
+        
+        this._target = this._config.target instanceof HTMLElement
+            ? this._config.target
             : this._element.parentNode;
 
         const eventData = { 
@@ -62,6 +70,13 @@ class Close extends Component {
 
         this._component.on(this._element, 'click', onClose);
 
+        if (this._config.delay != 0 && this._config.delay >= 3000) {           
+            clearTimeout(timeout); 
+            setTimeout(() => {
+                this._close();
+            }, this._config.delay);
+        }
+
         this._component.dispatch('initialize');
     }
 
@@ -74,8 +89,8 @@ class Close extends Component {
     }
 }
 
-uk.registerComponent(_component, Close);
+uk.registerComponent(_component, Dismiss);
 
 export {
-    Close
+    Dismiss
 };

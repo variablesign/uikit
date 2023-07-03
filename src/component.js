@@ -26,13 +26,68 @@ export default class Component {
         };
 
         /**
+         * Merge class with the `-merge` suffix values.
+         * 
+         * @param {object} newConfig
+         */
+        const mergeUndoClassConfig = (newConfig) => {
+            const config = {};
+
+            for (const key in newConfig) {
+                if (['classUndo', 'ClassUndo'].includes(key.substring(key.length - 9))) {
+                    const newKey = key.replace('classUndo', 'class').replace('ClassUndo', 'Class');
+                    const newClass = (newConfig[key] || '').split(' ');
+                    const oldClass = (this._config[newKey] || '').split(' ');
+                    config[newKey] = oldClass.filter((item) => !newClass.includes(item)).join(' ');
+                } else if (['classMerge', 'ClassMerge'].includes(key.substring(key.length - 10))) {
+                    const newKey = key.replace('classMerge', 'class').replace('ClassMerge', 'Class');
+                    const oldClass = (this._config[newKey] || '').split(' ');
+                    const newClass = (newConfig[key] || '').split(' ');
+                    config[newKey] = oldClass.concat(newClass.filter((item) => oldClass.indexOf(item) < 0)).join(' ');
+                } else {
+                    config[key] = newConfig[key];
+                }
+            }
+
+            return config;
+        };
+
+        /**
          * Merge all configurations.
          */
         this._config = util.extendObjects(
-            defaults, 
-            config, 
-            getDatasetConfig()
+            defaults,
+            config,
+            mergeUndoClassConfig(getDatasetConfig())
         );
+
+        /**
+         * Component configuration
+         * 
+         * - null: returns the configuration object
+         * - string: returns a value with the specified key
+         * - array: merges other config objects
+         * - object: updates the config
+         * @param {null|string|array|object} value 
+         * @returns
+         */
+        this.config = (value) => {
+            if (typeof value === 'string') {
+                return this._config[value];
+            }
+
+            if (value instanceof Array) {
+                value = value.map((config) => mergeUndoClassConfig(config));
+
+                return util.extendObjects(this._config, ...value);
+            }
+
+            if (value instanceof Object) {
+                return util.extendObjects(this._config, mergeUndoClassConfig(value));
+            }
+
+            return this._config;
+        }
 
         /**
          * Lock the listed config to the provided values.

@@ -1,10 +1,11 @@
 import './index.core.js';
 import './components/theme.js';
 import './components/toggle.js';
-import './components/close.js';
+import './components/dismiss.js';
 import './components/datepicker.js'; 
 import './components/dropdown.js';
 import './components/tooltip.js';
+import './components/toast.js';
 import './components/modal.js';
 import './components/offcanvas.js';
 import './components/tab.js';

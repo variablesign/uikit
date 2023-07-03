@@ -1,9 +1,9 @@
-const config = {
+export default {
     prefix: 'uk',
     autoload: [
         'theme',
         'toggle',
-        'close',
+        'dismiss',
         'datepicker',
         'dropdown',
         'tooltip',
@@ -14,7 +14,6 @@ const config = {
         'scroll',
         'clipboard',
         'highlight'
-    ]
+    ],
+    global: []
 };
-
-export default config;

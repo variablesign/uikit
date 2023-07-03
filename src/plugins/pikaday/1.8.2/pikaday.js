@@ -363,7 +363,7 @@
         if (opts.isEmpty) {
             if (opts.showDaysInNextAndPreviousMonths) {
                 // arr.push('is-outside-current-month');
-                attr.push('data-pika-muted');
+                attr.push('data-dp-muted');
 
                 if(!opts.enableSelectionDaysInNextAndPreviousMonths) {
                     // arr.push('is-selection-disabled');
@@ -380,32 +380,32 @@
         }
         if (opts.isToday) {
             // arr.push('is-today');
-            attr.push('data-pika-today');
+            attr.push('data-dp-today');
         }
         if (opts.isSelected) {
             arr.push('is-selected');
-            attr.push('data-pika-selected');
+            attr.push('data-dp-selected');
             ariaSelected = 'true';
         }
         if (opts.hasEvent) {
             // arr.push('has-event');
-            attr.push('data-pika-event');
+            attr.push('data-dp-event');
         }
         if (opts.isInRange) {
             // arr.push('is-inrange');
-            attr.push('data-pika-range');
+            attr.push('data-dp-range');
         }
         if (opts.isStartRange) {
             // arr.push('is-startrange');
-            attr.push('data-pika-range-start');
+            attr.push('data-dp-range-start');
         }
         if (opts.isEndRange) {
             // arr.push('is-endrange');
-            attr.push('data-pika-range-end');
+            attr.push('data-dp-range-end');
         }
      
         return `<td data-day="${opts.day}" class="${arr.join(' ')} ${self.daysClass}" aria-selected="${ariaSelected}">
-                    <button class="pika-button pika-day ${self.dayClass}" type="button" data-pika-year="${opts.year}" data-pika-month="${opts.month}" data-pika-day="${opts.day}" ${attr.join(' ')}>
+                    <button class="dp-button dp-day ${self.dayClass}" type="button" data-dp-year="${opts.year}" data-dp-month="${opts.month}" data-dp-day="${opts.day}" ${attr.join(' ')}>
                         ${opts.day}
                     </button>
                 </td>`;
@@ -439,12 +439,12 @@
         var date = new Date(y, m, d),
             week = hasMoment ? moment(date).isoWeek() : isoWeek(date, firstWeekOfYearMinDays);
 
-        return '<td class="pika-week">' + week + '</td>';
+        return '<td class="dp-week">' + week + '</td>';
     },
 
     renderRow = function(days, isRTL, pickWholeWeek, isRowSelected)
     {
-        return '<tr class="pika-row' + (pickWholeWeek ? ' pick-whole-week' : '') + (isRowSelected ? ' is-selected' : '') + '">' + (isRTL ? days.reverse() : days).join('') + '</tr>';
+        return '<tr class="dp-row' + (pickWholeWeek ? ' pick-whole-week' : '') + (isRowSelected ? ' is-selected' : '') + '">' + (isRTL ? days.reverse() : days).join('') + '</tr>';
     },
 
     renderBody = function(rows)
@@ -470,7 +470,7 @@
             opts = instance._o,
             isMinYear = year === opts.minYear,
             isMaxYear = year === opts.maxYear,
-            html = '<div id="' + randId + '" class="pika-title ' + opts.headerClass + '" role="heading" aria-live="polite">',
+            html = '<div id="' + randId + '" class="dp-title ' + opts.headerClass + '" role="heading" aria-live="polite">',
             monthHtml,
             yearHtml,
             prev = true,
@@ -483,8 +483,8 @@
                 opts.i18n.months[i] + '</option>');
         }
 
-        monthHtml = '<div class="pika-label ' + opts.monthClass + '">' + opts.i18n.months[month] + '<select class="pika-select pika-select-month" tabindex="-1">' + arr.join('') + '</select></div>';
-        // monthHtml = '<div class="pika-label">' + opts.i18n.months[month] + '<select class="pika-select pika-select-month" tabindex="-1">' + arr.join('') + '</select></div>';
+        monthHtml = '<div class="dp-label ' + opts.monthClass + '">' + opts.i18n.months[month] + '<select class="dp-select dp-select-month" tabindex="-1">' + arr.join('') + '</select></div>';
+        // monthHtml = '<div class="dp-label">' + opts.i18n.months[month] + '<select class="dp-select dp-select-month" tabindex="-1">' + arr.join('') + '</select></div>';
 
         if (isArray(opts.yearRange)) {
             i = opts.yearRange[0];
@@ -499,8 +499,8 @@
                 arr.push('<option value="' + i + '"' + (i === year ? ' selected="selected"': '') + '>' + (i) + '</option>');
             }
         }
-        yearHtml = '<div class="pika-label ' + opts.yearClass + '">' + year + opts.yearSuffix + '<select class="pika-select pika-select-year" tabindex="-1">' + arr.join('') + '</select></div>';
-        // yearHtml = '<div class="pika-label">' + year + opts.yearSuffix + '<select class="pika-select pika-select-year" tabindex="-1">' + arr.join('') + '</select></div>';
+        yearHtml = '<div class="dp-label ' + opts.yearClass + '">' + year + opts.yearSuffix + '<select class="dp-select dp-select-year" tabindex="-1">' + arr.join('') + '</select></div>';
+        // yearHtml = '<div class="dp-label">' + year + opts.yearSuffix + '<select class="dp-select dp-select-year" tabindex="-1">' + arr.join('') + '</select></div>';
 
         if (isMinYear && (month === 0 || opts.minMonth >= month)) {
             prev = false;
@@ -511,7 +511,7 @@
         }
 
         if (c === 0) {
-            html += `<button class="pika-prev ${prev ? '' : 'is-disabled'} ${opts.previousClass}" type="button" ${prev ? '' : 'disabled'}>${opts.i18n.previousMonth}</button>`;
+            html += `<button class="dp-prev ${prev ? '' : 'is-disabled'} ${opts.previousClass}" type="button" ${prev ? '' : 'disabled'}>${opts.i18n.previousMonth}</button>`;
         }
 
         if (opts.showMonthAfterYear) {
@@ -521,7 +521,7 @@
         }
 
         if (c === (instance._o.numberOfMonths - 1) ) {
-            html += `<button class="pika-next ${next ? '' : 'is-disabled'} ${opts.nextClass}" type="button" ${next ? '' : 'disabled'}>${opts.i18n.nextMonth}</button>`;
+            html += `<button class="dp-next ${next ? '' : 'is-disabled'} ${opts.nextClass}" type="button" ${next ? '' : 'disabled'}>${opts.i18n.nextMonth}</button>`;
         }
 
         return html += '</div>';
@@ -529,13 +529,13 @@
 
     renderTable = function(opts, data, randId)
     {
-        return '<table cellpadding="0" cellspacing="0" class="pika-table" role="grid" aria-labelledby="' + randId + '">' + renderHead(opts) + renderBody(data) + '</table>';
+        return '<table cellpadding="0" cellspacing="0" class="dp-table" role="grid" aria-labelledby="' + randId + '">' + renderHead(opts) + renderBody(data) + '</table>';
     },
 
     renderHeading = function(opts)
     {
         if (opts.title) {
-            return '<div class="pika-header-title ' + opts.titleClass + '">' + opts.title + '</div>';
+            return '<div class="dp-header-title ' + opts.titleClass + '">' + opts.title + '</div>';
         }
 
         return '';
@@ -545,13 +545,13 @@
     {
         let html = '';
         let buttons = {
-            clear: '<button class="pika-clear ' + opts.clearClass + '" type="button">' + opts.clear + '</button>',
-            cancel: '<button class="pika-cancel ' + opts.cancelClass + '" type="button">' + opts.cancel + '</button>',
-            today: '<button class="pika-today ' + opts.todayClass + '" type="button">' + opts.today + '</button>',
-            apply: '<button class="pika-apply ' + opts.applyClass + '" type="button">' + opts.apply + '</button>'
+            clear: '<button class="dp-clear ' + opts.clearClass + '" type="button">' + opts.clear + '</button>',
+            cancel: '<button class="dp-cancel ' + opts.cancelClass + '" type="button">' + opts.cancel + '</button>',
+            today: '<button class="dp-today ' + opts.todayClass + '" type="button">' + opts.today + '</button>',
+            apply: '<button class="dp-apply ' + opts.applyClass + '" type="button">' + opts.apply + '</button>'
         };
         if (opts.showButtons) {
-            html += '<div class="pika-buttons ' + opts.buttonsClass + '">';
+            html += '<div class="dp-buttons ' + opts.buttonsClass + '">';
 
             opts.buttons.forEach((button) => {
                 html += buttons[button];
@@ -585,7 +585,7 @@
             if (opts.showButtons) {
 
                 // set today's date
-                if (hasClass(target, 'pika-today')) {      
+                if (hasClass(target, 'dp-today')) {      
                     let today = new Date();
 
                     if (self._o.toString) {
@@ -605,7 +605,7 @@
                 }
 
                 // manually apply date
-                if (hasClass(target, 'pika-apply')) {
+                if (hasClass(target, 'dp-apply')) {
                     self._o.field.value = self.toString();
                     self.hide();
                     if (opts.field && opts.blurFieldOnSelect) {
@@ -614,7 +614,7 @@
                 }
 
                 // close calendar
-                if (hasClass(target, 'pika-cancel')) {
+                if (hasClass(target, 'dp-cancel')) {
                     self.hide();
                     if (opts.field && opts.blurFieldOnSelect) {
                         opts.field.blur();
@@ -622,7 +622,7 @@
                 }
 
                 // clear date
-                if (hasClass(target, 'pika-clear')) {
+                if (hasClass(target, 'dp-clear')) {
                     self.hide();
                     if (opts.field && opts.blurFieldOnSelect) {
                         opts.field.blur();
@@ -632,8 +632,8 @@
             }
 
             if (!hasClass(target, 'is-disabled')) {
-                if (hasClass(target, 'pika-button') && !hasClass(target, 'is-empty') && !hasClass(target.parentNode, 'is-disabled')) {
-                    self.setDate(new Date(target.getAttribute('data-pika-year'), target.getAttribute('data-pika-month'), target.getAttribute('data-pika-day')));
+                if (hasClass(target, 'dp-button') && !hasClass(target, 'is-empty') && !hasClass(target.parentNode, 'is-disabled')) {
+                    self.setDate(new Date(target.getAttribute('data-dp-year'), target.getAttribute('data-dp-month'), target.getAttribute('data-dp-day')));
                     if (opts.bound) {
                         sto(function() {
                             // self.hide();
@@ -646,14 +646,14 @@
                         }, 100);
                     }
                 }
-                else if (hasClass(target, 'pika-prev')) {
+                else if (hasClass(target, 'dp-prev')) {
                     self.prevMonth();
                 }
-                else if (hasClass(target, 'pika-next')) {
+                else if (hasClass(target, 'dp-next')) {
                     self.nextMonth();
                 }
             }
-            if (!hasClass(target, 'pika-select')) {
+            if (!hasClass(target, 'dp-select')) {
                 // if this is touch event prevent mouse events emulation
                 if (e.preventDefault) {
                     e.preventDefault();
@@ -673,10 +673,10 @@
             if (!target) {
                 return;
             }
-            if (hasClass(target, 'pika-select-month')) {
+            if (hasClass(target, 'dp-select-month')) {
                 self.gotoMonth(target.value);
             }
-            else if (hasClass(target, 'pika-select-year')) {
+            else if (hasClass(target, 'dp-select-year')) {
                 self.gotoYear(target.value);
             }
         };
@@ -766,7 +766,7 @@
             // IE allows pika div to gain focus; catch blur the input field
             var pEl = document.activeElement;
             do {
-                if (hasClass(pEl, 'pika-single')) {
+                if (hasClass(pEl, 'dp-single')) {
                     return;
                 }
             }
@@ -793,14 +793,14 @@
             if (!target) {
                 return;
             }
-            if (!hasEventListeners && hasClass(target, 'pika-select')) {
+            if (!hasEventListeners && hasClass(target, 'dp-select')) {
                 if (!target.onchange) {
                     target.setAttribute('onchange', 'return;');
                     addEvent(target, 'change', self._onChange);
                 }
             }
             do {
-                if (hasClass(pEl, 'pika-single') || pEl === opts.trigger) {
+                if (hasClass(pEl, 'dp-single') || pEl === opts.trigger) {
                     return;
                 }
             }
@@ -812,7 +812,7 @@
 
         self.el = document.createElement('div');
         let calendarClass = opts.calendarClass ? ' ' + opts.calendarClass : '';
-        self.el.className = 'pika-single' + (opts.isRTL ? ' is-rtl' : '') + (opts.theme ? ' ' + opts.theme : '') + calendarClass;
+        self.el.className = 'dp-single' + (opts.isRTL ? ' is-rtl' : '') + (opts.theme ? ' ' + opts.theme : '') + calendarClass;
 
         if (opts.bound) {
             self.el.style.display = 'none';
@@ -1232,14 +1232,14 @@
             }
 
             for (var c = 0; c < opts.numberOfMonths; c++) {
-                randId = 'pika-title-' + Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 2);
+                randId = 'dp-title-' + Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 2);
 
                 if (opts.buttonsPlacement == 'top') {
                     html += renderFoot(opts);
                 }
 
                 html += renderHeading(opts);
-                html += '<div class="pika-lendar">' + renderTitle(this, c, this.calendars[c].year, this.calendars[c].month, this.calendars[0].year, randId) + this.render(this.calendars[c].year, this.calendars[c].month, randId) + '</div>';
+                html += '<div class="dp-lendar">' + renderTitle(this, c, this.calendars[c].year, this.calendars[c].month, this.calendars[0].year, randId) + this.render(this.calendars[c].year, this.calendars[c].month, randId) + '</div>';
 
                 if (opts.buttonsPlacement == 'bottom') {
                     html += renderFoot(opts);
