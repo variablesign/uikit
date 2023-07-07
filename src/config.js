@@ -15,5 +15,7 @@ export default {
         'clipboard',
         'highlight'
     ],
-    global: []
+    global: {
+        //Snackbar: 'toast'
+    }
 };

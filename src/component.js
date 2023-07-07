@@ -5,6 +5,11 @@ export default class Component {
     constructor(element, config, defaults, component) {
         
         /**
+         * The global component config.
+         */
+        const globalConfig = UIkit.globalConfig[component] || {};
+        
+        /**
          * The component element.
          */
         this._element = util.getElement(element);
@@ -26,11 +31,12 @@ export default class Component {
         };
 
         /**
-         * Merge class with the `-merge` suffix values.
+         * Merge classes with the `-merge` suffix
+         * and remove classes with the `-undo` suffix
          * 
          * @param {object} newConfig
          */
-        const mergeUndoClassConfig = (newConfig) => {
+        const mergeConfig = (newConfig) => {
             const config = {};
 
             for (const key in newConfig) {
@@ -41,14 +47,14 @@ export default class Component {
                     config[newKey] = oldClass.filter((item) => !newClass.includes(item)).join(' ');
                 } else if (['classMerge', 'ClassMerge'].includes(key.substring(key.length - 10))) {
                     const newKey = key.replace('classMerge', 'class').replace('ClassMerge', 'Class');
-                    const oldClass = (this._config[newKey] || '').split(' ');
+                    const oldClass = (config[newKey] || this._config[newKey] || '').split(' ');
                     const newClass = (newConfig[key] || '').split(' ');
                     config[newKey] = oldClass.concat(newClass.filter((item) => oldClass.indexOf(item) < 0)).join(' ');
                 } else {
                     config[key] = newConfig[key];
                 }
             }
-
+            
             return config;
         };
 
@@ -57,8 +63,13 @@ export default class Component {
          */
         this._config = util.extendObjects(
             defaults,
-            config,
-            mergeUndoClassConfig(getDatasetConfig())
+            globalConfig
+        );
+
+        this._config = util.extendObjects(
+            this._config,
+            mergeConfig(config),
+            mergeConfig(getDatasetConfig())
         );
 
         /**
@@ -329,7 +340,9 @@ export default class Component {
             if (callback instanceof Function) {
                 callback(detail);
             }
-    
+
+            if (!element) return;
+
             element.dispatchEvent(new CustomEvent(prefixedEventName(eventName), { detail }));
         }
 
@@ -372,6 +385,7 @@ export default class Component {
 
         // Component data object
         this._component = {
+            mergeConfig,
             allowTransitions,
             transition,
             transitionCleanup,
@@ -397,6 +411,16 @@ export default class Component {
     destroy() {
         this._component.removeEvent();
         uk.removeInstance(this._element, this._component.name);
+    }
+
+    /**
+     * Sets new options for component
+     * @param {object} options 
+     */
+    setOptions(options) {
+        options = options instanceof Object ? options : {};
+
+        this._config = util.extendObjects(this._config, this._component.mergeConfig(options));
     }
 
     /**

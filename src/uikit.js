@@ -1,3 +1,4 @@
+import config from './config';
 import * as util from './utils.js';
 
 UIkit.setConfig = (options, componentConfig = true) => {
@@ -38,6 +39,16 @@ const getConfig = (key) => {
     return UIkit.config[key] || null;
 };
 
+const setGlobalComponent = (component) => {
+    if (!config.global instanceof Object) return;
+
+    for (const key in config.global) {
+        if (config.global[key] == component && !window[key]) {
+            window[key] = UIkit[component];
+        }
+    }
+};
+
 const registerComponent = (component, constructor) => {
     UIkit[component] = (element, config) => {
         if ((element instanceof Object) && !(element instanceof HTMLElement)) {
@@ -55,9 +66,9 @@ const registerComponent = (component, constructor) => {
             }
         }
 
-        if (UIkit.globalConfig[component]) {
-            config = util.extendObjects(config, UIkit.globalConfig[component]);
-        }
+        // if (UIkit.globalConfig[component]) {
+        //     config = util.extendObjects(config, UIkit.globalConfig[component]);
+        // }
     
         const instance = new constructor(element, config);
 
@@ -69,6 +80,8 @@ const registerComponent = (component, constructor) => {
     
         return instance;
     };
+
+    setGlobalComponent(component);
 };
 
 const removeInstance = (element, component) => {

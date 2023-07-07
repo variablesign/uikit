@@ -8,11 +8,13 @@ const _defaults = {
     offset: ['24', '24'],
     gap: 16,
     delay: 5000,
-    stacked: false,
+    stacking: 'bottom',
     create: null,
     template: null,
     class: null,
     zindex: 1090,
+    dismiss: 'data-dismiss',
+    onAction: null
 };
 
 class Toast extends Component {
@@ -27,6 +29,12 @@ class Toast extends Component {
         this._container = document.body;
         this._config.zindex = parseInt(this._config.zindex) || 0;
         this._config.delay = parseInt(this._config.delay);
+        this.isVisible = false;
+        const stacking = {
+            top: 'afterbegin',
+            bottom: 'beforeend'
+        };
+        let timeout;
 
         this._config.offset = util.isNumber(this._config.offset)
             ? [this._config.offset, this._config.offset]
@@ -36,12 +44,14 @@ class Toast extends Component {
             ? this._config.offset.split(' ')
             : this._config.offset;
 
-        const getTemplate = (options) => {
-            return options.create[options.template](options);
+        this._config.stacking = stacking[this._config.stacking] || 'beforeend';
+
+        const getTemplate = () => {
+            return this._config.create[this._config.template](this._config);
         };
 
-        const setPositionStyles = (element, options) => {
-            const positions = options.placement.split('-');
+        const setPositionStyles = (element) => {
+            const positions = this._config.placement.split('-');
             const alignment = {
                 start: 'left',
                 end: 'right'
@@ -52,64 +62,110 @@ class Toast extends Component {
             element.style.transform = `translate(${positions[1] ? '0' : '-50'}%, 0%)`;
         };
 
-        const getToast = (options) => {
-            const toast = document.createElement('div');
-            toast.innerHTML = getTemplate(options);
-            util.addClass(toast, options.class);
-            util.setAttributes(toast, {
-                role: 'alert'
-            });
+        this._show = () => {
+            if (!this._config.template) return;
 
-            return toast;
-        };
+            this._placementGroup = this._container.querySelector(`[data-toast-placement=${this._config.placement}]`);
 
-        this._show = (options) => {
-            this._placementGroup = document.querySelector(`[data-toast-placement=${options.placement}]`);
-            
             if (!this._placementGroup) {
-                const paddingX = options.offset[0] || 24;
-                const paddingY = options.offset[1] || 24;
+                const paddingX = this._config.offset[0] || 24;
+                const paddingY = this._config.offset[1] || 24;
 
                 this._placementGroup = document.createElement('div');
-                this._placementGroup.setAttribute('data-toast-placement', options.placement);
-                setPositionStyles(this._placementGroup, options);
+                this._placementGroup.setAttribute('data-toast-placement', this._config.placement);
+                setPositionStyles(this._placementGroup);
                 util.styles(this._placementGroup, {
                     position: `fixed`,
-                    overflow: `hidden`,
                     display: `flex`,
                     flexDirection: `column`,
-                    gap: `${options.gap}px`,
-                    zIndex: options.zIndex,
+                    gap: `${this._config.gap}px`,
+                    zIndex: this._config.zIndex,
                     padding: `${paddingX}px ${paddingY}px`
                 });
 
                 this._container.appendChild(this._placementGroup);
             }
 
-            this._toast = getToast(options);
-            const dismissTriggers = this._toast.querySelectorAll('[data-uk-dismiss=true]');
-
-            dismissTriggers.forEach((trigger) => {
-                const dismiss = UIkit.dismiss(trigger, {
-                    target: this._toast,
-                    remove: true,
-                    delay: options.delay
+            
+            if (!this.isVisible) {    
+                // Create toast            
+                this._toast = document.createElement('div');
+                this._toast.innerHTML = getTemplate(this._config);
+                util.hide(this._toast);
+                util.addClass(this._toast, this._config.class);
+                util.setAttributes(this._toast, {
+                    role: 'alert'
                 });
+
+                const dismissTriggers = this._toast.querySelectorAll(`[${this._config.dismiss}]`);
+                const actionTriggers = this._toast.querySelectorAll(`button:not([${this._config.dismiss}])`);
+                
+                dismissTriggers.forEach((trigger) => {
+                    this._component.on(trigger, 'click', this._hide);
+                });
+    
+                actionTriggers.forEach((trigger) => {
+                    this._component.on(trigger, 'click', () => {
+                        if (typeof this._config.onAction === 'function') {
+                            this._config.onAction(trigger)
+                        }
+                    });
+                });
+            }
+
+            this._component.dispatch('show', null, this._toast);
+            this._placementGroup.insertAdjacentElement(this._config.stacking, this._toast);
+            util.show(this._toast);
+            this.isVisible = true;
+
+            const transitioned = this._component.transition('transitionEnter', this._toast, (e) => {
+                //
             });
 
-            this._placementGroup.appendChild(this._toast);
+            if (this._config.delay >= 3000) {                
+                clearTimeout(timeout);
+                timeout = setTimeout(this._hide, this._config.delay);
+            }
+
+            if (transitioned) {
+                return;
+            }
+        };
+
+        this._hide = () => {
+            this._component.dispatch('hide', null, this._toast);
+
+            const hide = () => {
+                util.hide(this._toast);
+                this._toast.remove();
+                this.isVisible = false;
+
+                if (this._placementGroup.childNodes.length == 0) {
+                    this._placementGroup.remove();
+                }
+
+                this._component.removeEvent();
+            };
+            
+            const transitioned = this._component.transition('transitionLeave', this._toast, (e) => {
+                hide();
+            });
+
+            if (transitioned) {
+                return;
+            }
+
+            hide();
         };
     }
 
     show(options) {
-        options = typeof options == 'object' ? options : {};
-        options = this.config([options]);
-
-        this._show(options);
+        this.setOptions(options);
+        this._show();
     }
 
     hide() {
-        
+        this._hide();
     }
 
     destroy() {

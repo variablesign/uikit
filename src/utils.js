@@ -131,7 +131,7 @@ export const isNumber = (value) => {
 /**
  * Show element
  */
-export const show = (element, display = 'block') => {
+export const show = (element, display = 'inherit') => {
     if (!element) return;
 
     element.style.display = display;
