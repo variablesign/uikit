@@ -14,7 +14,8 @@ const _defaults = {
     class: null,
     zindex: 1090,
     dismiss: 'data-dismiss',
-    onAction: null
+    onAction: null,
+    onClose: null
 };
 
 class Toast extends Component {
@@ -44,6 +45,7 @@ class Toast extends Component {
             ? this._config.offset.split(' ')
             : this._config.offset;
 
+        this._config.gap = parseInt(this._config.gap) || 16;
         this._config.stacking = stacking[this._config.stacking] || 'beforeend';
 
         const getTemplate = () => {
@@ -101,6 +103,10 @@ class Toast extends Component {
                 const actionTriggers = this._toast.querySelectorAll(`button:not([${this._config.dismiss}])`);
                 
                 dismissTriggers.forEach((trigger) => {
+                    if (!trigger.hasAttribute('aria-label')) {
+                        trigger.setAttribute('aria-label', 'Close');
+                    }
+
                     this._component.on(trigger, 'click', this._hide);
                 });
     
@@ -113,7 +119,6 @@ class Toast extends Component {
                 });
             }
 
-            this._component.dispatch('show', null, this._toast);
             this._placementGroup.insertAdjacentElement(this._config.stacking, this._toast);
             util.show(this._toast);
             this.isVisible = true;
@@ -133,8 +138,6 @@ class Toast extends Component {
         };
 
         this._hide = () => {
-            this._component.dispatch('hide', null, this._toast);
-
             const hide = () => {
                 util.hide(this._toast);
                 this._toast.remove();
@@ -142,6 +145,10 @@ class Toast extends Component {
 
                 if (this._placementGroup.childNodes.length == 0) {
                     this._placementGroup.remove();
+                }
+
+                if (typeof this._config.onClose === 'function') {
+                    this._config.onClose(trigger)
                 }
 
                 this._component.removeEvent();

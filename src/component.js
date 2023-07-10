@@ -198,7 +198,7 @@ export default class Component {
             transitionEvent = isNaN(animationDuration) || animationDuration <= 0 
                 ? transitionEvent 
                 : 'animationend';
-
+            
             const _handler = (e) => {
                 this.isTransitioning = false;
                 callback(e);
