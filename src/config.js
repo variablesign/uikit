@@ -15,7 +15,7 @@ export default {
         'clipboard',
         'highlight'
     ],
-    global: {
-        //Snackbar: 'toast'
+    globalScope: {
+        // Snackbar: 'toast'
     }
 };

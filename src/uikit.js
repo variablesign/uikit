@@ -1,20 +1,14 @@
 import config from './config';
 import * as util from './utils.js';
 
-UIkit.setConfig = (options, componentConfig = true) => {
-    options = options instanceof Object ? options : null;
+UIkit.setConfig = (options) => {
+    options = options instanceof Object ? options : {};
+    UIkit.config = util.extend(true, UIkit.config, options);
+};
 
-    if (!options) {
-        return;
-    }
-
-    if (componentConfig) {
-        UIkit.globalConfig = util.extendObjects(UIkit.globalConfig, options);
-
-        return;
-    }
-
-    UIkit.config = util.extendObjects(UIkit.config, options);
+UIkit.componentConfig = (options) => {
+    options = options instanceof Object ? options : {};
+    UIkit.globalConfig = util.extend(UIkit.globalConfig, options);
 };
 
 UIkit.autoload = (filter = [], context = null) => {
@@ -40,10 +34,11 @@ const getConfig = (key) => {
 };
 
 const setGlobalComponent = (component) => {
-    if (!config.global instanceof Object) return;
-
-    for (const key in config.global) {
-        if (config.global[key] == component && !window[key]) {
+    if (!config.globalScope instanceof Object) return;
+    console.log(component);
+    console.log(UIkit.config);
+    for (const key in config.globalScope) {
+        if (config.globalScope[key] == component && !window[key]) {
             window[key] = UIkit[component];
         }
     }

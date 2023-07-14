@@ -19,7 +19,8 @@ export default class Component {
          */
         const getDatasetConfig = () => {
             const config = {};
-            const dataset = this._element ? this._element.dataset : {};
+            let dataset = this._element ? this._element.dataset : null;
+            dataset = dataset ? util.parseNestedDataset(dataset) : {};
 
             for (const key in dataset) {
                 if (key.substring(0, component.length) === component) {
@@ -45,15 +46,39 @@ export default class Component {
                     const newClass = (newConfig[key] || '').split(' ');
                     const oldClass = (this._config[newKey] || '').split(' ');
                     config[newKey] = oldClass.filter((item) => !newClass.includes(item)).join(' ');
-                } else if (['classMerge', 'ClassMerge'].includes(key.substring(key.length - 10))) {
+                }
+            }
+
+            for (const key in newConfig) {
+                if (['classMerge', 'ClassMerge'].includes(key.substring(key.length - 10))) {
                     const newKey = key.replace('classMerge', 'class').replace('ClassMerge', 'Class');
                     const oldClass = (config[newKey] || this._config[newKey] || '').split(' ');
                     const newClass = (newConfig[key] || '').split(' ');
                     config[newKey] = oldClass.concat(newClass.filter((item) => oldClass.indexOf(item) < 0)).join(' ');
-                } else {
+                }
+            }
+
+            for (const key in newConfig) {
+                if (!['classUndo', 'ClassUndo'].includes(key.substring(key.length - 9)) || !['classMerge', 'ClassMerge'].includes(key.substring(key.length - 10))) {
                     config[key] = newConfig[key];
                 }
             }
+
+            // for (const key in newConfig) {
+            //     if (['classUndo', 'ClassUndo'].includes(key.substring(key.length - 9))) {
+            //         const newKey = key.replace('classUndo', 'class').replace('ClassUndo', 'Class');
+            //         const newClass = (newConfig[key] || '').split(' ');
+            //         const oldClass = (this._config[newKey] || '').split(' ');
+            //         config[newKey] = oldClass.filter((item) => !newClass.includes(item)).join(' ');
+            //     } else if (['classMerge', 'ClassMerge'].includes(key.substring(key.length - 10))) {
+            //         const newKey = key.replace('classMerge', 'class').replace('ClassMerge', 'Class');
+            //         const oldClass = (config[newKey] || this._config[newKey] || '').split(' ');
+            //         const newClass = (newConfig[key] || '').split(' ');
+            //         config[newKey] = oldClass.concat(newClass.filter((item) => oldClass.indexOf(item) < 0)).join(' ');
+            //     } else {
+            //         config[key] = newConfig[key];
+            //     }
+            // }
             
             return config;
         };

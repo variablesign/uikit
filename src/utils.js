@@ -64,6 +64,71 @@ export const extendObjects = (...objects) => {
 }
 
 /**
+ * A native JS extend() function
+ *
+ * Returns a new object instead, preserving all of the original objects
+ * and their properties. Supported back to IE6.
+ *
+ * Usage:
+ * 1.- Pass in the objects to merge as arguments.
+ * 2.- For a deep extend, set the first argument to `true`.
+ *
+ * Example:
+ * const object1 = {
+ *     apple: 0,
+ *     banana: { weight: 52, price: 100 },
+ *     cherry: 97
+ * };
+ * const object2 = {
+ *     banana: { price: 200 },
+ *     durian: 100
+ * };
+ * const object3 = {
+ *     apple: 'yum',
+ *     pie: 3.214,
+ *     applePie: true
+ * }
+ *
+ * // create a new object by combining two or more objects:
+ * const newObjectShallow = extend(object1, object2, object3);
+ * const newObjectDeep = extend(true, object1, object2, object3);
+ *
+ * All credits to author.
+ * https://gomakethings.com/vanilla-javascript-version-of-jquery-extend/
+ */
+export const extend = (...options) => {
+    let extended = {};
+    let deep = false;
+    let i = 0;
+    let length = options.length;
+
+    // check if a deep merge
+    if (typeof options[0] === 'boolean') {
+        deep = options[0];
+        i ++;
+    }
+
+    // merge the object into the extended object
+    let merge = (obj) => {
+        for (const prop in obj) if (Object.prototype.hasOwnProperty.call(obj, prop)) {
+            // if deep merge and property is an object, merge properties
+            if (deep && Object.prototype.toString.call(obj[prop]) === '[object Object]')
+                extended[prop] = extend(true, extended[prop], obj[prop]);
+            else
+                extended[prop] = obj[prop];
+        }
+    };
+
+    // loop through each object and conduct a merge
+    for (; i < length; i++) {
+        let obj = options[i];
+        merge(obj);
+    }
+
+    return extended;
+};
+
+/**
  * Replace object keys
  */
 export const replaceObjectKeys = (object, search, replace = '') => {

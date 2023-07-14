@@ -8,7 +8,6 @@ const _defaults = {
     offset: ['24', '24'],
     gap: 16,
     delay: 5000,
-    stacking: 'bottom',
     create: null,
     template: null,
     class: null,
@@ -46,7 +45,7 @@ class Toast extends Component {
             : this._config.offset;
 
         this._config.gap = parseInt(this._config.gap) || 16;
-        this._config.stacking = stacking[this._config.stacking] || 'beforeend';
+        const stackingPosition = this._config.placement.includes('top') ? 'afterbegin' : 'beforeend';
 
         const getTemplate = () => {
             return this._config.create[this._config.template](this._config);
@@ -64,7 +63,37 @@ class Toast extends Component {
             element.style.transform = `translate(${positions[1] ? '0' : '-50'}%, 0%)`;
         };
 
-        this._show = () => {
+        this._hide = () => {
+            clearTimeout(timeout);
+
+            const hide = () => {
+                util.hide(this._toast);
+                this._toast.remove();
+                this.isVisible = false;
+
+                if (this._placementGroup.childNodes.length == 0) {
+                    this._placementGroup.remove();
+                }
+
+                if (typeof this._config.onClose === 'function') {
+                    this._config.onClose(trigger)
+                }
+
+                this._component.removeEvent();
+            };
+            
+            const transitioned = this._component.transition('transitionLeave', this._toast, (e) => {
+                hide();
+            });
+
+            if (transitioned) {
+                return;
+            }
+
+            hide();
+        };
+
+        // this._show = () => {
             if (!this._config.template) return;
 
             this._placementGroup = this._container.querySelector(`[data-toast-placement=${this._config.placement}]`);
@@ -119,7 +148,7 @@ class Toast extends Component {
                 });
             }
 
-            this._placementGroup.insertAdjacentElement(this._config.stacking, this._toast);
+            this._placementGroup.insertAdjacentElement(stackingPosition, this._toast);
             util.show(this._toast);
             this.isVisible = true;
 
@@ -128,47 +157,13 @@ class Toast extends Component {
             });
 
             if (this._config.delay >= 3000) {                
-                clearTimeout(timeout);
                 timeout = setTimeout(this._hide, this._config.delay);
             }
 
             if (transitioned) {
                 return;
             }
-        };
-
-        this._hide = () => {
-            const hide = () => {
-                util.hide(this._toast);
-                this._toast.remove();
-                this.isVisible = false;
-
-                if (this._placementGroup.childNodes.length == 0) {
-                    this._placementGroup.remove();
-                }
-
-                if (typeof this._config.onClose === 'function') {
-                    this._config.onClose(trigger)
-                }
-
-                this._component.removeEvent();
-            };
-            
-            const transitioned = this._component.transition('transitionLeave', this._toast, (e) => {
-                hide();
-            });
-
-            if (transitioned) {
-                return;
-            }
-
-            hide();
-        };
-    }
-
-    show(options) {
-        this.setOptions(options);
-        this._show();
+        // };
     }
 
     hide() {
