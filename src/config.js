@@ -16,6 +16,6 @@ export default {
         'highlight'
     ],
     globalScope: {
-        // Snackbar: 'toast'
+        // Toaster: 'toast'
     }
 };

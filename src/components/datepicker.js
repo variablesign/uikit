@@ -564,6 +564,4 @@ class Datepicker extends Component {
 
 uk.registerComponent(_component, Datepicker);
 
-export {
-    Datepicker
-};
+export default Datepicker;

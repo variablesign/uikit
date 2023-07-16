@@ -108,6 +108,4 @@ themeChannel.addEventListener('message', (e) => {
     theme.theme(e.data);
 });
 
-export {
-    Theme
-};
+export default Theme;

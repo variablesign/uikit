@@ -606,6 +606,4 @@ class Modal extends Component {
 
 uk.registerComponent(_component, Modal);
 
-export {
-    Modal
-};
+export default Modal;

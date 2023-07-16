@@ -405,6 +405,4 @@ class Tab extends Component {
 
 uk.registerComponent(_component, Tab);
 
-export {
-    Tab
-};
+export default Tab;

@@ -188,6 +188,4 @@ class Dropdown extends Component {
 
 uk.registerComponent(_component, Dropdown);
 
-export {
-    Dropdown
-};
+export default Dropdown;

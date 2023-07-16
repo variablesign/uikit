@@ -44,14 +44,10 @@ class Tooltip extends Component {
             ? this._config.trigger 
             : [];
 
-        this._generateId = () => {
-            return 'tooltip-' + util.randomNumber(4);
-        };
-
         // this._config.placement = this._config.placement.replace('-start', '').replace('-end', '');
         this._config.showDelay = parseInt(this._config.showDelay);
         this._config.hideDelay = parseInt(this._config.hideDelay);
-        this._id = this._generateId();
+        this._id = 'tooltip-' + util.randomNumber(4);
         // this._originalTitle = null;
         this._content = this._config.content; 
         this._contentType = 'innerText';
@@ -107,16 +103,15 @@ class Tooltip extends Component {
             tooltipContent.setAttribute('data-content', '');
             tooltip.appendChild(tooltipContent);
 
-            tooltipArrow = document.createElement('div');
-            tooltipArrow.style.position = 'absolute';
-            tooltipArrow.style.transform = 'rotate(45deg)';
-            tooltipArrow.style.backgroundColor = 'inherit';
-            tooltipArrow.style.width = '8px';
-            tooltipArrow.style.height = '8px';
-            tooltipArrow.style.zIndex = '-1';
-            tooltipArrow.className = this._config.arrowClass ? this._config.arrowClass : '';
-
             if (this._config.arrow) {
+                tooltipArrow = document.createElement('div');
+                tooltipArrow.style.position = 'absolute';
+                tooltipArrow.style.transform = 'rotate(45deg)';
+                tooltipArrow.style.backgroundColor = 'inherit';
+                tooltipArrow.style.width = '8px';
+                tooltipArrow.style.height = '8px';
+                tooltipArrow.style.zIndex = '-1';
+                tooltipArrow.className = this._config.arrowClass ? this._config.arrowClass : '';
                 tooltipArrow.setAttribute('data-arrow', '');
                 tooltip.appendChild(tooltipArrow);
             }
@@ -126,7 +121,7 @@ class Tooltip extends Component {
 
         this._tooltip = tooltip;
         this._tooltipContent = tooltipContent;
-        this._tooltipArrow = tooltipArrow;
+        this._tooltipArrow = this._config.arrow ? tooltipArrow : null;
 
         this._element.setAttribute('aria-describedby', this._id);
 
@@ -184,7 +179,7 @@ class Tooltip extends Component {
             timeout = setTimeout(() => {
     
                 this._component.dispatch('show');
-                this._element.after(this._tooltip);
+                document.body.appendChild(this._tooltip);
                 autoUpdatePosition = updatePosition();
                 util.show(this._tooltip);
 
@@ -321,6 +316,4 @@ class Tooltip extends Component {
 
 uk.registerComponent(_component, Tooltip);
 
-export {
-    Tooltip
-};
+export default Tooltip;

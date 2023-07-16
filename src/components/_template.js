@@ -22,6 +22,4 @@ class ComponentClass extends Component {
 
 uk.registerComponent(_component, ComponentClass);
 
-export {
-    ComponentClass
-};
+export default ComponentClass;

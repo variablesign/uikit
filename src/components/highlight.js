@@ -31,6 +31,4 @@ class Highlight extends Component {
 
 uk.registerComponent(_component, Highlight);
 
-export {
-    Highlight
-};
+export default Highlight;

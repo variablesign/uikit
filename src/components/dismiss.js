@@ -91,6 +91,4 @@ class Dismiss extends Component {
 
 uk.registerComponent(_component, Dismiss);
 
-export {
-    Dismiss
-};
+export default Dismiss;

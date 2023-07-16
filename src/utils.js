@@ -23,12 +23,18 @@ export const parseNestedDatasetKey = (keys, value, data) => {
  * Parse nested dataset
  */
 export const parseNestedDataset = (dataset) => {
-	var keys = Object.keys(dataset);
-	var data = {};
-	for (var i = 0; i < keys.length; i++) {
-		var key = keys[i];
-		var value = dataset[key];
-		var splat = key.split('-');
+	let keys = Object.keys(dataset);
+	let data = {};
+    let value = null;
+	for (let i = 0; i < keys.length; i++) {
+		let key = keys[i];
+		let splat = key.split('-');
+
+        try {
+            value = JSON.parse(dataset[key]);
+        } catch (error) {
+            value = dataset[key];
+        }
 
 		data = parseNestedDatasetKey(splat, value, data);
 	}
@@ -39,29 +45,29 @@ export const parseNestedDataset = (dataset) => {
 /**
  * Merge objects into one
  */
-export const extendObjects = (...objects) => {
-	let obj;
-	let item;
-	let objectsList = [];
+// export const extendObjects = (...objects) => {
+// 	let obj;
+// 	let item;
+// 	let objectsList = [];
 
-	for (let index in objects) {
-		item = objects[index] ? parseNestedDataset(objects[index]) : {};
-		obj = Object.fromEntries(
-			Object.entries(item).map(([key, value]) => {
-				try {
-					value = JSON.parse(value);
-				} catch (error) {
-					value = value;
-				}
-				return [key, value];
-			})
-		);
+// 	for (let index in objects) {
+// 		item = objects[index] ? parseNestedDataset(objects[index]) : {};
+// 		obj = Object.fromEntries(
+// 			Object.entries(item).map(([key, value]) => {
+// 				try {
+// 					value = JSON.parse(value);
+// 				} catch (error) {
+// 					value = value;
+// 				}
+// 				return [key, value];
+// 			})
+// 		);
 		
-		objectsList.push(obj);
-	}
+// 		objectsList.push(obj);
+// 	}
 
-	return Object.assign(...objectsList);
-}
+// 	return Object.assign(...objectsList);
+// }
 
 /**
  * A native JS extend() function
@@ -306,7 +312,9 @@ export const getElement = (selector, context = document) => {
         return selector;
     }
 
-    return context.querySelector(selector);
+    return typeof selector === 'string' 
+        ? context.querySelector(selector) 
+        : null;
 }
 
 /**
@@ -317,7 +325,9 @@ export const getElements = (selector, context = document) => {
         return selector;
     }
 
-    return context.querySelectorAll(selector);
+    return typeof selector === 'string'
+        ? context.querySelectorAll(selector)
+        : null;
 }
 
 /**

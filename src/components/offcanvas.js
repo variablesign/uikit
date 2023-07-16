@@ -83,6 +83,4 @@ class Offcanvas extends Component {
 
 uk.registerComponent(_component, Offcanvas);
 
-export {
-    Offcanvas
-};
+export default Offcanvas;

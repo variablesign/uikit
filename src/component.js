@@ -86,12 +86,14 @@ export default class Component {
         /**
          * Merge all configurations.
          */
-        this._config = util.extendObjects(
+        this._config = util.extend(
+            true,
             defaults,
             globalConfig
         );
 
-        this._config = util.extendObjects(
+        this._config = util.extend(
+            true,
             this._config,
             mergeConfig(config),
             mergeConfig(getDatasetConfig())
@@ -115,11 +117,11 @@ export default class Component {
             if (value instanceof Array) {
                 value = value.map((config) => mergeUndoClassConfig(config));
 
-                return util.extendObjects(this._config, ...value);
+                return util.extend(true, this._config, ...value);
             }
 
             if (value instanceof Object) {
-                return util.extendObjects(this._config, mergeUndoClassConfig(value));
+                return util.extend(true, this._config, mergeUndoClassConfig(value));
             }
 
             return this._config;
@@ -133,7 +135,7 @@ export default class Component {
         const lockConfig = (config) => {
             config = config instanceof Object ? config : {};
 
-            this._config = util.extendObjects(this._config, config);
+            this._config = util.extend(true, this._config, config);
         };
 
         /**
@@ -174,7 +176,7 @@ export default class Component {
                 config.transitionLeaveEnd = this._config.transitionLeaveEnd || null;
             }
 
-            this._config = util.extendObjects(this._config, config);
+            this._config = util.extend(this._config, config);
         };
 
         /**
@@ -256,7 +258,7 @@ export default class Component {
          */
         const storeEvent = (target, eventName, handler, options) => {
             options = typeof options === 'boolean' ? { useCapture: options } : options;
-            const eventItem = util.extendObjects({
+            const eventItem = util.extend({
                 once: false,
                 passive: false,
                 useCapture: false,
@@ -342,7 +344,8 @@ export default class Component {
                 }
             }
 
-            this._config = util.extendObjects(
+            this._config = util.extend(
+                true,
                 config,
                 util.replaceObjectKeys(this._element ? this._element.dataset : {}, component)
             );
@@ -445,7 +448,7 @@ export default class Component {
     setOptions(options) {
         options = options instanceof Object ? options : {};
 
-        this._config = util.extendObjects(this._config, this._component.mergeConfig(options));
+        this._config = util.extend(true, this._config, this._component.mergeConfig(options));
     }
 
     /**

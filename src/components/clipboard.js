@@ -91,6 +91,4 @@ class Clipboard extends Component {
 
 uk.registerComponent(_component, Clipboard);
 
-export {
-    Clipboard
-};
+export default Clipboard;

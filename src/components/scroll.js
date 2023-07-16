@@ -37,6 +37,4 @@ class Scroll extends Component {
 
 uk.registerComponent(_component, Scroll);
 
-export {
-    Scroll
-};
+export default Scroll;

@@ -8,6 +8,7 @@ const _defaults = {
     offset: ['24', '24'],
     gap: 16,
     delay: 5000,
+    stack: false,
     create: null,
     template: null,
     class: null,
@@ -18,8 +19,8 @@ const _defaults = {
 };
 
 class Toast extends Component {
-    constructor(element, config) {
-        super(element, config, _defaults, _component);
+    constructor(config) {
+        super(null, config, _defaults, _component);
         this._component.allowTransitions();
         this.init();
     }
@@ -30,10 +31,6 @@ class Toast extends Component {
         this._config.zindex = parseInt(this._config.zindex) || 0;
         this._config.delay = parseInt(this._config.delay);
         this.isVisible = false;
-        const stacking = {
-            top: 'afterbegin',
-            bottom: 'beforeend'
-        };
         let timeout;
 
         this._config.offset = util.isNumber(this._config.offset)
@@ -93,7 +90,7 @@ class Toast extends Component {
             hide();
         };
 
-        // this._show = () => {
+        const show = () => {
             if (!this._config.template) return;
 
             this._placementGroup = this._container.querySelector(`[data-toast-placement=${this._config.placement}]`);
@@ -101,6 +98,7 @@ class Toast extends Component {
             if (!this._placementGroup) {
                 const paddingX = this._config.offset[0] || 24;
                 const paddingY = this._config.offset[1] || 24;
+                const alignment = this._config.placement.split('-');
 
                 this._placementGroup = document.createElement('div');
                 this._placementGroup.setAttribute('data-toast-placement', this._config.placement);
@@ -109,6 +107,7 @@ class Toast extends Component {
                     position: `fixed`,
                     display: `flex`,
                     flexDirection: `column`,
+                    alignItems: alignment[1] || 'center',
                     gap: `${this._config.gap}px`,
                     zIndex: this._config.zIndex,
                     padding: `${paddingX}px ${paddingY}px`
@@ -116,7 +115,6 @@ class Toast extends Component {
 
                 this._container.appendChild(this._placementGroup);
             }
-
             
             if (!this.isVisible) {    
                 // Create toast            
@@ -148,6 +146,10 @@ class Toast extends Component {
                 });
             }
 
+            if (!this._config.stack) {
+                this._placementGroup.innerHTML = '';
+            }
+
             this._placementGroup.insertAdjacentElement(stackingPosition, this._toast);
             util.show(this._toast);
             this.isVisible = true;
@@ -163,7 +165,9 @@ class Toast extends Component {
             if (transitioned) {
                 return;
             }
-        // };
+        };
+
+        show();
     }
 
     hide() {
@@ -177,6 +181,4 @@ class Toast extends Component {
 
 uk.registerComponent(_component, Toast);
 
-export {
-    Toast
-};
+export default Toast;

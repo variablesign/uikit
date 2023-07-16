@@ -3,11 +3,6 @@ import * as util from './utils.js';
 
 UIkit.setConfig = (options) => {
     options = options instanceof Object ? options : {};
-    UIkit.config = util.extend(true, UIkit.config, options);
-};
-
-UIkit.componentConfig = (options) => {
-    options = options instanceof Object ? options : {};
     UIkit.globalConfig = util.extend(UIkit.globalConfig, options);
 };
 
@@ -35,8 +30,7 @@ const getConfig = (key) => {
 
 const setGlobalComponent = (component) => {
     if (!config.globalScope instanceof Object) return;
-    console.log(component);
-    console.log(UIkit.config);
+
     for (const key in config.globalScope) {
         if (config.globalScope[key] == component && !window[key]) {
             window[key] = UIkit[component];
@@ -46,10 +40,6 @@ const setGlobalComponent = (component) => {
 
 const registerComponent = (component, constructor) => {
     UIkit[component] = (element, config) => {
-        if ((element instanceof Object) && !(element instanceof HTMLElement)) {
-            config = element;
-            element = null;
-        }
 
         if (element?.uikitInstance) {
             if ((!config || Object.keys(config).length === 0) && element.uikitInstance[component]) {
@@ -60,12 +50,10 @@ const registerComponent = (component, constructor) => {
                 element.uikitInstance[component]?.destroy();
             }
         }
-
-        // if (UIkit.globalConfig[component]) {
-        //     config = util.extendObjects(config, UIkit.globalConfig[component]);
-        // }
     
-        const instance = new constructor(element, config);
+        const instance = (element instanceof Object) && !(element instanceof HTMLElement) 
+            ? new constructor(element)
+            : new constructor(element, config);
 
         element = util.getElement(element);
 

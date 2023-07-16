@@ -105,6 +105,4 @@ class Toggle extends Component {
 
 uk.registerComponent(_component, Toggle);
 
-export {
-    Toggle
-};
+export default Toggle;

@@ -152,6 +152,4 @@ class Scrollspy extends Component {
 
 uk.registerComponent(_component, Scrollspy);
 
-export {
-    Scrollspy
-};
+export default Scrollspy;
