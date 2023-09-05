@@ -1,31 +1,30 @@
-import * as util from '../utils.js';
-import uk from '../uikit.js';
 import Component from '../component.js';
-
-const _component = 'scrollspy';
-const _defaults = {
-    type: 'navigation',
-    root: document,
-    rootMargin: '0px',
-    threshold: 0,
-    offset: 0,
-    trigger: null,
-    target: null,
-    activeClass: null,
-    inactiveClass: null,
-};
 
 class Scrollspy extends Component {
     constructor(element, config) {
-        super(element, config, _defaults, _component);
-        this.init();
-    }
 
-    init() {
+        const _defaults = {
+            type: 'navigation',
+            root: document,
+            rootMargin: '0px',
+            threshold: 0,
+            offset: 0,
+            trigger: null,
+            target: null
+        };
+
+        const _component = {
+            name: 'scrollspy',
+            element: element, 
+            defaultConfig: _defaults, 
+            config: config
+        };
+
+        super(_component);
+
         this._triggers = document.querySelectorAll(this._config.trigger);
         this._targets = document.querySelectorAll(this._config.target);
         this._activeNav = null;
-        let navigationTimeout;
 
         this._scroller = this._config.root == window || this._config.root == document
             ? window 
@@ -41,18 +40,15 @@ class Scrollspy extends Component {
         this._setActiveNavState = () => {
             for (const target of this._targets) {
                 if (target.hash == '#' + this._activeNav) {
-                    util.removeClass(target, this._config.inactiveClass);
-                    util.addClass(target, this._config.activeClass);
+                    target.setAttribute('aria-current', true);
                 } else {
-                    util.removeClass(target, this._config.activeClass);
-                    util.addClass(target, this._config.inactiveClass);
+                    target.setAttribute('aria-current', false);
                 }
             }
         };
 
         this._onScrollNavigation = (e) => {
-            clearTimeout(navigationTimeout);
-            navigationTimeout = setTimeout(() => {  
+            this._setTimeout(() => {  
                 const scrollPosition = this._config.root.scrollTop;
 
                 if (this._triggers.length > 0) {      
@@ -69,13 +65,13 @@ class Scrollspy extends Component {
                     }
                 }
 
-            });
+            }, 50);
         };
 
         // Type: Navigation
         if (this._config.type === 'navigation') { 
             this._onScrollNavigation();   
-            this._component.on(this._scroller, 'scroll', this._onScrollNavigation);
+            this._on(this._scroller, 'scroll', this._onScrollNavigation);
         }
 
         // Navigation callback
@@ -149,7 +145,5 @@ class Scrollspy extends Component {
         super.destroy();
     }
 }
-
-uk.registerComponent(_component, Scrollspy);
 
 export default Scrollspy;

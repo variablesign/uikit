@@ -1,37 +1,45 @@
-import * as util from '../utils.js';
-import uk from '../uikit.js';
+import { randomNumber, addClass, removeClass, setAttributes } from '../utils.js';
 import Component from '../component.js';
-
-const _component = 'tab';
-const _defaults = {
-    tab: 'data-tab',
-    panel: 'data-panel',
-    activeClass: null,
-    inactiveClass: null,
-    disabledClass: null,
-    displayClass: null,
-    selected: 'data-selected',
-    disabled: 'data-disabled',
-};
 
 class Tab extends Component {
     constructor(element, config) {
-        super(element, config, _defaults, _component);
-        this._component.allowTransitions(true, false);
-        this.init();
-    }
 
-    init() {
+        const _defaults = {
+            displayClass: null,
+            tab: 'data-tab',
+            panel: 'data-panel',
+            selected: 'data-selected',
+            disabled: 'data-disabled'
+        };
+
+        const _component = {
+            name: 'tab',
+            element: element, 
+            defaultConfig: _defaults, 
+            config: config, 
+            transitions: {
+                enter: true
+            }
+        };
+
+        super(_component);
+
         if (!this._element) return;
 
         this._data = [];
         this._selectedIndex = 0;
-        const id = this._element.id !== '' ? this._element.id : 'tab-' + util.randomNumber(4);
+        const id = this._element.id !== '' ? this._element.id : 'tab-' + randomNumber(4);
         const tabs = this._element.querySelectorAll(`[${this._config.tab}]`);
         const panels = this._element.querySelectorAll(`[${this._config.panel}]`);
         this._lastIndex = tabs.length > 0 ? tabs.length - 1 : 0; 
         this._totalTabs = tabs.length;
 
+        /**
+         * Data returned through events
+         * 
+         * @param {number} index 
+         * @returns 
+         */
         const eventData = (index) => {
             return {
                 index: index,
@@ -39,8 +47,7 @@ class Tab extends Component {
                 next: this._data[index].active.next,
                 previous: this._data[index].active.previous,
                 tab: this._data[index].tab,
-                panel: this._data[index].panel,
-                config: this._config
+                panel: this._data[index].panel
             };
         };
 
@@ -124,27 +131,19 @@ class Tab extends Component {
                 const previous = data.selected ? data.current : null;
 
                 if (previous !== null) {
-                    this._component.dispatch('hide', eventData(index));
+                    this._dispatchEvent('hide', eventData(index));
                 }
                 
-                if (data.tab.disabled) {
-                    util.removeClass(data.tab, this._config.inactiveClass);
-                    util.addClass(data.tab, this._config.disabledClass);
-                } else {
-                    util.addClass(data.tab, this._config.inactiveClass);
-                }
-                
-                util.removeClass(data.tab, this._config.activeClass);
-                util.addClass(data.panel, this._config.displayClass);
+                addClass(data.panel, this._config.displayClass);
 
                 data.selected = false;
-                util.setAttributes(data.tab, {
+                setAttributes(data.tab, {
                     tabindex: -1,
                     ariaSelected: false
                 });
 
                 if (previous !== null) {
-                    this._component.dispatch('hidden', eventData(index));
+                    this._dispatchEvent('hidden', eventData(index));
                 }
             });
         };
@@ -164,11 +163,11 @@ class Tab extends Component {
 
             hideAll();
 
-            this._component.dispatch('show', eventData(index));
+            this._dispatchEvent('show', eventData(index));
 
             data.selected = true;
             this._selectedIndex = index;
-            util.setAttributes(data.tab, {
+            setAttributes(data.tab, {
                 tabindex: 0,
                 ariaSelected: true
             });
@@ -177,17 +176,13 @@ class Tab extends Component {
                 data.tab.focus();
             }
 
-            util.removeClass(data.tab, this._config.inactiveClass);
-            util.addClass(data.tab, this._config.activeClass);
-            util.removeClass(data.panel, this._config.displayClass);
+            removeClass(data.panel, this._config.displayClass);
 
-            const transitioned = this._component.transition('transitionEnter', data.panel, data.onTransitionEnterEnd);
+            const transitioned = this._transition('transitionEnter', data.panel, data.onTransitionEnterEnd);
 
-            if (transitioned) {
-                return;
-            }
+            if (transitioned) return;
 
-            this._component.dispatch('shown', eventData(index));
+            this._dispatchEvent('shown', eventData(index));
         };
 
         /**
@@ -197,10 +192,7 @@ class Tab extends Component {
          */
         this._disable = (index) => {
             const disable = (data) => {
-                util.removeClass(data.tab, this._config.activeClass);
-                util.removeClass(data.tab, this._config.inactiveClass);
-                util.addClass(data.tab, this._config.disabledClass);
-                util.setAttributes(data.tab, {
+                setAttributes(data.tab, {
                     tabindex: -1,
                     ariaDisabled: true
                 });
@@ -228,20 +220,13 @@ class Tab extends Component {
          */
         this._enable = (index) => {
             const enable = (data) => {
-                util.removeClass(data.tab, this._config.disabledClass);
-                util.addClass(data.tab, this._config.inactiveClass);
-                util.setAttributes(data.tab, {
+                setAttributes(data.tab, {
                     tabindex: 0,
                     ariaDisabled: false
                 });
 
                 if (data.tab.disabled !== undefined) {
                     data.tab.disabled = false;
-                }
-
-                if (data.selected) {
-                    util.removeClass(data.tab, this._config.inactiveClass);
-                    util.addClass(data.tab, this._config.activeClass);
                 }
             };
 
@@ -257,7 +242,7 @@ class Tab extends Component {
         };
 
         // Set tablist element attributes
-        util.setAttributes(this._element, {
+        setAttributes(this._element, {
             role: 'tablist',
             id: id
         });
@@ -269,7 +254,7 @@ class Tab extends Component {
                 ?   `${id}-${index}` 
                 : tab.getAttribute(this._config.tab);
 
-            util.setAttributes(tab, {
+            setAttributes(tab, {
                 role: 'tab',
                 id: name,
                 tabindex: -1,
@@ -280,7 +265,7 @@ class Tab extends Component {
             });
 
             if (tab.disabled === true && !tab.hasAttribute(this._config.disabled)) {
-                util.setAttributes(tab, {
+                setAttributes(tab, {
                     ariaDisabled: tab.disabled
                 });
             }
@@ -296,19 +281,13 @@ class Tab extends Component {
             let panel = getPanel(name);
             panel = panel ? panel : panels[index];
 
-            util.setAttributes(panel, {
+            setAttributes(panel, {
                 role: 'tabpanel',
                 id: name + panelSuffix,
                 tabindex: 0,
                 ariaLabelledby: name,
                 dataIndex: index
             });
-
-            if (tab.getAttribute('aria-disabled') == 'true') {
-                util.addClass(tab, this._config.disabledClass);
-            } else {
-                util.addClass(tab, this._config.inactiveClass);
-            }
 
             this._data.push({
                 current: index,
@@ -322,7 +301,7 @@ class Tab extends Component {
                     this._show(index);
                 },
                 onTransitionEnterEnd: (e) => {
-                    this._component.dispatch('shown', eventData(index));
+                    this._dispatchEvent('shown', eventData(index));
                 },
                 onKeydown: (e) => {
                     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
@@ -359,14 +338,14 @@ class Tab extends Component {
 
         // Add events
         this._data.forEach((data) => {
-            this._component.on(data.tab, 'click', data.onClick);
-            this._component.on(data.tab, 'keydown', data.onKeydown);
+            this._on(data.tab, 'click', data.onClick);
+            this._on(data.tab, 'keydown', data.onKeydown);
         });
 
         // Select default tab 
         this._show(this._selectedIndex);
 
-        this._component.dispatch('initialize');
+        this._dispatchEvent('initialize');
     }
 
     show(index = 0) {
@@ -402,7 +381,5 @@ class Tab extends Component {
         super.destroy();
     }
 }
-
-uk.registerComponent(_component, Tab);
 
 export default Tab;

@@ -1,17 +1,19 @@
-import * as util from '../utils.js';
-import uk from '../uikit.js';
 import Component from '../component.js';
-
-const _component = 'highlight';
-const _defaults = {};
 
 class Highlight extends Component {
     constructor(element, config) {
-        super(element, config, _defaults, _component);
-        this.init();
-    }
 
-    init() {
+        const _defaults = {};
+
+        const _component = {
+            name: 'highlight',
+            element: element, 
+            defaultConfig: _defaults, 
+            config: config
+        };
+
+        super(_component);
+
         // Prevent highlighting twice
         if (this._element.classList.contains('hljs')) {
             return;
@@ -28,7 +30,5 @@ class Highlight extends Component {
         super.destroy();
     }
 }
-
-uk.registerComponent(_component, Highlight);
 
 export default Highlight;

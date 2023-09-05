@@ -1,31 +1,36 @@
-import * as util from '../utils.js';
-import uk from '../uikit.js';
+import { isNumber, styles, addClass, setAttributes, showElement, hideElement } from '../utils.js';
 import Component from '../component.js';
-
-const _component = 'toast';
-const _defaults = {
-    placement: 'bottom-start',
-    offset: ['24', '24'],
-    gap: 16,
-    delay: 5000,
-    stack: false,
-    create: null,
-    template: null,
-    class: null,
-    zindex: 1090,
-    dismiss: 'data-dismiss',
-    onAction: null,
-    onClose: null
-};
 
 class Toast extends Component {
     constructor(config) {
-        super(null, config, _defaults, _component);
-        this._component.allowTransitions();
-        this.init();
-    }
 
-    init() {
+        const _defaults = {
+            placement: 'bottom-start',
+            offset: ['24', '24'],
+            gap: 16,
+            delay: 5000,
+            stack: false,
+            create: null,
+            template: null,
+            class: null,
+            zindex: 1090,
+            dismiss: 'data-dismiss',
+            onAction: null,
+            onClose: null
+        };
+
+        const _component = {
+            name: 'toast',
+            defaultConfig: _defaults, 
+            config: config, 
+            transitions: {
+                enter: true,
+                leave: true
+            }
+        };
+
+        super(_component);
+
         this._config.create = this._config.create ? this._config.create : () => void 0;
         this._container = document.body;
         this._config.zindex = parseInt(this._config.zindex) || 0;
@@ -33,7 +38,7 @@ class Toast extends Component {
         this.isVisible = false;
         let timeout;
 
-        this._config.offset = util.isNumber(this._config.offset)
+        this._config.offset = isNumber(this._config.offset)
             ? [this._config.offset, this._config.offset]
             : this._config.offset;
 
@@ -64,7 +69,7 @@ class Toast extends Component {
             clearTimeout(timeout);
 
             const hide = () => {
-                util.hide(this._toast);
+                hideElement(this._toast);
                 this._toast.remove();
                 this.isVisible = false;
 
@@ -76,16 +81,14 @@ class Toast extends Component {
                     this._config.onClose(trigger)
                 }
 
-                this._component.removeEvent();
+                this._removeEvent();
             };
             
-            const transitioned = this._component.transition('transitionLeave', this._toast, (e) => {
+            const transitioned = this._transition('transitionLeave', this._toast, (e) => {
                 hide();
             });
 
-            if (transitioned) {
-                return;
-            }
+            if (transitioned) return;
 
             hide();
         };
@@ -103,7 +106,7 @@ class Toast extends Component {
                 this._placementGroup = document.createElement('div');
                 this._placementGroup.setAttribute('data-toast-placement', this._config.placement);
                 setPositionStyles(this._placementGroup);
-                util.styles(this._placementGroup, {
+                styles(this._placementGroup, {
                     position: `fixed`,
                     display: `flex`,
                     flexDirection: `column`,
@@ -120,9 +123,9 @@ class Toast extends Component {
                 // Create toast            
                 this._toast = document.createElement('div');
                 this._toast.innerHTML = getTemplate(this._config);
-                util.hide(this._toast);
-                util.addClass(this._toast, this._config.class);
-                util.setAttributes(this._toast, {
+                hideElement(this._toast);
+                addClass(this._toast, this._config.class);
+                setAttributes(this._toast, {
                     role: 'alert'
                 });
 
@@ -134,11 +137,11 @@ class Toast extends Component {
                         trigger.setAttribute('aria-label', 'Close');
                     }
 
-                    this._component.on(trigger, 'click', this._hide);
+                    this._on(trigger, 'click', this._hide);
                 });
     
                 actionTriggers.forEach((trigger) => {
-                    this._component.on(trigger, 'click', () => {
+                    this._on(trigger, 'click', () => {
                         if (typeof this._config.onAction === 'function') {
                             this._config.onAction(trigger)
                         }
@@ -151,20 +154,16 @@ class Toast extends Component {
             }
 
             this._placementGroup.insertAdjacentElement(stackingPosition, this._toast);
-            util.show(this._toast);
+            showElement(this._toast);
             this.isVisible = true;
 
-            const transitioned = this._component.transition('transitionEnter', this._toast, (e) => {
-                //
-            });
+            const transitioned = this._transition('transitionEnter', this._toast);
 
             if (this._config.delay >= 3000) {                
                 timeout = setTimeout(this._hide, this._config.delay);
             }
-
-            if (transitioned) {
-                return;
-            }
+            
+            if (transitioned) return;
         };
 
         show();
@@ -178,7 +177,5 @@ class Toast extends Component {
         super.destroy();
     }
 }
-
-uk.registerComponent(_component, Toast);
 
 export default Toast;

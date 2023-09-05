@@ -1,22 +1,27 @@
-import * as util from '../utils.js';
-import uk from '../uikit.js';
+import { hideElement } from '../utils.js';
 import Component from '../component.js';
-
-const _component = 'dismiss';
-const _defaults = {
-    target: null,
-    remove: false,
-    delay: 0
-};
 
 class Dismiss extends Component {
     constructor(element, config) {
-        super(element, config, _defaults, _component);
-        this._component.allowTransitions(false);
-        this.init();
-    }
 
-    init() {
+        const _defaults = {
+            target: null,
+            remove: false,
+            delay: 0
+        };
+
+        const _component = {
+            name: 'dismiss',
+            element: element, 
+            defaultConfig: _defaults, 
+            config: config, 
+            transitions: {
+                leave: true
+            }
+        };
+
+        super(_component);
+
         if (!this._element) return;
         
         let timeout;
@@ -46,21 +51,19 @@ class Dismiss extends Component {
         }
 
         this._close = () => {
-            this._component.dispatch('hide', eventData);
+            this._dispatchEvent('hide', eventData);
 
-            const transitioned = this._component.transition('transitionLeave', this._target, (e) => {
-                this._component.dispatch('hidden', eventData);
-                util.hide(this._target);
+            const transitioned = this._transition('transitionLeave', this._target, (e) => {
+                this._dispatchEvent('hidden', eventData);
+                hideElement(this._target);
                 removeTarget();
             });
 
-            if (transitioned) {
-                return;
-            }
+            if (transitioned) return;
 
-            util.hide(this._target);
+            hideElement(this._target);
             removeTarget();
-            this._component.dispatch('hidden', eventData);
+            this._dispatchEvent('hidden', eventData);
         };
 
         const onClose = (e) => {
@@ -68,7 +71,7 @@ class Dismiss extends Component {
             this._close(e);
         };
 
-        this._component.on(this._element, 'click', onClose);
+        this._on(this._element, 'click', onClose);
 
         if (this._config.delay != 0 && this._config.delay >= 3000) {           
             clearTimeout(timeout); 
@@ -77,7 +80,7 @@ class Dismiss extends Component {
             }, this._config.delay);
         }
 
-        this._component.dispatch('initialize');
+        this._dispatchEvent('initialize');
     }
 
     close() {
@@ -88,7 +91,5 @@ class Dismiss extends Component {
         super.destroy();
     }
 }
-
-uk.registerComponent(_component, Dismiss);
 
 export default Dismiss;

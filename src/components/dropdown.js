@@ -1,29 +1,35 @@
-import * as util from '../utils.js';
-import uk from '../uikit.js';
+import { styles, addClass, removeClass } from '../utils.js';
 import Component from '../component.js';
 import { computePosition, offset, flip, shift, limitShift, autoUpdate } from '@floating-ui/dom';
 
-const _component = 'dropdown';
-const _defaults = {
-    target: null,
-    reference: null,
-    autoClose: true,
-    displayClass: null,
-    placement: 'bottom-start',
-    autoPlacement: true,
-    offset: 8,
-    shift: 8,
-    zindex: 1000
-};
-
 class Dropdown extends Component {
     constructor(element, config) {
-        super(element, config, _defaults, _component);
-        this._component.allowTransitions();
-        this.init();
-    }
 
-    init() {
+        const _defaults = {
+            target: null,
+            reference: null,
+            autoClose: true,
+            displayClass: null,
+            placement: 'bottom-start',
+            autoPlacement: true,
+            offset: 8,
+            shift: 8,
+            zindex: 1000
+        };
+
+        const _component = {
+            name: 'dropdown',
+            element: element, 
+            defaultConfig: _defaults, 
+            config: config, 
+            transitions: {
+                enter: true,
+                leave: true
+            }
+        };
+
+        super(_component);
+        
         if (!this._element) return;
 
         this._isOpened = false;
@@ -71,7 +77,7 @@ class Dropdown extends Component {
         };
 
         const resetPositionStyles = () => {
-            util.styles(this._dropdown, {
+            styles(this._dropdown, {
                 top: null,
                 left: null,
                 zIndex: null
@@ -79,8 +85,7 @@ class Dropdown extends Component {
         };
 
         const eventData = {
-            dropdown: this._dropdown,
-            config: this._config
+            dropdown: this._dropdown
         };
 
         const onClickToggle = (e) => {
@@ -90,7 +95,7 @@ class Dropdown extends Component {
 
         const onClickHide = (e) => {
             const clicked = e.target;
-    
+
             if (this._element.contains(clicked)) {
                 return;
             }
@@ -109,7 +114,7 @@ class Dropdown extends Component {
         };
     
         const onKeydown = (e) => {
-            if (e.key === 'Escape' && this._config.autoClose != false) {
+            if (e.key === 'Escape' && this._config.autoClose != false && this._isOpened) {
                 this.hide();
             }
         };
@@ -117,49 +122,45 @@ class Dropdown extends Component {
         this._show = () => {
             autoUpdatePosition = updatePosition();
             this._isOpened = true;
-            this._component.dispatch('show', eventData);
+            this._dispatchEvent('show', eventData);
             this._element.setAttribute('aria-expanded', this._isOpened);
-            util.removeClass(this._dropdown, this._config.displayClass);
+            removeClass(this._dropdown, this._config.displayClass);
 
-            const transitioned = this._component.transition('transitionEnter', this._dropdown, (e) => {
-                this._component.dispatch('shown', eventData);
+            const transitioned = this._transition('transitionEnter', this._dropdown, (e) => {
+                this._dispatchEvent('shown', eventData);
             });
 
-            if (transitioned) {
-                return;
-            }
+            if (transitioned) return;
     
-            this._component.dispatch('shown', eventData);
+            this._dispatchEvent('shown', eventData);
         };
 
         this._hide = () => {
             this._isOpened = false;
-            this._component.dispatch('hide', eventData);
+            this._dispatchEvent('hide', eventData);
             this._element.setAttribute('aria-expanded', this._isOpened);
 
-            const transitioned = this._component.transition('transitionLeave', this._dropdown, (e) => {
+            const transitioned = this._transition('transitionLeave', this._dropdown, (e) => {
                 this._isOpened = false;
-                this._component.dispatch('hidden', eventData);
+                this._dispatchEvent('hidden', eventData);
                 autoUpdatePosition();
                 resetPositionStyles();
-                util.addClass(this._dropdown, this._config.displayClass);
+                addClass(this._dropdown, this._config.displayClass);
             });
 
-            if (transitioned) {
-                return;
-            }
+            if (transitioned) return;
     
-            util.addClass(this._dropdown, this._config.displayClass);
+            addClass(this._dropdown, this._config.displayClass);
             autoUpdatePosition();
             resetPositionStyles();
-            this._component.dispatch('hidden', eventData);
+            this._dispatchEvent('hidden', eventData);
         };
 
-        this._component.on(this._reference, 'click', onClickToggle);
-        this._component.on(this._reference, 'keydown', onKeydown);
-        this._component.on(document, 'click', onClickHide);
+        this._on(this._reference, 'click', onClickToggle);
+        this._on(this._reference, 'keydown', onKeydown);
+        this._on(document, 'click', onClickHide);
 
-        this._component.dispatch('initialize');
+        this._dispatchEvent('initialize');
     }
 
     toggle() {
@@ -185,7 +186,5 @@ class Dropdown extends Component {
         super.destroy();
     }
 }
-
-uk.registerComponent(_component, Dropdown);
 
 export default Dropdown;

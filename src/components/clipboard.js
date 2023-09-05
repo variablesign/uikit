@@ -1,25 +1,27 @@
-import * as util from '../utils.js';
-import uk from '../uikit.js';
 import Component from '../component.js';
-
-const _component = 'clipboard';
-const _defaults = {
-    action: 'copy',
-    parent: null,
-    target: null,
-    text: null,
-    attribute: null,
-    container: null,
-    clearSelection: false
-};
 
 class Clipboard extends Component {
     constructor(element, config) {
-        super(element, config, _defaults, _component);
-        this.init();
-    }
 
-    init() {
+        const _defaults = {
+            action: 'copy',
+            parent: null,
+            target: null,
+            text: null,
+            attribute: null,
+            container: null,
+            clearSelection: false
+        };
+
+        const _component = {
+            name: 'clipboard',
+            element: element, 
+            defaultConfig: _defaults, 
+            config: config
+        };
+
+        super(_component);
+   
         if (!this._element || typeof ClipboardJS !== 'function') return;
 
         this._target = null;
@@ -71,15 +73,15 @@ class Clipboard extends Component {
         });
 
         this._clipboard.on('success', (e) => {
-            this._component.dispatch('success', e);
+            this._dispatchEvent('success', e);
 
             if (this._config.clearSelection) {
                 e.clearSelection();
             }
         });
-          
+            
         this._clipboard.on('error', (e) => {
-            this._component.dispatch('error');
+            this._dispatchEvent('error');
         });
     }
 
@@ -88,7 +90,5 @@ class Clipboard extends Component {
         super.destroy();
     }
 }
-
-uk.registerComponent(_component, Clipboard);
 
 export default Clipboard;

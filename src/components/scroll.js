@@ -1,21 +1,23 @@
-import * as util from '../utils.js';
-import uk from '../uikit.js';
 import Component from '../component.js';
-
-const _component = 'scroll';
-const _defaults = {
-    trigger: 'auto',
-    target: null,
-    container: null
-};
 
 class Scroll extends Component {
     constructor(element, config) {
-        super(element, config, _defaults, _component);
-        this.init();
-    }
 
-    init() {
+        const _defaults = {
+            trigger: 'auto',
+            target: null,
+            container: null
+        };
+
+        const _component = {
+            name: 'scroll',
+            element: element, 
+            defaultConfig: _defaults, 
+            config: config
+        };
+
+        super(_component);
+
         const handler = {};
         const container = this._config.container ? document.querySelector(this._config.container) : this._element;
         const target = container.querySelector(this._config.target);
@@ -34,7 +36,5 @@ class Scroll extends Component {
         super.destroy();
     }
 }
-
-uk.registerComponent(_component, Scroll);
 
 export default Scroll;

@@ -43,33 +43,6 @@ export const parseNestedDataset = (dataset) => {
 }
 
 /**
- * Merge objects into one
- */
-// export const extendObjects = (...objects) => {
-// 	let obj;
-// 	let item;
-// 	let objectsList = [];
-
-// 	for (let index in objects) {
-// 		item = objects[index] ? parseNestedDataset(objects[index]) : {};
-// 		obj = Object.fromEntries(
-// 			Object.entries(item).map(([key, value]) => {
-// 				try {
-// 					value = JSON.parse(value);
-// 				} catch (error) {
-// 					value = value;
-// 				}
-// 				return [key, value];
-// 			})
-// 		);
-		
-// 		objectsList.push(obj);
-// 	}
-
-// 	return Object.assign(...objectsList);
-// }
-
-/**
  * A native JS extend() function
  *
  * Returns a new object instead, preserving all of the original objects
@@ -148,6 +121,35 @@ export const replaceObjectKeys = (object, search, replace = '') => {
 }
 
 /**
+ * Check if string is a valid html string
+ */
+export const isHtmlString = (string) => {
+	if (typeof string === 'string' && string.indexOf('<') > -1) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Convert HTML string to DOM node
+ */
+export const stringToDom = (html) => {
+	if (html instanceof HTMLElement) {
+        return html;
+    }
+
+    if (isHtmlString(html)) {
+        const template = document.createElement('template');
+        template.innerHTML = html.trim();
+
+        return template.content.firstChild;
+    }
+
+    return null;
+}
+
+/**
  * Escape HTML tags
  */
 export const escapeHtml = (html) => {
@@ -202,7 +204,7 @@ export const isNumber = (value) => {
 /**
  * Show element
  */
-export const show = (element, display = 'inherit') => {
+export const showElement = (element, display = 'inherit') => {
     if (!element) return;
 
     element.style.display = display;
@@ -211,7 +213,7 @@ export const show = (element, display = 'inherit') => {
 /**
  * Hide element
  */
-export const hide = (element, display = 'none') => {
+export const hideElement = (element, display = 'none') => {
     if (!element) return;
 
     element.style.display = display;

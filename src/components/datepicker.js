@@ -1,94 +1,100 @@
-import * as util from '../utils.js';
-import uk from '../uikit.js';
+import { isNumber } from '../utils.js';
 import Component from '../component.js';
 import Pikaday from  '../plugins/pikaday/1.8.2/pikaday.js';
 import { computePosition, offset, flip, shift, limitShift, autoUpdate } from '@floating-ui/dom';
 
-const _component = 'datepicker';
-const _defaults = {
-    bound: undefined,
-    trigger: null,
-    container: undefined,
-    startRange: null,
-    endRange: null,
-    startRangeTarget: null,
-    endRangeTarget: null,
-    format: null,
-    minDate: null,
-    maxDate: null,
-    toString: null,
-    parse: null,
-    defaultDate: null,
-    setDefaultDate: false,
-    firstDay: 0,
-    yearRange: 10,
-    showOtherDays: false,
-    otherDaysSelection: false,
-    focus : false,
-    title: null,
-    autoClose: true,
-    showButtons: false,
-    buttonsPlacement: 'bottom',
-    previous: 'Previous',
-    next: 'Next',
-    buttons: ['cancel', 'apply'],
-    clear: 'Clear',
-    today: 'Today',
-    cancel: 'Cancel',
-    apply: 'Apply',
-    offset: 8,
-    placement: 'bottom-start',
-    shortWeekdays: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
-    months: [
-        'January', 
-        'February',
-        'March',
-        'April',
-        'May',
-        'June',
-        'July',
-        'August',
-        'September',
-        'October',
-        'November',
-        'December'
-    ],
-    weekdays: [
-        'Sunday', 
-        'Monday', 
-        'Tuesday', 
-        'Wednesday', 
-        'Thursday', 
-        'Friday', 
-        'Saturday'
-    ],
-    events: [],
-    disableDay: null,
-    class: '',
-    headerClass: '',
-    titleClass: '',
-    weekdayClass: '',
-    daysClass: '',
-    dayClass: '',
-    previousClass: '',
-    nextClass: '',
-    monthClass: '',
-    yearClass: '',
-    buttonsClass: '',
-    clearClass: '',
-    todayClass: '',
-    cancelClass: '',
-    applyClass: '',
-};
-
 class Datepicker extends Component {
     constructor(element, config) {
-        super(element, config, _defaults, _component);
-        this._component.allowTransitions();
-        this.init();
-    }
 
-    init() {
+        const _defaults = {
+            bound: undefined,
+            trigger: null,
+            container: undefined,
+            startRange: null,
+            endRange: null,
+            startRangeTarget: null,
+            endRangeTarget: null,
+            format: null,
+            minDate: null,
+            maxDate: null,
+            toString: null,
+            parse: null,
+            defaultDate: null,
+            setDefaultDate: false,
+            firstDay: 0,
+            yearRange: 10,
+            showOtherDays: false,
+            otherDaysSelection: false,
+            focus : false,
+            title: null,
+            autoClose: true,
+            showButtons: false,
+            buttonsPlacement: 'bottom',
+            previous: 'Previous',
+            next: 'Next',
+            buttons: ['cancel', 'apply'],
+            clear: 'Clear',
+            today: 'Today',
+            cancel: 'Cancel',
+            apply: 'Apply',
+            offset: 8,
+            placement: 'bottom-start',
+            shortWeekdays: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
+            months: [
+                'January', 
+                'February',
+                'March',
+                'April',
+                'May',
+                'June',
+                'July',
+                'August',
+                'September',
+                'October',
+                'November',
+                'December'
+            ],
+            weekdays: [
+                'Sunday', 
+                'Monday', 
+                'Tuesday', 
+                'Wednesday', 
+                'Thursday', 
+                'Friday', 
+                'Saturday'
+            ],
+            events: [],
+            disableDay: null,
+            class: '',
+            headerClass: '',
+            titleClass: '',
+            weekdayClass: '',
+            daysClass: '',
+            dayClass: '',
+            previousClass: '',
+            nextClass: '',
+            monthClass: '',
+            yearClass: '',
+            buttonsClass: '',
+            clearClass: '',
+            todayClass: '',
+            cancelClass: '',
+            applyClass: '',
+        };
+
+        const _component = {
+            name: 'datepicker',
+            element: element, 
+            defaultConfig: _defaults, 
+            config: config, 
+            transitions: {
+                enter: true,
+                leave: true
+            }
+        };
+
+        super(_component);
+
         if (!this._element) return;
 
         let autoUpdatePosition = () => void 0;
@@ -198,8 +204,8 @@ class Datepicker extends Component {
             return ordinals[index] ? number + ordinals[index] : number + 'th';
         };
         
-        // Pikaday config
-        let config = {
+        // Pikaday options
+        let options = {
             field: this._element,
             reposition: false,
             bound: this._config.bound,
@@ -257,11 +263,11 @@ class Datepicker extends Component {
         }
 
 
-        config.onInitialize = () => {
-            this._component.dispatch('initialize');
+        options.onInitialize = () => {
+            this._dispatchEvent('initialize');
         };
 
-        config.onBeforeOpen = () => {
+        options.onBeforeOpen = () => {
 
             const setPosition = () => {
                 computePosition(this._element, this._pikaday.el, {
@@ -293,62 +299,62 @@ class Datepicker extends Component {
 
             autoUpdatePosition = updatePosition();
             updateRangeDate();
-            this._component.dispatch('show');
+            this._dispatchEvent('show');
         };
 
-        config.onOpen = () => {
+        options.onOpen = () => {
             if (this._config.bound != false) {                
-                this._component.transition('transitionEnter', this._pikaday.el, (e) => {
-                    this._component.dispatch('shown');
+                this._transition('transitionEnter', this._pikaday.el, (e) => {
+                    this._dispatchEvent('shown');
                 });
             }
         };
 
-        config.onBeforeClose = () => {
-            this._component.dispatch('hide');
+        options.onBeforeClose = () => {
+            this._dispatchEvent('hide');
 
             if (this._config.bound != false) {
-                const transitioned = this._component.transition('transitionLeave', this._pikaday.el, (e) => {
-                    this._component.dispatch('hidden');
+                const transitioned = this._transition('transitionLeave', this._pikaday.el, (e) => {
+                    this._dispatchEvent('hidden');
                     autoUpdatePosition();
                     this._pikaday.el.style.display = 'none';
                 });
 
                 if (!transitioned) {
                     this._pikaday.el.style.display = 'none';
-                    this._component.dispatch('hidden');
+                    this._dispatchEvent('hidden');
                     autoUpdatePosition();
                 }
             }
         };
 
-        config.onClose = () => {
+        // options.onClose = () => {
             
+        // };
+
+        options.onDraw = () => {
+            this._dispatchEvent('draw');
         };
 
-        config.onDraw = () => {
-            this._component.dispatch('draw');
-        };
-
-        config.onSelect = (date, hasEvent) => {
+        options.onSelect = (date, hasEvent) => {
             updateRangeDate();
-            this._component.dispatch('select', { date, hasEvent, config: this._config });
+            this._dispatchEvent('select', { date, hasEvent });
         };
 
         if (!this._config.toString && this._config.format && (!this._hasMoment || !this._hasDayjs)) {
-            config.toString = (date, format) => {
+            options.toString = (date, format) => {
 
                 let formattedDate = '';
                 const tokens = {
-                    ddd: config.i18n.weekdays[date.getDay()].slice(0, 3),
-                    dddd: config.i18n.weekdays[date.getDay()],
+                    ddd: options.i18n.weekdays[date.getDay()].slice(0, 3),
+                    dddd: options.i18n.weekdays[date.getDay()],
                     D: date.getDate().toString(),
                     DD: date.getDate().toString().padStart(2, '0'),
                     Do: getOrdinalNumber(date.getDate().toString()),
                     M: (date.getMonth() + 1).toString(),
                     MM: (date.getMonth() + 1).toString().padStart(2, '0'),
-                    MMM: config.i18n.months[date.getMonth()].slice(0, 3),
-                    MMMM: config.i18n.months[date.getMonth()],
+                    MMM: options.i18n.months[date.getMonth()].slice(0, 3),
+                    MMMM: options.i18n.months[date.getMonth()],
                     YY: date.getFullYear().toString().slice(2),
                     YYYY: date.getFullYear().toString()
                 };
@@ -361,7 +367,7 @@ class Datepicker extends Component {
                     .filter(str => str.length > 0);
 
                 const replacedParts = parts.map((part) => {
-                     return tokens[part];
+                        return tokens[part];
                 }).filter(part => part);
 
                 replacedParts.forEach((part, index) => {
@@ -379,7 +385,7 @@ class Datepicker extends Component {
         }
 
         if (!this._config.parse && this._config.format && (!this._hasMoment || !this._hasDayjs)) {
-            config.parse = (dateString, format) => {
+            options.parse = (dateString, format) => {
                 let day = '', 
                     month = '', 
                     year = '';
@@ -402,7 +408,7 @@ class Datepicker extends Component {
                             break;
                             
                         case 'M':
-                            if (util.isNumber(dateParts[index])) {
+                            if (isNumber(dateParts[index])) {
                                 month = dateParts[index] ? parseInt(dateParts[index]) - 1 : dateParts[index];
                             } else {
                                 month = dateParts[index] || '';
@@ -423,20 +429,20 @@ class Datepicker extends Component {
 
         // Day.js toString function
         if (!this._config.toString && this._config.format && this._hasDayjs) {
-            config.toString = (date, format) => {
+            options.toString = (date, format) => {
                 return dayjs(date).format(format);
             };
         }
 
         // Day.js parse function
         if (!this._config.parse && this._config.format && this._hasDayjs) {
-            config.parse = (dateString, format) => {
+            options.parse = (dateString, format) => {
                 return dayjs(dateString, format).toDate();
             }
         }
 
         // Init Pikaday
-        this._pikaday = new Pikaday(config);
+        this._pikaday = new Pikaday(options);
     }
 
     toString(format) {
@@ -561,7 +567,5 @@ class Datepicker extends Component {
         super.destroy();
     }
 }
-
-uk.registerComponent(_component, Datepicker);
 
 export default Datepicker;

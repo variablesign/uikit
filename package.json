@@ -3,12 +3,14 @@
   "version": "1.0.0",
   "description": "A lightweight and modular Tailwind CSS styled components, and vanilla JavaScript plugins for developing web interfaces faster.",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@floating-ui/dom": "^1.4.1"
-  }
+    "@floating-ui/dom": "^1.5.1"
+  },
+  "devDependencies": {}
 }

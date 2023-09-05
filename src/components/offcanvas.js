@@ -1,40 +1,46 @@
-import * as util from '../utils.js';
-import uk from '../uikit.js';
 import Component from '../component.js';
-import { Modal } from './modal.js';
-
-const _component = 'offcanvas';
-const _defaults = {
-    target: null,
-    keyboard: true,
-    focus: false,
-    backdropClass: null,
-    backdropFadeDuration: 200,
-    backdropClose: true,
-    hideBackdrop: false,
-    displayClass: null,
-    dialog: 'data-dialog',
-    content: 'data-content',
-    close: 'data-close',
-    backdrop: 'data-backdrop',
-    autoCloseDelay: 0,
-    history: false,
-    allowScroll: false,
-    zindex: 1045,
-    namespace: 'offcanvas'
-};
+import Modal from './modal.js';
 
 class Offcanvas extends Component {
     constructor(element, config) {
-        super(element, config, _defaults, _component);
-        this._component.allowTransitions();
-        this._component.lockConfig({
+
+        const _defaults = {
+            target: null,
+            keyboard: true,
+            focus: false,
+            backdropClass: null,
+            backdropFadeDuration: 200,
+            backdropClose: true,
+            hideBackdrop: false,
+            displayClass: null,
+            dialog: 'data-dialog',
+            content: 'data-content',
+            close: 'data-close',
+            backdrop: 'data-backdrop',
+            autoCloseDelay: 0,
+            history: false,
+            allowScroll: false,
+            zindex: 1045,
+            namespace: 'offcanvas'
+        };
+
+        const _component = {
+            name: 'offcanvas',
+            element: element, 
+            defaultConfig: _defaults, 
+            config: config, 
+            transitions: {
+                enter: true,
+                leave: true
+            }
+        };
+
+        super(_component);
+
+        this._lockConfig({
             autoCloseDelay: 0
         });
-        this.init();
-    }
 
-    init() {
         this.modal = new Modal(this._element, this._config);
 
         // Accessible event data
@@ -44,27 +50,27 @@ class Offcanvas extends Component {
         };
 
         this.modal.on('initialize', () => {
-            this._component.dispatch('initialize');
+            this._dispatchEvent('initialize');
         });
 
         this.modal.on('show', () => {
-            this._component.dispatch('show', eventData);
+            this._dispatchEvent('show', eventData);
         });
 
         this.modal.on('shown', () => {
-            this._component.dispatch('shown', eventData);
+            this._dispatchEvent('shown', eventData);
         });
 
         this.modal.on('hidePrevented', () => {
-            this._component.dispatch('hidePrevented', eventData);
+            this._dispatchEvent('hidePrevented', eventData);
         });
 
         this.modal.on('hide', () => {
-            this._component.dispatch('hide', eventData);
+            this._dispatchEvent('hide', eventData);
         });
 
         this.modal.on('hidden', () => {
-            this._component.dispatch('hidden', eventData);
+            this._dispatchEvent('hidden', eventData);
         });
     }
 
@@ -80,7 +86,5 @@ class Offcanvas extends Component {
         this.modal.destroy();
     }
 }
-
-uk.registerComponent(_component, Offcanvas);
 
 export default Offcanvas;

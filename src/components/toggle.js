@@ -1,35 +1,38 @@
-import * as util from '../utils.js';
-import uk from '../uikit.js';
+import { addClass, removeClass, setAttributes } from '../utils.js';
 import Component from '../component.js';
-
-const _component = 'toggle';
-const _defaults = {
-    addClass: null,
-    removeClass: null,
-    target: null
-};
 
 class Toggle extends Component {
     constructor(element, config) {
-        super(element, config, _defaults, _component);
-        this.init();
-    }
 
-    init() {
+        const _defaults = {
+            addClass: null,
+            removeClass: null,
+            target: null
+        };
+
+        const _component = {
+            name: 'toggle',
+            element: element, 
+            defaultConfig: _defaults, 
+            config: config
+        };
+
+        super(_component);
+        
         if (!this._element) return;
 
         this._config.create = typeof this._config.create == 'string'
             ? this._config.create.split(' ')
             : this._config.create;
 
-        const toggles = this._component.createConfig(this._config.create, [
+        const toggles = this._createConfig(this._config.create, [
             'addClass', 
             'removeClass', 
             'target'
         ]);
 
         this._toggled = false;
-        util.setAttributes(this._element, {
+        setAttributes(this._element, {
             ariaPressed: this._toggled,
             role: 'button'
         });
@@ -42,31 +45,31 @@ class Toggle extends Component {
                         ? 'transitionend'
                         : null;
 
-                this._component.dispatch('toggle', { toggled: this._toggled, config: this._config }, target);
+                this._dispatchEvent('toggle', { toggled: this._toggled, config: this._config }, target);
 
                 if (target.dataset.toggled == 'true') {
                     this._toggled = false;
                     this._element.setAttribute('aria-pressed', this._toggled);
                     target.setAttribute('data-toggled', false);
-                    util.addClass(target, options.removeClass);
-                    util.removeClass(target, options.addClass);
+                    addClass(target, options.removeClass);
+                    removeClass(target, options.addClass);
                 } else {
                     this._toggled = true;
                     this._element.setAttribute('aria-pressed', this._toggled);
                     target.setAttribute('data-toggled', true);
-                    util.removeClass(target, options.removeClass);
-                    util.addClass(target, options.addClass);
+                    removeClass(target, options.removeClass);
+                    addClass(target, options.addClass);
                 }
 
                 if (eventName) {  
-                    this._component.one(target, eventName, () => {
-                        this._component.dispatch('toggled', { toggled: this._toggled, config: this._config }, target);
+                    this._one(target, eventName, () => {
+                        this._dispatchEvent('toggled', { toggled: this._toggled, config: this._config }, target);
                     });
 
                     return;
                 }
 
-                this._component.dispatch('toggled', { toggled: this._toggled, config: this._config }, target);
+                this._dispatchEvent('toggled', { toggled: this._toggled, config: this._config }, target);
             });    
         };
         
@@ -89,9 +92,9 @@ class Toggle extends Component {
             this._toggle();
         };
 
-        this._component.on(this._element, 'click', toggle);
+        this._on(this._element, 'click', toggle);
 
-        this._component.dispatch('initialize');
+        this._dispatchEvent('initialize');
     }
 
     toggle() {
@@ -102,7 +105,5 @@ class Toggle extends Component {
         super.destroy();
     }
 }
-
-uk.registerComponent(_component, Toggle);
 
 export default Toggle;

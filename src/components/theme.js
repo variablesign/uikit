@@ -1,25 +1,27 @@
-import * as util from '../utils.js';
-import uk from '../uikit.js';
+import { addClass, removeClass } from '../utils.js';
 import Component from '../component.js';
-
-const _component = 'theme';
-const themeChannel = new BroadcastChannel('theme-channel');
-const _defaults = {
-    theme: 'system',
-    target: document.documentElement,
-    optionAttribute: 'color-theme',
-    attribute: 'data-theme',
-    class: 'dark',
-    storage: 'theme'
-};
 
 class Theme extends Component {
     constructor(element, config) {
-        super(element, config, _defaults, _component);
-        this.init();
-    }
 
-    init() {
+        const _defaults = {
+            theme: 'system',
+            target: document.documentElement,
+            optionAttribute: 'color-theme',
+            attribute: 'data-theme',
+            class: 'dark',
+            storage: 'theme'
+        };
+
+        const _component = {
+            name: 'theme',
+            element: element, 
+            defaultConfig: _defaults, 
+            config: config
+        };
+
+        super(_component);
+
         this._theme = this._config.theme;
         this._target = this._config.target instanceof HTMLElement ? this._config.target : document.querySelector(this._config.target);
 
@@ -28,38 +30,38 @@ class Theme extends Component {
 
             if (this._theme != 'system') {
                 if (this._theme == 'dark') {
-                    util.addClass(this._target, this._config.class);
+                    addClass(this._target, this._config.class);
                 } else {
-                    util.removeClass(this._target, this._config.class);
+                    removeClass(this._target, this._config.class);
                 }
 
                 localStorage.setItem(this._config.storage, this._theme);
                 this._target.setAttribute(this._config.attribute, this._theme);
-                this._component.dispatch('change', { theme: this._theme }, document);
+                this._dispatchEvent('change', { theme: this._theme }, document);
 
                 return;
             }
 
             if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                util.addClass(this._target, this._config.class);
+                addClass(this._target, this._config.class);
                 this._target.setAttribute(this._config.attribute, 'dark');
             } else {
-                util.removeClass(this._target, this._config.class);
+                removeClass(this._target, this._config.class);
                 this._target.setAttribute(this._config.attribute, 'light');
             }
 
             localStorage.removeItem(this._config.storage);
-            this._component.dispatch('change', { theme: this._theme }, document);
+            this._dispatchEvent('change', { theme: this._theme }, document);
         };
 
         this._onClickChangeTheme = (e) => {
             e.preventDefault();
             this._updateTheme();
-            this._component.dispatch('broadcast', { theme: this._theme }, document);
+            this._dispatchEvent('broadcast', { theme: this._theme }, document);
         };
 
         if (this._element) {   
-            this._component.on(this._element, 'click', this._onClickChangeTheme);
+            this._on(this._element, 'click', this._onClickChangeTheme);
         }
     }
 
@@ -71,41 +73,14 @@ class Theme extends Component {
     destroy() {
         this._target.removeAttribute(this._config.optionAttribute);
         this._target.removeAttribute(this._config.attribute);
-        util.removeClass(this._target, this._config.class);
+        removeClass(this._target, this._config.class);
         localStorage.removeItem(this._config.storage);
         super.destroy();
 
         if (this._element) {   
-            this._component.off(this._element, 'click', this._onClickChangeTheme);
+            this._off(this._element, 'click', this._onClickChangeTheme);
         }
     }
 }
-
-uk.registerComponent(_component, Theme);
-
-// Auto detect & set theme on load
-const theme = UIkit.theme();
-
-if (localStorage.getItem(theme._config.storage)) {
-    theme.theme(localStorage.getItem(theme._config.storage));
-}
-
-if (localStorage.getItem(theme._config.storage) == null) {
-    theme.theme('system');
-}
-
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-    if (localStorage.getItem(theme._config.storage) == null) {
-        theme.theme('system');
-    }
-});
-
-document.addEventListener(uk.getConfig('prefix') + '.theme.broadcast', (e) => {
-    themeChannel.postMessage(e.detail.theme);
-});
-
-themeChannel.addEventListener('message', (e) => {
-    theme.theme(e.data);
-});
 
 export default Theme;

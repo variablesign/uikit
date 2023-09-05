@@ -1,79 +1,86 @@
-import * as util from '../utils.js';
-import uk from '../uikit.js';
+import { randomNumber, removeClass, showElement, hideElement } from '../utils.js';
 import Component from '../component.js';
 import { computePosition, offset, inline, flip, shift, limitShift, arrow, autoUpdate } from '@floating-ui/dom';
 
-const _component = 'tooltip';
-const _defaults = {
-    target: null,
-    content: '',
-    placement: 'top',
-    offset: 8,
-    shift: 8,
-    showDelay: 0,
-    hideDelay: 0,
-    trigger: ['hover', 'focus'],
-    class: null,
-    displayClass: null,
-    arrow: true,
-    arrowPadding: 8,
-    html: false,
-    arrowClass: null,
-    zindex: 1080
-};
-
 class Tooltip extends Component {
     constructor(element, config) {
-        super(element, config, _defaults, _component);
-        this._component.allowTransitions();
-        this.init();
-    }
+        
+        const _defaults = {
+            target: null,
+            content: '',
+            placement: 'top',
+            container: null,
+            offset: 8,
+            shift: 8,
+            showDelay: 0,
+            hideDelay: 0,
+            trigger: ['hover', 'focus'],
+            class: null,
+            displayClass: null,
+            arrow: true,
+            arrowPadding: 8,
+            html: false,
+            arrowClass: null,
+            zindex: 1080
+        };
 
-    init() {
+        const _component = {
+            name: 'tooltip',
+            element: element, 
+            defaultConfig: _defaults, 
+            config: config, 
+            transitions: {
+                enter: true,
+                leave: true
+            }
+        };
+
+        super(_component);
+
         if (!this._element) return;
 
         this._config.target = typeof this._config.target == 'string'
             ? document.querySelector(this._config.target)
             : null;
 
+        this._config.container = typeof this._config.container == 'string'
+            ? document.querySelector(this._config.container)
+            : this._config.container instanceof HTMLElement
+            ? this._config.container
+            : document.body;
+
         this._config.trigger = typeof this._config.trigger == 'string' 
             ? this._config.trigger.split(' ') 
-            : this._config.trigger;
-
-        this._config.trigger = this._config.trigger instanceof Array 
+            : this._config.trigger instanceof Array 
             ? this._config.trigger 
             : [];
 
-        // this._config.placement = this._config.placement.replace('-start', '').replace('-end', '');
         this._config.showDelay = parseInt(this._config.showDelay);
         this._config.hideDelay = parseInt(this._config.hideDelay);
-        this._id = 'tooltip-' + util.randomNumber(4);
-        // this._originalTitle = null;
         this._content = this._config.content; 
         this._contentType = 'innerText';
-        let tooltip, tooltipContent, tooltipArrow, timeout;
+        this._isShown = false;
+        const _id = 'tooltip-' + randomNumber(4);
+        let tooltip, tooltipContent, tooltipArrow;
 
         if (this._element.hasAttribute('title')) {
             this._content = this._element.title;
-            // this._originalTitle = this._element.title;
             this._element.setAttribute('data-tooltip-original-title', this._element.title);
             this._element.removeAttribute('title');
         }
 
         if (this._element.hasAttribute('aria-label') && !this._element.hasAttribute('title')) {
             this._content = this._element.getAttribute('aria-label');
-            // this._originalTitle = this._content;
         }
         
         // Create tooltip
         if (this._config.target) {
             tooltip = this._config.target;
 
-            this._id = tooltip.hasAttribute('id') ? tooltip.id : this._id;
-            tooltip.setAttribute('id', this._id);
+            tooltip.setAttribute('id', tooltip.hasAttribute('id') ? tooltip.id : _id);
             tooltip.style.display = 'none';
             tooltip.style.zIndex = this._config.zindex;
-            util.removeClass(tooltip, this._config.displayClass);
+            removeClass(tooltip, this._config.displayClass);
 
             tooltipContent = tooltip.querySelector('[data-content]');
             tooltipArrow = tooltip.querySelector('[data-arrow]');
@@ -89,7 +96,7 @@ class Tooltip extends Component {
             const type = this._config.html ? 'innerHTML' : 'innerText'
             this._contentType = type;
             tooltip = document.createElement('div');
-            tooltip.id = this._id;
+            tooltip.id = _id;
             tooltip.style.display = 'none';
             tooltip.style.position = 'absolute';
             tooltip.style.top = 0;
@@ -123,7 +130,7 @@ class Tooltip extends Component {
         this._tooltipContent = tooltipContent;
         this._tooltipArrow = this._config.arrow ? tooltipArrow : null;
 
-        this._element.setAttribute('aria-describedby', this._id);
+        this._element.setAttribute('aria-describedby', _id);
 
         let autoUpdatePosition = () => void 0;
 
@@ -175,43 +182,46 @@ class Tooltip extends Component {
         };
 
         this._show = () => {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => {
-    
-                this._component.dispatch('show');
-                document.body.appendChild(this._tooltip);
-                autoUpdatePosition = updatePosition();
-                util.show(this._tooltip);
+            this._setTimeout(() => {
+                this._dispatchEvent('show');
 
-                const transitioned = this._component.transition('transitionEnter', this._tooltip, (e) => {
-                    this._component.dispatch('shown');
+                if (!this._config.container.contains(this._tooltip)) {
+                    this._config.container.appendChild(this._tooltip);
+                }
+
+                autoUpdatePosition = updatePosition();
+                showElement(this._tooltip);
+                this._isShown = true;
+
+                const transitioned = this._transition('transitionEnter', this._tooltip, (e) => {
+                    this._dispatchEvent('shown');
                 });
 
                 if (transitioned) {
                     return;
                 }
     
-                util.show(this._tooltip);
-                this._component.dispatch('shown');
+                showElement(this._tooltip);
+                this._dispatchEvent('shown');
 
             }, this._config.showDelay);
         };
 
         this._hide = () => {
-            
-            if (this.isTransitioning) {
-                this._tooltip.remove();
+            if (!this._isShown) {
+                clearTimeout(this._timeout);
+
+                return;
             }
+            
+            this._setTimeout(() => {
+                this._dispatchEvent('hide');
 
-            clearTimeout(timeout);
-            timeout = setTimeout(() => {
-    
-                this._component.dispatch('hide');
-
-                const transitioned = this._component.transition('transitionLeave', this._tooltip, (e) => {
-                    this._component.dispatch('hidden');
+                const transitioned = this._transition('transitionLeave', this._tooltip, (e) => {
+                    this._dispatchEvent('hidden');
                     autoUpdatePosition();
-                    util.hide(this._tooltip);
+                    hideElement(this._tooltip);
+                    this._isShown = false;
                     this._tooltip.remove();
                 });
 
@@ -219,15 +229,16 @@ class Tooltip extends Component {
                     return;
                 }
     
-                util.hide(this._tooltip);
+                hideElement(this._tooltip);
+                this._isShown = false;
                 this._tooltip.remove();
-                this._component.dispatch('hidden');
+                this._dispatchEvent('hidden');
 
             }, this._config.hideDelay);
         };
 
         this._toggle = (e) => {
-            if (this._tooltip.isConnected) {
+            if (this._isShown) {
                 this._hide();
 
                 return;
@@ -237,7 +248,7 @@ class Tooltip extends Component {
         }
 
         const onKeydown = (e) => {
-            if (e.key === 'Escape') {
+            if (e.key === 'Escape' && this._isShown) {
                 this._hide();
             }
         };
@@ -252,28 +263,28 @@ class Tooltip extends Component {
             }
 
             if (this._config.trigger[i] == 'click') {
-                this._component.on(this._element, 'click', this._toggle);
+                this._on(this._element, 'click', this._toggle);
             }
 
             if (this._config.trigger[i] == 'hover') {                
-                this._component.on(this._element, 'mouseenter', this._show);
-                this._component.on(this._element, 'mouseleave', this._hide);
+                this._on(this._element, 'mouseenter', this._show);
+                this._on(this._element, 'mouseleave', this._hide);
             }
 
             if (this._config.trigger[i] == 'focus') {
-                this._component.on(this._element, 'focus', this._show);
-                this._component.on(this._element, 'blur', this._hide);
+                this._on(this._element, 'focusin', this._show);
+                this._on(this._element, 'focusout', this._hide);
             }
 
             if (i == 0 && this._config.trigger[i] == 'once') {                
-                this._component.on(this._element, 'mouseenter', onHoverDestroy);
-                this._component.on(this._element, 'focus', onHoverDestroy);
+                this._on(this._element, 'mouseenter', onHoverDestroy);
+                this._on(this._element, 'focusin', onHoverDestroy);
             }
         }
 
-        this._component.on(document, 'keydown', onKeydown);
+        this._on(document, 'keydown', onKeydown);
 
-        this._component.dispatch('initialize');
+        this._dispatchEvent('initialize');
 
         if (this._config.trigger.length == 1 && this._config.trigger[0] == 'once') {                
             this.show();
@@ -313,7 +324,5 @@ class Tooltip extends Component {
         super.destroy();
     }
 }
-
-uk.registerComponent(_component, Tooltip);
 
 export default Tooltip;

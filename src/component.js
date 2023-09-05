@@ -1,18 +1,36 @@
-import * as util from './utils.js';
-import uk from "./uikit.js";
+import { getElement, parseNestedDataset, replaceObjectKeys, extend, addClass, removeClass, capitalize } from './utils.js';
 
 export default class Component {
-    constructor(element, config, defaults, component) {
+    constructor(options) {
+
+        /**
+         * Component data object.
+         */
+        this._component = extend(true, {
+            name: null,
+            element: null,
+            defaultConfig: {},
+            config: {},
+            transitions: {
+                enter: false,
+                leave: false
+            }
+        }, options);
         
         /**
          * The global component config.
          */
-        const globalConfig = UIkit.globalConfig[component] || {};
+        const globalConfig = UIkit.globalConfig[this._component.name] || {};
         
         /**
          * The component element.
          */
-        this._element = util.getElement(element);
+        this._element = getElement(this._component.element);
+        
+        /**
+         * The timeout ID.
+         */
+        this._timeout = undefined;
 
         /**
          * Get component config from dataset.
@@ -20,15 +38,15 @@ export default class Component {
         const getDatasetConfig = () => {
             const config = {};
             let dataset = this._element ? this._element.dataset : null;
-            dataset = dataset ? util.parseNestedDataset(dataset) : {};
+            dataset = dataset ? parseNestedDataset(dataset) : {};
 
             for (const key in dataset) {
-                if (key.substring(0, component.length) === component) {
+                if (key.substring(0, this._component.name.length) === this._component.name) {
                     config[key] = dataset[key];
                 }
             }
 
-            return util.replaceObjectKeys(config, component);
+            return replaceObjectKeys(config, this._component.name);
         };
 
         /**
@@ -63,22 +81,6 @@ export default class Component {
                     config[key] = newConfig[key];
                 }
             }
-
-            // for (const key in newConfig) {
-            //     if (['classUndo', 'ClassUndo'].includes(key.substring(key.length - 9))) {
-            //         const newKey = key.replace('classUndo', 'class').replace('ClassUndo', 'Class');
-            //         const newClass = (newConfig[key] || '').split(' ');
-            //         const oldClass = (this._config[newKey] || '').split(' ');
-            //         config[newKey] = oldClass.filter((item) => !newClass.includes(item)).join(' ');
-            //     } else if (['classMerge', 'ClassMerge'].includes(key.substring(key.length - 10))) {
-            //         const newKey = key.replace('classMerge', 'class').replace('ClassMerge', 'Class');
-            //         const oldClass = (config[newKey] || this._config[newKey] || '').split(' ');
-            //         const newClass = (newConfig[key] || '').split(' ');
-            //         config[newKey] = oldClass.concat(newClass.filter((item) => oldClass.indexOf(item) < 0)).join(' ');
-            //     } else {
-            //         config[key] = newConfig[key];
-            //     }
-            // }
             
             return config;
         };
@@ -86,123 +88,78 @@ export default class Component {
         /**
          * Merge all configurations.
          */
-        this._config = util.extend(
+        this._config = extend(
             true,
-            defaults,
+            this._component.defaultConfig,
             globalConfig
         );
-
-        this._config = util.extend(
+        
+        this._config = extend(
             true,
             this._config,
-            mergeConfig(config),
+            mergeConfig(this._component.config),
             mergeConfig(getDatasetConfig())
         );
-
-        /**
-         * Component configuration
-         * 
-         * - null: returns the configuration object
-         * - string: returns a value with the specified key
-         * - array: merges other config objects
-         * - object: updates the config
-         * @param {null|string|array|object} value 
-         * @returns
-         */
-        this.config = (value) => {
-            if (typeof value === 'string') {
-                return this._config[value];
-            }
-
-            if (value instanceof Array) {
-                value = value.map((config) => mergeUndoClassConfig(config));
-
-                return util.extend(true, this._config, ...value);
-            }
-
-            if (value instanceof Object) {
-                return util.extend(true, this._config, mergeUndoClassConfig(value));
-            }
-
-            return this._config;
-        }
 
         /**
          * Lock the listed config to the provided values.
          * 
          * @param {object} config
          */
-        const lockConfig = (config) => {
+        this._lockConfig = (config) => {
             config = config instanceof Object ? config : {};
 
-            this._config = util.extend(true, this._config, config);
+            this._config = extend(true, this._config, config);
         };
 
         /**
          * Get the current transition state.
          */
-        this.isTransitioning = false;
-
-        /**
-         * Check if component is using the transition options.
-         */
-        const hasTransition = this._config.transitionEnter || this._config.transitionLeave 
-            ? true 
-            : false;
+        this._isTransitioning = false;
 
         /**
          * Events storage.
          */
-        let events = {};
+        this._events = {};
 
         /**
-         * Makes the transition options available for the component.
-         * 
-         * @param {boolean} enter allow enter transitions
-         * @param {boolean} leave allow leave transitions
+         * Enable the use of enter transitions config for component.
          */
-        const allowTransitions = (enter = true, leave = true) => {
-            const config = {};
-
-            if (enter) {
-                config.transitionEnter = this._config.transitionEnter || null;
-                config.transitionEnterStart = this._config.transitionEnterStart || null;
-                config.transitionEnterEnd = this._config.transitionEnterEnd || null;
-            }
-
-            if (leave) {
-                config.transitionLeave = this._config.transitionLeave || this._config.transitionEnter || null;
-                config.transitionLeaveStart = this._config.transitionLeaveStart || null;
-                config.transitionLeaveEnd = this._config.transitionLeaveEnd || null;
-            }
-
-            this._config = util.extend(this._config, config);
-        };
+        if (this._component.transitions.enter) {
+            this._config = extend({
+                transitionEnter: null,
+                transitionEnterStart: null,
+                transitionEnterEnd: null
+            }, this._config);
+        }
 
         /**
-         * Remove leftover transition classes.
-         * 
-         * @param {HTMLElement} element 
+         * Enable the use of leave transitions config for component.
          */
-        const transitionCleanup = (element) => {
-            const transitions = ['transitionEnter', 'transitionLeave'];
+        if (this._component.transitions.leave) {
+            this._config = extend({
+                transitionLeave: null,
+                transitionLeaveStart: null,
+                transitionLeaveEnd: null
+            }, this._config);
+        }
 
-            for (const transition of transitions) {
-                util.removeClass(element, this._config[`${transition}`]);
-                util.removeClass(element, this._config[`${transition}Start`]);
-                util.removeClass(element, this._config[`${transition}End`]);
-            }
-        };
+        /**
+         * Check if component is using the transition options.
+         */
+        this._hasTransition = this._config.transitionEnter || this._config.transitionLeave 
+            ? true 
+            : false;
 
         /**
          * Run a transition/animation.
          * 
          * @param {string} type transitionEnter/transitionLeave
          * @param {HTMLElement} element 
-         * @param {function} callback 
+         * @param {function} callback
          * @returns 
          */
-         const transition = (type, element, callback) => {
+        this._transition = (type, element, callback) => {
             let transitionEvent = 'transitionend';
             callback =  typeof callback === 'function' ? callback : () => void 0;
 
@@ -210,15 +167,19 @@ export default class Component {
                 return false;
             }
 
-            transitionCleanup(element);
-            
-            util.addClass(element, this._config[`${type}`]);
-            util.addClass(element, this._config[`${type}Start`]);
+            const transitionCleanup = (element) => {
+                const transitions = ['transitionEnter', 'transitionLeave'];
+    
+                for (const transition of transitions) {
+                    removeClass(element, this._config[`${transition}`]);
+                    removeClass(element, this._config[`${transition}Start`]);
+                    removeClass(element, this._config[`${transition}End`]);
+                }
+            };
 
-            window.requestAnimationFrame(() => {
-                util.removeClass(element, this._config[`${type}Start`]);
-                util.addClass(element, this._config[`${type}End`]);
-            });
+            transitionCleanup(element);
+            addClass(element, this._config[`${type}`]);
+            addClass(element, this._config[`${type}Start`]);
 
             let animationDuration = parseFloat(window.getComputedStyle(element).animationDuration);
 
@@ -227,22 +188,22 @@ export default class Component {
                 : 'animationend';
             
             const _handler = (e) => {
-                this.isTransitioning = false;
+                this._isTransitioning = false;
                 callback(e);
-                util.removeClass(element, this._config[`${type}`]);
-                util.removeClass(element, this._config[`${type}End`]);
-                off(element, transitionEvent, _handler);
+                removeClass(element, this._config[`${type}`]);
+                removeClass(element, this._config[`${type}End`]);
             }
 
-            if (this.isTransitioning) {
-                this.isTransitioning = false;
-                removeEvent(transitionEvent, element);
+            this._one(element, transitionEvent.replace('end', 'start'), () => {
+                this._isTransitioning = true;
+            });
+ 
+            this._one(element, transitionEvent, _handler);
 
-                return true;
-            }
-
-            on(element, transitionEvent, _handler);
-            this.isTransitioning = true;
+            window.requestAnimationFrame(() => {
+                removeClass(element, this._config[`${type}Start`]);
+                addClass(element, this._config[`${type}End`]);
+            });
 
             return true;
         };
@@ -256,9 +217,9 @@ export default class Component {
          * @param {boolean|object} options 
          * @returns 
          */
-        const storeEvent = (target, eventName, handler, options) => {
+        this._storeEvent = (target, eventName, handler, options) => {
             options = typeof options === 'boolean' ? { useCapture: options } : options;
-            const eventItem = util.extend({
+            const eventItem = extend({
                 once: false,
                 passive: false,
                 useCapture: false,
@@ -267,13 +228,13 @@ export default class Component {
                 target: target
             }, options);
 
-            if (!events[eventName]) {
-                events[eventName] = [ eventItem ];
+            if (!this._events[eventName]) {
+                this._events[eventName] = [ eventItem ];
 
                 return;
             }
 
-            events[eventName].push(eventItem);
+            this._events[eventName].push(eventItem);
         };
 
         /**
@@ -282,14 +243,14 @@ export default class Component {
          * @param {string} eventName 
          * @param {HTMLElement} target 
          */
-        const removeEvent = (eventName = null, target = null) => {
-            for (const name in events) {
+        this._removeEvent = (eventName = null, target = null) => {
+            for (const name in this._events) {
 
                 if (eventName !== null && eventName !== name) {
                     continue;
                 }
 
-                for (const item of events[name]) {
+                for (const item of this._events[name]) {
 
                     item.target.removeEventListener(item.type, item.listener, {
                         once: item.once,
@@ -298,10 +259,10 @@ export default class Component {
                     });
 
                     if (target !== null && target === item.target) {
-                        events[name].splice(events[name].indexOf(item), 1);
+                        this._events[name].splice(this._events[name].indexOf(item), 1);
 
-                        if (events[name].length === 0) {
-                            delete events[name];
+                        if (this._events[name].length === 0) {
+                            delete this._events[name];
                         }
                     }
                 }
@@ -314,8 +275,8 @@ export default class Component {
          * @param {string} eventName 
          * @returns 
          */
-        const prefixedEventName = (eventName) => {
-            return uk.getConfig('prefix') + '.' + component + '.' + eventName;
+        this._prefixedEventName = (eventName) => {
+            return UIkit.config.prefix + '.' + this._component.name + '.' + eventName;
         };
 
         /**
@@ -325,7 +286,7 @@ export default class Component {
          * @param {array} allowedOptions 
          * @returns 
          */
-        const createConfig = (configNames = [], allowedOptions = []) => {
+        this._createConfig = (configNames = [], allowedOptions = []) => {
             configNames = configNames instanceof Array ? configNames : [];
             allowedOptions = allowedOptions instanceof Array ? allowedOptions : [];
             configNames.push('');
@@ -337,20 +298,34 @@ export default class Component {
                 items[name] = {};
 
                 for (let option of allowedOptions) {
-                    const newOption = util.capitalize(option);
+                    const newOption = capitalize(option);
 
                     config[name + newOption] = null;
                     items[name][option] = name == '' ? option : name + newOption;
                 }
             }
 
-            this._config = util.extend(
+            this._config = extend(
                 true,
                 config,
-                util.replaceObjectKeys(this._element ? this._element.dataset : {}, component)
+                replaceObjectKeys(this._element ? this._element.dataset : {}, this._component.name)
             );
 
             return items;
+        };
+
+        /**
+         * Remove stored instance on element.
+         * 
+         * @param {HTMLElement} context 
+         * @param {string} component 
+         */
+        this._removeInstance = (element, component) => {
+            if (!element) return;
+
+            if (element[UIkit.config.elementPropName]) {
+                delete element[UIkit.config.elementPropName][component];
+            }
         };
 
         /**
@@ -360,18 +335,18 @@ export default class Component {
          * @param {object} detail 
          * @param {HTMLElement} context 
          */
-        const dispatch = (eventName, detail = null, context = null) => {
+        this._dispatchEvent = (eventName, detail = null, context = null) => {
             const element = context || this._element;
-            const callbackName = 'on' + util.capitalize(eventName);
+            const callbackName = 'on' + capitalize(eventName);
             const callback = this._config[callbackName];
-    
+
             if (callback instanceof Function) {
                 callback(detail);
             }
 
             if (!element) return;
 
-            element.dispatchEvent(new CustomEvent(prefixedEventName(eventName), { detail }));
+            element.dispatchEvent(new CustomEvent(this._prefixedEventName(eventName), { detail }));
         }
 
         /**
@@ -382,11 +357,11 @@ export default class Component {
          * @param {function} handler 
          * @param {boolean|object} options 
          */
-        const on = (target, eventName, handler, options = false) => {
+        this._on = (target, eventName, handler, options = false) => {
             target.addEventListener(eventName, handler, options);
-            storeEvent(target, eventName, handler, options);
+            this._storeEvent(target, eventName, handler, options);
         }
-    
+
         /**
          * Remove event listener.
          * 
@@ -395,11 +370,11 @@ export default class Component {
          * @param {function} handler 
          * @param {boolean|object} options 
          */
-        const off = (target, eventName, handler, options = false) => {
-            removeEvent(eventName, target);
+        this._off = (target, eventName, handler, options = false) => {
+            this._removeEvent(eventName, target);
             target.removeEventListener(eventName, handler, options);
         }
-    
+
         /**
          * Add event listener to be executed once.
          * 
@@ -407,48 +382,42 @@ export default class Component {
          * @param {string} eventName 
          * @param {function} handler 
          */
-        const one = (target, eventName, handler) => {
+        this._one = (target, eventName, handler) => {
             target.addEventListener(eventName, handler, { once : true });
         }
 
-        // Component data object
-        this._component = {
-            mergeConfig,
-            allowTransitions,
-            transition,
-            transitionCleanup,
-            prefixedEventName,
-            createConfig,
-            lockConfig,
-            storeEvent,
-            removeEvent,
-            dispatch,
-            on,
-            off,
-            one,
-            events,
-            hasTransition,
-            name: component,
-            storage: {}
-        };
+        /**
+         * Timer to execute to call a function.
+         * 
+         * @param {function} handler 
+         * @param {number} timeout 
+         */
+        this._setTimeout = (handler, timeout) => {
+            clearTimeout(this._timeout);
+            this._timeout = setTimeout(handler, timeout);
+        }
     }
 
     /**
      * Removes all events and stored data.
      */
     destroy() {
-        this._component.removeEvent();
-        uk.removeInstance(this._element, this._component.name);
+        this._removeEvent();
+        this._removeInstance(this._element, this._component.name);
     }
 
     /**
-     * Sets new options for component
-     * @param {object} options 
+     * Retrieves component options
+     * 
+     * @param {string} key 
+     * @returns
      */
-    setOptions(options) {
-        options = options instanceof Object ? options : {};
+    config(key = null) {
+        if (key) {
+            return this._config[key];
+        }
 
-        this._config = util.extend(true, this._config, this._component.mergeConfig(options));
+        return this._config;
     }
 
     /**
@@ -459,8 +428,8 @@ export default class Component {
      * @param {boolean|object} options 
      */
     on(eventName, handler, options = false) {
-        this._element.addEventListener(this._component.prefixedEventName(eventName), handler, options);
-        this._component.storeEvent(this._element, this._component.prefixedEventName(eventName), handler, options);
+        this._element.addEventListener(this._prefixedEventName(eventName), handler, options);
+        this._storeEvent(this._element, this._prefixedEventName(eventName), handler, options);
     }
 
     /**
@@ -473,10 +442,10 @@ export default class Component {
     off(eventName, handler, options = false) {
 
         if (handler === undefined && options === false) {
-            this._component.removeEvent(this._component.prefixedEventName(eventName));
+            this._removeEvent(this._prefixedEventName(eventName));
         }
 
-        this._element.removeEventListener(this._component.prefixedEventName(eventName), handler, options);
+        this._element.removeEventListener(this._prefixedEventName(eventName), handler, options);
     }
 
     /**
@@ -486,6 +455,6 @@ export default class Component {
      * @param {function} handler 
      */
     one(eventName, handler) {
-        this._element.addEventListener(this._component.prefixedEventName(eventName), handler, { once : true });
+        this._element.addEventListener(this._prefixedEventName(eventName), handler, { once : true });
     }
 }
