@@ -6,9 +6,11 @@ class Accordion extends Component {
 
         const _defaults = {
             toggle: false,
-            displayClass: null,
             trigger: 'data-trigger',
-            panel: 'data-panel'
+            panel: 'data-panel',
+            classes: {
+                display: 'hidden'
+            }
         };
 
         const _component = {
@@ -200,9 +202,9 @@ class Accordion extends Component {
             });
 
             // Remove display class and hide panels
-            if (panel.classList.contains(this._config.displayClass)) {                
+            if (panel.classList.contains(this._config.classes.display)) {                
                 hideElement(panel);
-                removeClass(panel, this._config.displayClass);
+                removeClass(panel, this._config.classes.display);
             }
 
             // Store accordion data

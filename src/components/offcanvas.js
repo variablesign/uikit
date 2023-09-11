@@ -8,11 +8,9 @@ class Offcanvas extends Component {
             target: null,
             keyboard: true,
             focus: false,
-            backdropClass: null,
             backdropFadeDuration: 200,
             backdropClose: true,
             hideBackdrop: false,
-            displayClass: null,
             dialog: 'data-dialog',
             content: 'data-content',
             close: 'data-close',
@@ -21,7 +19,11 @@ class Offcanvas extends Component {
             history: false,
             allowScroll: false,
             zindex: 1045,
-            namespace: 'offcanvas'
+            namespace: 'offcanvas',
+            classes: {
+                backdrop: null,
+                display: 'hidden'
+            }
         };
 
         const _component = {

@@ -9,12 +9,14 @@ class Dropdown extends Component {
             target: null,
             reference: null,
             autoClose: true,
-            displayClass: null,
             placement: 'bottom-start',
             autoPlacement: true,
             offset: 8,
             shift: 8,
-            zindex: 1000
+            zindex: 1000,
+            classes: {
+                display: 'hidden'
+            }
         };
 
         const _component = {
@@ -124,7 +126,7 @@ class Dropdown extends Component {
             this._isOpened = true;
             this._dispatchEvent('show', eventData);
             this._element.setAttribute('aria-expanded', this._isOpened);
-            removeClass(this._dropdown, this._config.displayClass);
+            removeClass(this._dropdown, this._config.classes.display);
 
             const transitioned = this._transition('transitionEnter', this._dropdown, (e) => {
                 this._dispatchEvent('shown', eventData);
@@ -145,12 +147,12 @@ class Dropdown extends Component {
                 this._dispatchEvent('hidden', eventData);
                 autoUpdatePosition();
                 resetPositionStyles();
-                addClass(this._dropdown, this._config.displayClass);
+                addClass(this._dropdown, this._config.classes.display);
             });
 
             if (transitioned) return;
     
-            addClass(this._dropdown, this._config.displayClass);
+            addClass(this._dropdown, this._config.classes.display);
             autoUpdatePosition();
             resetPositionStyles();
             this._dispatchEvent('hidden', eventData);

@@ -15,13 +15,15 @@ class Tooltip extends Component {
             showDelay: 0,
             hideDelay: 0,
             trigger: ['hover', 'focus'],
-            class: null,
-            displayClass: null,
             arrow: true,
             arrowPadding: 8,
             html: false,
-            arrowClass: null,
-            zindex: 1080
+            zindex: 1080,
+            classes: {
+                wrapper: null,
+                arrow: null,
+                display: 'hidden'
+            }
         };
 
         const _component = {
@@ -80,7 +82,7 @@ class Tooltip extends Component {
             tooltip.setAttribute('id', tooltip.hasAttribute('id') ? tooltip.id : _id);
             tooltip.style.display = 'none';
             tooltip.style.zIndex = this._config.zindex;
-            removeClass(tooltip, this._config.displayClass);
+            removeClass(tooltip, this._config.classes.display);
 
             tooltipContent = tooltip.querySelector('[data-content]');
             tooltipArrow = tooltip.querySelector('[data-arrow]');
@@ -102,7 +104,7 @@ class Tooltip extends Component {
             tooltip.style.top = 0;
             tooltip.style.left = 0;
             tooltip.style.zIndex = this._config.zindex;
-            tooltip.className = this._config.class ? this._config.class : '';
+            tooltip.className = this._config.classes.wrapper ? this._config.classes.wrapper : '';
             tooltip.setAttribute('role', 'tooltip');
 
             tooltipContent = document.createElement('div');
@@ -118,7 +120,7 @@ class Tooltip extends Component {
                 tooltipArrow.style.width = '8px';
                 tooltipArrow.style.height = '8px';
                 tooltipArrow.style.zIndex = '-1';
-                tooltipArrow.className = this._config.arrowClass ? this._config.arrowClass : '';
+                tooltipArrow.className = this._config.classes.arrow ? this._config.classes.arrow : '';
                 tooltipArrow.setAttribute('data-arrow', '');
                 tooltip.appendChild(tooltipArrow);
             }

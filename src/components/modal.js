@@ -16,11 +16,9 @@ class Modal extends Component {
             target: null,
             keyboard: true,
             focus: false,
-            backdropClass: null,
             backdropFadeDuration: 200,
             backdropClose: true,
             hideBackdrop: false,
-            displayClass: null,
             dialog: 'data-dialog',
             content: 'data-content',
             close: 'data-close',
@@ -29,7 +27,11 @@ class Modal extends Component {
             history: false,
             allowScroll: false,
             zindex: 1055,
-            namespace: 'modal'
+            namespace: 'modal',
+            classes: {
+                backdrop: null,
+                display: 'hidden'
+            }
         };
 
         const _component = {
@@ -378,7 +380,7 @@ class Modal extends Component {
         const backdrop = () => {
             const backdrop = document.createElement('div');
             
-            if (!this._config.backdropClass) {        
+            if (!this._config.classes.backdrop) {        
                 backdrop.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
             }
     
@@ -398,7 +400,7 @@ class Modal extends Component {
                 });
             }
     
-            addClass(backdrop, this._config.backdropClass);
+            addClass(backdrop, this._config.classes.backdrop);
             setAttributes(backdrop, {
                 [`${this._config.backdrop}`]: this._config.namespace
             });
@@ -516,7 +518,7 @@ class Modal extends Component {
                 self._initialFocus = getFocusable(self)[0];
             }
 
-            removeClass(self._modal, self._config.displayClass);
+            removeClass(self._modal, self._config.classes.display);
             
             const transitioned = self._transition('transitionEnter', self._dialog, (e) => {
                 focus(self._initialFocus);
@@ -556,7 +558,7 @@ class Modal extends Component {
             }
 
             const transitioned = self._transition('transitionLeave', self._dialog, (e) => {
-                addClass(self._modal, self._config.displayClass);
+                addClass(self._modal, self._config.classes.display);
 
                 // If last modal is closed
                 if (getTotalModals() < 1) focus(self._finalFocus);
@@ -569,7 +571,7 @@ class Modal extends Component {
 
             if (transitioned) return;
 
-            addClass(self._modal, self._config.displayClass);
+            addClass(self._modal, self._config.classes.display);
             
             // If last modal is closed
             if (getTotalModals() < 1) focus(self._finalFocus);
@@ -605,7 +607,7 @@ class Modal extends Component {
         this._backdrop?.remove();
         this._transitionCleanup(this._dialog);
         delete UIkit.store.openedModals;
-        addClass(this._modal, this._config.displayClass);
+        addClass(this._modal, this._config.classes.display);
         removeAttributes(this._modal, [ 'id', 'tabindex', 'role', 'ariaModal' ]);
         styles(this._modal, { zIndex: null });
         super.destroy();

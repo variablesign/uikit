@@ -50,55 +50,65 @@ export default class Component {
         };
 
         /**
-         * Merge classes with the `-merge` suffix
-         * and remove classes with the `-undo` suffix
+         * Transforms config
          * 
-         * @param {object} newConfig
+         * @param {object} config
+         * @returns {object}
          */
-        const mergeConfig = (newConfig) => {
-            const config = {};
+        const configFactory = (config) => {
+            config = config instanceof Object ? config : {};
+            options = {
+                classes: {}
+            };
 
-            for (const key in newConfig) {
-                if (['classUndo', 'ClassUndo'].includes(key.substring(key.length - 9))) {
-                    const newKey = key.replace('classUndo', 'class').replace('ClassUndo', 'Class');
-                    const newClass = (newConfig[key] || '').split(' ');
-                    const oldClass = (this._config[newKey] || '').split(' ');
-                    config[newKey] = oldClass.filter((item) => !newClass.includes(item)).join(' ');
+            if (config['removeClasses'] instanceof Object) {         
+                for (const key in config['removeClasses']) {
+                    const classes = config['removeClasses'][key].split(' ') || [];
+                    const existingClasses = typeof this._config.classes[key] === 'string' 
+                        ? this._config.classes[key].split(' ') 
+                        : [];
+
+                    options.classes[key] = existingClasses.filter(x => !classes.includes(x)).join(' ');
+                    this._config.classes[key] = options.classes[key] !== '' ? options.classes[key] : null;
                 }
+
+                delete config['removeClasses'];
             }
 
-            for (const key in newConfig) {
-                if (['classMerge', 'ClassMerge'].includes(key.substring(key.length - 10))) {
-                    const newKey = key.replace('classMerge', 'class').replace('ClassMerge', 'Class');
-                    const oldClass = (config[newKey] || this._config[newKey] || '').split(' ');
-                    const newClass = (newConfig[key] || '').split(' ');
-                    config[newKey] = oldClass.concat(newClass.filter((item) => oldClass.indexOf(item) < 0)).join(' ');
+            if (config['addClasses'] instanceof Object) {         
+                for (const key in config['addClasses']) {
+                    const classes = config['addClasses'][key].split(' ') || [];
+                    const existingClasses = typeof this._config.classes[key] === 'string' 
+                        ? this._config.classes[key].split(' ') 
+                        : [];
+
+                    const filteredClasses = classes.filter(x => !existingClasses.includes(x));
+                    this._config.classes[key] = filteredClasses.length > 0 
+                        ? this._config.classes[key] + ' ' + filteredClasses.join(' ') 
+                        : this._config.classes[key];
+                    options.classes[key] = this._config.classes[key];
                 }
+
+                delete config['addClasses'];
             }
 
-            for (const key in newConfig) {
-                if (!['classUndo', 'ClassUndo'].includes(key.substring(key.length - 9)) || !['classMerge', 'ClassMerge'].includes(key.substring(key.length - 10))) {
-                    config[key] = newConfig[key];
-                }
+            for (const key in config) {
+                options[key] = config[key];
             }
-            
-            return config;
+   
+            return options;
         };
 
         /**
          * Merge all configurations.
          */
-        this._config = extend(
-            true,
-            this._component.defaultConfig,
-            globalConfig
-        );
+        this._config = extend(true, this._component.defaultConfig, globalConfig);
         
         this._config = extend(
             true,
             this._config,
-            mergeConfig(this._component.config),
-            mergeConfig(getDatasetConfig())
+            configFactory(this._component.config),
+            configFactory(getDatasetConfig())
         );
 
         /**
@@ -298,17 +308,16 @@ export default class Component {
                 items[name] = {};
 
                 for (let option of allowedOptions) {
-                    const newOption = capitalize(option);
-
-                    config[name + newOption] = null;
-                    items[name][option] = name == '' ? option : name + newOption;
+                    const newName = name !== '' ? name + capitalize(option) : option;
+                    config[newName] = null;
+                    items[name][option] = name == '' ? option : newName;
                 }
             }
 
             this._config = extend(
                 true,
                 config,
-                replaceObjectKeys(this._element ? this._element.dataset : {}, this._component.name)
+                configFactory(getDatasetConfig())
             );
 
             return items;

@@ -41,24 +41,26 @@ class Select extends Component {
             checkbox: false,
             caretPosition: false,
             itemSelection: false,
-            class: '',
-            inputClass: '',
-            dropdownWrapperClass: '',
-            dropdownClass: '',
-            itemClass: '',
-            itemSingleClass: '',
-            optionClass: '',
-            optgroupClass: '',
-            optgroupLabelClass: '',
-            createOptionClass: '',
-            highlightClass: '',
-            arrowClass: '',
-            removeButtonClass: '',
-            clearButtonClass: '',
-            checkboxClass: '',
-            noResultsClass: '',
-            loadingClass: '',
-            loaderClass: '',
+            classes: {
+                wrapper: '',
+                input: '',
+                dropdownWrapper: '',
+                dropdown: '',
+                item: '',
+                itemSingle: '',
+                option: '',
+                optgroup: '',
+                optgroupLabel: '',
+                createOption: '',
+                highlight: '',
+                arrow: '',
+                removeButton: '',
+                clearButton: '',
+                checkbox: '',
+                noResults: '',
+                loading: '',
+                loader: ''
+            }
         };
 
         const _component = {
@@ -165,7 +167,7 @@ class Select extends Component {
             plugins.remove_button = {
                 label: this._config.removeButtonLabel,
                 title: this._config.removeButtonTitle,
-                className: this._config.removeButtonClass
+                className: this._config.classes.removeButton
             };
         }
 
@@ -175,7 +177,7 @@ class Select extends Component {
                 html: () => {
                     const disabled = this._element.disabled ? 'disabled' : '';
                     
-                    return `<button type="button" class="${this._config.clearButtonClass}" title="${this._config.clearButtonTitle}" aria-label="clear" data-multiple="${mode === 'multi'}" ${disabled} data-ts-clear style="display: none">${this._config.clearButtonLabel}</button>`;
+                    return `<button type="button" class="${this._config.classes.clearButton}" title="${this._config.clearButtonTitle}" aria-label="clear" data-multiple="${mode === 'multi'}" ${disabled} data-ts-clear style="display: none">${this._config.clearButtonLabel}</button>`;
                 }
             };
         }
@@ -183,7 +185,7 @@ class Select extends Component {
         // Show/hide option checkbox plugin
         if (this._config.checkbox && mode === 'multi') {
             plugins.checkbox_options = {
-                className: this._config.checkboxClass
+                className: this._config.classes.checkbox
             };
         }
 
@@ -207,14 +209,14 @@ class Select extends Component {
             create: this._config.create,
             persist: this._config.persist,
             allowEmptyOption: this._config.allowEmptyOption,
-            controlClass: this._config.class,
-            controlInput: `<input type="text" autocomplete="off" size="1" class="${this._config.inputClass}" />`,
-            dropdownContentClass: this._config.dropdownClass,
-            dropdownClass: this._config.dropdownWrapperClass,
-            itemClass: mode === 'multi' ? this._config.itemClass : this._config.itemSingleClass,
-            optionClass: this._config.optionClass,
+            controlClass: this._config.classes.wrapper,
+            controlInput: `<input type="text" autocomplete="off" size="1" class="${this._config.classes.input}" />`,
+            dropdownContentClass: this._config.classes.dropdown,
+            dropdownClass: this._config.classes.dropdownWrapper,
+            itemClass: mode === 'multi' ? this._config.classes.item : this._config.classes.itemSingle,
+            optionClass: this._config.classes.option,
             hidePlaceholder: this._config.hidePlaceholder,
-            highlightClass: this._config.highlightClass,
+            highlightClass: this._config.classes.highlight,
             plugins: plugins
         };
 
@@ -297,26 +299,26 @@ class Select extends Component {
                 return `<div>${escape(data[this._config.labelField])}</div>`;
             },
             option_create: (data, escape) => {
-                return `<div class="create ${this._config.createOptionClass}">Add <strong>${escape(data.input)}</strong>&hellip;</div>`;
+                return `<div class="create ${this._config.classes.createOption}">Add <strong>${escape(data.input)}</strong>&hellip;</div>`;
             },
             no_results: (data, escape) => {
-                return `<div class="${this._config.noResultsClass}">No results found for "${escape(data.input)}"</div>`;
+                return `<div class="${this._config.classes.noResults}">No results found for "${escape(data.input)}"</div>`;
             },
             not_loading: (data, escape) => {
                 // no default content
             },
             optgroup: (data) => {
                 const optgroup = document.createElement('div');
-                optgroup.className = this._config.optgroupClass;
+                optgroup.className = this._config.classes.optgroup;
                 optgroup.appendChild(data.options);
 
                 return optgroup;
             },
             optgroup_header: (data, escape) => {
-                return `<div class="${this._config.optgroupLabelClass}">${escape(data.label)}</div>`;
+                return `<div class="${this._config.classes.optgroupLabel}">${escape(data.label)}</div>`;
             },
             loading: (data, escape) => {
-                return `<div class="${this._config.loadingClass}">Loading...</div>`;
+                return `<div class="${this._config.classes.loading}">Loading...</div>`;
             },
             dropdown: () => {
                 return `<div></div>`;
@@ -374,7 +376,7 @@ class Select extends Component {
         // Show arrow if single select 
         if (this._config.arrowLabel && this._tomSelect.settings.mode === 'single') {
             const arrow = stringToDom(`<div data-ts-arrow data-opened="false"></div>`);
-            arrow.className = this._config.arrowClass;
+            arrow.className = this._config.classes.arrow;
             arrow.innerHTML = this._config.arrowLabel;
 
             this._tomSelect.control.appendChild(arrow);
@@ -384,7 +386,7 @@ class Select extends Component {
         // Add loader to control element
         if (this._config.remote && this._config.loader) {
             const multiple = this._tomSelect.settings.mode === 'multi';
-            const fragment = `<div class="${this._config.loaderClass}" data-multiple="${multiple}" data-ts-loader style="display:none">${this._config.loader}</div>`;
+            const fragment = `<div class="${this._config.classes.loader}" data-multiple="${multiple}" data-ts-loader style="display:none">${this._config.loader}</div>`;
             this._tomSelect.control_input.insertAdjacentHTML('afterend', fragment);
         }
 

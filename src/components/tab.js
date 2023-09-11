@@ -5,11 +5,13 @@ class Tab extends Component {
     constructor(element, config) {
 
         const _defaults = {
-            displayClass: null,
             tab: 'data-tab',
             panel: 'data-panel',
             selected: 'data-selected',
-            disabled: 'data-disabled'
+            disabled: 'data-disabled',
+            classes: {
+                display: 'hidden'
+            }
         };
 
         const _component = {
@@ -134,7 +136,7 @@ class Tab extends Component {
                     this._dispatchEvent('hide', eventData(index));
                 }
                 
-                addClass(data.panel, this._config.displayClass);
+                addClass(data.panel, this._config.classes.display);
 
                 data.selected = false;
                 setAttributes(data.tab, {
@@ -176,7 +178,7 @@ class Tab extends Component {
                 data.tab.focus();
             }
 
-            removeClass(data.panel, this._config.displayClass);
+            removeClass(data.panel, this._config.classes.display);
 
             const transitioned = this._transition('transitionEnter', data.panel, data.onTransitionEnterEnd);
 

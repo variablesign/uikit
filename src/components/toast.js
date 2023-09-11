@@ -12,9 +12,11 @@ class Toast extends Component {
             stack: false,
             create: null,
             template: null,
-            class: null,
             zindex: 1090,
             dismiss: 'data-dismiss',
+            classes: {
+                wrapper: null
+            },
             onAction: null,
             onClose: null
         };
@@ -124,7 +126,7 @@ class Toast extends Component {
                 this._toast = document.createElement('div');
                 this._toast.innerHTML = getTemplate(this._config);
                 hideElement(this._toast);
-                addClass(this._toast, this._config.class);
+                addClass(this._toast, this._config.classes.wrapper);
                 setAttributes(this._toast, {
                     role: 'alert'
                 });
