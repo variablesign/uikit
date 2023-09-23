@@ -2175,7 +2175,8 @@ class TomSelect extends MicroPlugin(MicroEvent) {
         const dropdown = this._render("dropdown");
 
         const dropdown_content = getDom(`<div role="listbox" tabindex="-1">`);
-        const classes = this.input.getAttribute("class") || "";
+        // const classes = this.input.getAttribute("class") || "";
+        const classes = "";
         const inputMode = settings.mode;
         var control_input;
         addClasses(wrapper, settings.wrapperClass, classes, inputMode);

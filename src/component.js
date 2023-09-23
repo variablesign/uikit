@@ -9,7 +9,9 @@ export default class Component {
         this._component = extend(true, {
             name: null,
             element: null,
-            defaultConfig: {},
+            defaultConfig: {
+                classes: {}
+            },
             config: {},
             transitions: {
                 enter: false,
@@ -103,7 +105,7 @@ export default class Component {
          * Merge all configurations.
          */
         this._config = extend(true, this._component.defaultConfig, globalConfig);
-        
+
         this._config = extend(
             true,
             this._config,
@@ -317,7 +319,8 @@ export default class Component {
             this._config = extend(
                 true,
                 config,
-                configFactory(getDatasetConfig())
+                this._config,
+                getDatasetConfig()
             );
 
             return items;
@@ -341,10 +344,10 @@ export default class Component {
          * Dispatch custom event.
          * 
          * @param {string} eventName 
-         * @param {object} detail 
-         * @param {HTMLElement} context 
+         * @param {?object} detail 
+         * @param {?HTMLElement} context 
          */
-        this._dispatchEvent = (eventName, detail = null, context = null) => {
+        this._dispatchEvent = (eventName, detail, context) => {
             const element = context || this._element;
             const callbackName = 'on' + capitalize(eventName);
             const callback = this._config[callbackName];
@@ -364,7 +367,7 @@ export default class Component {
          * @param {HTMLElement} target 
          * @param {string} eventName 
          * @param {function} handler 
-         * @param {boolean|object} options 
+         * @param {(boolean|object)} options 
          */
         this._on = (target, eventName, handler, options = false) => {
             target.addEventListener(eventName, handler, options);
@@ -377,7 +380,7 @@ export default class Component {
          * @param {HTMLElement} target 
          * @param {string} eventName 
          * @param {function} handler 
-         * @param {boolean|object} options 
+         * @param {(boolean|object)} options 
          */
         this._off = (target, eventName, handler, options = false) => {
             this._removeEvent(eventName, target);
@@ -434,7 +437,7 @@ export default class Component {
      * 
      * @param {string} eventName 
      * @param {function} handler 
-     * @param {boolean|object} options 
+     * @param {(boolean|object)} options 
      */
     on(eventName, handler, options = false) {
         this._element.addEventListener(this._prefixedEventName(eventName), handler, options);
@@ -446,7 +449,7 @@ export default class Component {
      * 
      * @param {string} eventName 
      * @param {function} handler 
-     * @param {boolean|object} options 
+     * @param {(boolean|object)} options 
      */
     off(eventName, handler, options = false) {
 
