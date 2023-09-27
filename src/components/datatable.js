@@ -425,6 +425,7 @@ class DataTable extends Component {
             window.controller = new AbortController();
             window.signal = window.controller.signal;
             loading();
+            this._dispatchEvent('processing', { processing: true });
 
             await fetch(url, { signal: signal }) 
                 .then(response => {
@@ -443,6 +444,7 @@ class DataTable extends Component {
                     regionVisibility(data)
                     rowSelection();
                     loading(true);
+                    this._dispatchEvent('processing', { processing: false });
                     pushHistoryState();
                 })
                 .finally(() => {
