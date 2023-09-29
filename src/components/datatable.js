@@ -448,7 +448,7 @@ class DataTable extends Component {
                     pushHistoryState();
                 })
                 .finally(() => {
-                    //
+                    this._dispatchEvent('draw');
                 })
                 .catch((error) => console.error(error));
         };
