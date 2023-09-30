@@ -353,12 +353,14 @@ export default class Component {
             const callback = this._config[callbackName];
 
             if (callback instanceof Function) {
-                callback(detail);
+                callback({ self: this, ...detail });
             }
 
             if (!element) return;
 
-            element.dispatchEvent(new CustomEvent(this._prefixedEventName(eventName), { detail }));
+            element.dispatchEvent(new CustomEvent(this._prefixedEventName(eventName), { 
+                self: this, ...detail
+            }));
         }
 
         /**
@@ -408,6 +410,8 @@ export default class Component {
             clearTimeout(this._timeout);
             this._timeout = setTimeout(handler, timeout);
         }
+
+        this._dispatchEvent('preflight');
     }
 
     /**
