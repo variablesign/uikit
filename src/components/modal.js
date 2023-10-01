@@ -5,7 +5,9 @@ import {
     addClass,
     removeClass,
     setAttributes,
-    removeAttributes
+    removeAttributes,
+    getElement,
+    getElements
 } from '../utils.js';
 import Component from '../component.js';
 
@@ -47,24 +49,24 @@ class Modal extends Component {
 
         super(_component);
         
-        if (!this._element || !this._config.target) return;
+        if (!this._element) return;
 
         this._isOpened = false;
         this._previous = false;
         this._config.zindex = parseInt(this._config.zindex) || 0;
         this._config.namespace = kebabCase(this._config.namespace);
-        this._modal = document.querySelector(this._config.target);
+        this._modal = getElement(this._config.target) ?? this._element;
 
         if (!this._modal) return;
 
-        this._dialog = this._modal.querySelector(`[${this._config.dialog}]`);
-        this._content = this._modal.querySelector(`[${this._config.content}]`);
+        this._dialog = getElement(`[${this._config.dialog}]`, this._modal);
+        this._content = getElement(`[${this._config.content}]`, this._modal);
         this._initialFocus = this._modal;
         this._finalFocus = this._element;
         this._config.backdropFadeDuration = parseInt(this._config.backdropFadeDuration) / 1000;
         this._config.autoCloseDelay = parseInt(this._config.autoCloseDelay);
         const modalId = this._modal.id !== '' ? this._modal.id : 'modal-' + randomNumber(4);
-        const closeTriggers = this._modal.querySelectorAll(`[${this._config.close}]`);
+        const closeTriggers = getElements(`[${this._config.close}]`, this._modal);
         const minimumAutoCloseDelay = 3000;
         UIkit.store[this._config.namespace] = UIkit.store[this._config.namespace] ? UIkit.store[this._config.namespace] : {};
 
@@ -168,7 +170,7 @@ class Modal extends Component {
          * @param {object} self 
          */
         const getFocusable = (self) => {
-            const focusable = self._content.querySelectorAll('*');
+            const focusable = getElements('*', self._content);
 
             return [...focusable].filter(node => node.tabIndex >= 0);
         };
@@ -299,6 +301,8 @@ class Modal extends Component {
          * @param {HTMLElement} element 
          */
         const focus = (element) => {
+            if (!element) return;
+            
             element.focus();
         };
 
@@ -412,7 +416,7 @@ class Modal extends Component {
          * Show backdrop.
          */
         const showBackdrop = () => {
-            this._backdrop = document.querySelector(`[${this._config.backdrop}="${this._config.namespace}"]`) || backdrop();
+            this._backdrop = getElement(`[${this._config.backdrop}="${this._config.namespace}"]`) || backdrop();
 
             if (!this._config.hideBackdrop) {
                 document.body.append(this._backdrop);
@@ -583,7 +587,10 @@ class Modal extends Component {
         /**
          * Events.
          */
-        this._on(this._element, 'click', onClickShow);
+        if (this._config.target) {
+            this._on(this._element, 'click', onClickShow);
+        }
+
         this._on(this._modal, 'keydown', onKeydown);
         this._on(this._modal, 'click', onClickModalHide);
 
