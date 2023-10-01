@@ -119,8 +119,7 @@ class Modal extends Component {
          * Hide modal when clicked outside.
          */
         const onClickModalHide = (e) => {
-            e.preventDefault();
-
+            
             if (this._isTransitioning || this._content.contains(e.target)) return;
 
             if (!this._config.backdropClose) {

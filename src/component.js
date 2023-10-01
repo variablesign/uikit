@@ -351,16 +351,17 @@ export default class Component {
             const element = context || this._element;
             const callbackName = 'on' + capitalize(eventName);
             const callback = this._config[callbackName];
+            detail = detail instanceof Object 
+                ? { detail: { self: this, ...detail } } 
+                : { detail: { self: this } } ;
 
             if (callback instanceof Function) {
-                callback({ self: this, ...detail });
+                callback(detail.detail);
             }
 
             if (!element) return;
 
-            element.dispatchEvent(new CustomEvent(this._prefixedEventName(eventName), { 
-                self: this, ...detail
-            }));
+            element.dispatchEvent(new CustomEvent(this._prefixedEventName(eventName), detail));
         }
 
         /**

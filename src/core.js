@@ -64,9 +64,9 @@ UIkit.register = (components) => {
     }
 };
 
-UIkit.autoload = (filter = [], context = null) => {
+UIkit.autoload = (filter, context) => {
     context = context ?? document;
-    const components = filter.length > 0 ? filter : UIkit.components;
+    const components = filter instanceof Array ? filter : UIkit.components;
 
     components.forEach((component) => {
         const componentName = kebabCase(component);

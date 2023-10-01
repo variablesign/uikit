@@ -132,6 +132,13 @@ export const isHtmlString = (string) => {
 }
 
 /**
+ * Check if element is visible
+ */
+export const isVisible = (element) => {
+    return !!(element.offsetWidth || element.offsetHeight || element.getClientRects().length);
+}
+
+/**
  * Convert HTML string to DOM node
  */
 export const stringToDom = (html) => {

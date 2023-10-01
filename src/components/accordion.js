@@ -1,4 +1,10 @@
-import { randomNumber, removeClass, hideElement, showElement, setAttributes } from '../utils.js';
+import { 
+    randomNumber, 
+    removeClass, 
+    hideElement, 
+    showElement, 
+    setAttributes 
+} from '../utils.js';
 import Component from '../component.js';
 
 class Accordion extends Component {
@@ -181,7 +187,7 @@ class Accordion extends Component {
             const panel = panels[index];
             const panelSuffix = '-panel';
 
-            const isVisible = panel.offsetParent !== null 
+            let isVisible = panel.offsetParent !== null 
                 ? true 
                 : false
 
@@ -191,9 +197,14 @@ class Accordion extends Component {
 
             setAttributes(trigger, {
                 id: name,
-                ariaControls: name + panelSuffix,
-                ariaExpanded: isVisible
+                ariaControls: name + panelSuffix
             });
+
+            if (!trigger.hasAttribute('aria-expanded')) {
+                trigger.setAttribute('aria-expanded', isVisible);
+            } else {
+                isVisible = trigger.getAttribute('aria-expanded') === 'true';
+            }
 
             setAttributes(panel, {
                 role: 'region',
