@@ -114,7 +114,7 @@ class Toast extends Component {
                     flexDirection: `column`,
                     alignItems: alignment[1] || 'center',
                     gap: `${this._config.gap}px`,
-                    zIndex: this._config.zIndex,
+                    zIndex: this._config.zindex,
                     padding: `${paddingX}px ${paddingY}px`
                 });
 
