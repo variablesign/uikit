@@ -373,6 +373,8 @@ export default class Component {
          * @param {(boolean|object)} options 
          */
         this._on = (target, eventName, handler, options = false) => {
+            if (!target) return;
+
             target.addEventListener(eventName, handler, options);
             this._storeEvent(target, eventName, handler, options);
         }
@@ -386,6 +388,8 @@ export default class Component {
          * @param {(boolean|object)} options 
          */
         this._off = (target, eventName, handler, options = false) => {
+            if (!target) return;
+
             this._removeEvent(eventName, target);
             target.removeEventListener(eventName, handler, options);
         }
@@ -398,6 +402,8 @@ export default class Component {
          * @param {function} handler 
          */
         this._one = (target, eventName, handler) => {
+            if (!target) return;
+
             target.addEventListener(eventName, handler, { once : true });
         }
 
@@ -445,6 +451,8 @@ export default class Component {
      * @param {(boolean|object)} options 
      */
     on(eventName, handler, options = false) {
+        if (!this._element) return;
+
         this._element.addEventListener(this._prefixedEventName(eventName), handler, options);
         this._storeEvent(this._element, this._prefixedEventName(eventName), handler, options);
     }
@@ -457,6 +465,7 @@ export default class Component {
      * @param {(boolean|object)} options 
      */
     off(eventName, handler, options = false) {
+        if (!this._element) return;
 
         if (handler === undefined && options === false) {
             this._removeEvent(this._prefixedEventName(eventName));
@@ -472,6 +481,8 @@ export default class Component {
      * @param {function} handler 
      */
     one(eventName, handler) {
+        if (!this._element) return;
+        
         this._element.addEventListener(this._prefixedEventName(eventName), handler, { once : true });
     }
 }

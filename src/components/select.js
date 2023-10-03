@@ -27,6 +27,7 @@ class Select extends Component {
             persist: true,
             create: false,
             allowEmptyOption: false,
+            clearOnReset: true,
             offset: 8,
             zindex: 1000,
             arrowLabel: null,
@@ -395,6 +396,17 @@ class Select extends Component {
 
         // Call the lock() method if lock option is true
         if (this._config.lock) this._tomSelect.lock();
+
+        // Clear the component on form reset
+        if (this._config.clearOnReset) {            
+            const form = this._tomSelect.input.closest('form');
+            
+            if (form) {
+                this._on(form, 'reset', () => {
+                    this._tomSelect.clear();
+                });
+            }
+        }
     }
 
     destroy() {
