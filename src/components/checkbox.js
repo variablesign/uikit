@@ -40,18 +40,21 @@ class Checkbox extends Component {
             });
         }
 
+        const updateCheckedCount = () => {
+            if (this._config.checked.length > 0) {
+                this._config.checked.forEach((element) => {
+                    element.innerHTML = this._totalChecked;
+                });
+            }
+        };
+
         const updateTotalChecked = () => {
             const filtered = [...this._checkboxes].filter((checkbox) => {
                 return checkbox.checked === true;
             });
 
             this._totalChecked = filtered.length;
-
-            if (this._config.checked.length > 0) {
-                this._config.checked.forEach((element) => {
-                    element.innerHTML = this._totalChecked;
-                });
-            }
+            updateCheckedCount();
         };
 
         const updateParent = () => {
@@ -111,6 +114,8 @@ class Checkbox extends Component {
         if (this._element.form) {
             this._on(this._element.form, 'reset', () => {
                 this._element.indeterminate = false;
+                this._totalChecked = 0;
+                updateCheckedCount();
             });
         }
 
