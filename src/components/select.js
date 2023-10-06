@@ -398,11 +398,9 @@ class Select extends Component {
         if (this._config.lock) this._tomSelect.lock();
 
         // Clear the component on form reset
-        if (this._config.clearOnReset) {            
-            const form = this._tomSelect.input.closest('form');
-            
-            if (form) {
-                this._on(form, 'reset', () => {
+        if (this._config.clearOnReset) {              
+            if (this._tomSelect.input.form) {
+                this._on(this._tomSelect.input.form, 'reset', () => {
                     this._tomSelect.clear();
                 });
             }

@@ -108,6 +108,12 @@ class Checkbox extends Component {
             updateTotalChecked();
         });
 
+        if (this._element.form) {
+            this._on(this._element.form, 'reset', () => {
+                this._element.indeterminate = false;
+            });
+        }
+
         updateTotalChecked();
         updateParent();
     }
