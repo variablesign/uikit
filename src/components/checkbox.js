@@ -6,7 +6,8 @@ class Checkbox extends Component {
         const _defaults = {
             target: null,
             total: null,
-            checked: null
+            checked: null,
+            related: 'data-related'
         };
 
         const _component = {
@@ -70,12 +71,11 @@ class Checkbox extends Component {
         };
 
         this._checkboxes.forEach((checkbox) => {
-            checkbox.setAttribute('data-previous-state', checkbox.checked);
 
             this._on(checkbox, 'change', (e) => {
-                if (checkbox.dataset.related) {
-                    const state = checkbox.checked;
-                    const targets = document.querySelectorAll(checkbox.dataset.related);
+                if (checkbox.hasAttribute(this._config.related)) {
+                    const related = checkbox.getAttribute(this._config.related);
+                    const targets = document.querySelectorAll(related);
     
                     if (targets.length > 0) {
                         const filtered = [...targets].filter((item) => {
@@ -84,15 +84,12 @@ class Checkbox extends Component {
     
                         filtered.forEach((relatedCheckbox) => {
                             if (checkbox.checked) {
-                                relatedCheckbox.checked = state;
-                            } else {
-                                relatedCheckbox.checked = JSON.parse(relatedCheckbox.dataset.previousState);
+                                relatedCheckbox.checked = true;
                             }
                         });
                     }
                 }
 
-                checkbox.setAttribute('data-previous-state', checkbox.checked);
                 updateTotalChecked();
                 updateParent();
             });
@@ -106,7 +103,6 @@ class Checkbox extends Component {
 
             filtered.forEach((checkbox) => {
                 checkbox.checked = state;
-                checkbox.setAttribute('data-previous-state', state);
             });
             
             updateTotalChecked();
