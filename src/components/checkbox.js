@@ -1,4 +1,4 @@
-import { addClass, removeClass } from '../utils.js';
+// import { addClass, removeClass } from '../utils.js';
 import Component from '../component.js';
 
 class Checkbox extends Component {
