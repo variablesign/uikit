@@ -74,6 +74,7 @@ export const parseNestedDataset = (dataset) => {
  *
  * All credits to author.
  * https://gomakethings.com/vanilla-javascript-version-of-jquery-extend/
+ * 
  */
 export const extend = (...options) => {
     let extended = {};
@@ -91,10 +92,11 @@ export const extend = (...options) => {
     let merge = (obj) => {
         for (const prop in obj) if (Object.prototype.hasOwnProperty.call(obj, prop)) {
             // if deep merge and property is an object, merge properties
-            if (deep && Object.prototype.toString.call(obj[prop]) === '[object Object]')
+            if (deep && Object.prototype.toString.call(obj[prop]) === '[object Object]') {
                 extended[prop] = extend(true, extended[prop], obj[prop]);
-            else
+            } else {
                 extended[prop] = obj[prop];
+            }
         }
     };
 
@@ -140,6 +142,9 @@ export const isVisible = (element) => {
 
 /**
  * Convert HTML string to DOM node
+ * 
+ * @param {string} html
+ * @returns {?HTMLElement}
  */
 export const stringToDom = (html) => {
 	if (html instanceof HTMLElement) {
@@ -315,6 +320,10 @@ export const removeTheme = (theme = 'dark') => {
 
 /**
  * Returns the first element that matches the selector
+ * 
+ * @param {(string|HTMLElement)} selector
+ * @param {HTMLElement} context
+ * @returns {?HTMLElement}
  */
 export const getElement = (selector, context = document) => {
 	if (selector instanceof HTMLElement) {
@@ -328,9 +337,13 @@ export const getElement = (selector, context = document) => {
 
 /**
  * Returns multiple elements that match the selector
+ * 
+ * @param {(string|NodeList)} selector
+ * @param {HTMLElement} context
+ * @returns {?NodeList}
  */
 export const getElements = (selector, context = document) => {
-	if (selector instanceof HTMLElement) {
+	if (selector instanceof NodeList) {
         return selector;
     }
 
