@@ -26,6 +26,7 @@ class Datepicker extends Component {
             showOtherDays: false,
             otherDaysSelection: false,
             focus : false,
+            clearOnReset: true,
             title: null,
             autoClose: true,
             showButtons: false,
@@ -175,6 +176,10 @@ class Datepicker extends Component {
                 this._pikaday.setStartRange(date);
                 range.setStartRange(date);
                 range.setMinDate(date);
+                
+                if (!range.getDate()) {
+                    range.gotoDate(date);
+                }
 
                 if (range.getDate()) {
                     this._pikaday.setEndRange(range.getDate());
@@ -186,6 +191,10 @@ class Datepicker extends Component {
                 this._pikaday.setEndRange(date);
                 range.setEndRange(date);
                 range.setMaxDate(date);
+                
+                if (!range.getDate()) {
+                    range.gotoDate(date);
+                }
 
                 if (range.getDate()) {
                     this._pikaday.setStartRange(range.getDate());
@@ -445,6 +454,20 @@ class Datepicker extends Component {
 
         // Init Pikaday
         this._pikaday = new Pikaday(options);
+
+        this._on(this._element, 'blur', (e) => {
+            if (this._pikaday.el.contains(e.relatedTarget)) return;
+            this.hide();
+        });
+
+        // Clear on form reset
+        if (this._config.clearOnReset) {              
+            if (this._element.form) {
+                this._on(this._element.form, 'reset', () => {
+                    this._pikaday.clear();
+                });
+            }
+        }
     }
 
     toString(format) {

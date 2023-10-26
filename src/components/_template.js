@@ -19,6 +19,8 @@ class ComponentClass extends Component {
         super(_component);
 
         // Your code and private methods
+
+        this._dispatchEvent('initialize');
     }
 
     destroy() {

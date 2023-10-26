@@ -232,6 +232,8 @@ class Select extends Component {
                 this._tomSelect.settings.placeholder = '';
                 this._tomSelect.inputState();
             }
+
+            this._dispatchEvent('focus');
         };
 
         options.onBlur = () => {  
@@ -246,6 +248,8 @@ class Select extends Component {
             if (this._tomSelect.items.length === 1 && this._tomSelect.settings.mode === 'single') {
                 showElement(this._tomSelect.control.firstElementChild);
             }
+
+            this._dispatchEvent('blur');
         };
 
         options.onType = (string) => {
@@ -257,17 +261,23 @@ class Select extends Component {
                     showElement(this._tomSelect.control.firstElementChild);
                 }
             }
+
+            this._dispatchEvent('type', { string });
         };
 
         options.onChange = (value) => {  
             // Show/hide clear button based on number of items
             clearButtonVisibility();
+
+            this._dispatchEvent('change', { value });
         };
 
         options.onDropdownOpen = (dropdown) => {
             autoUpdatePosition = updatePosition();
 
             if (this._arrow) this._arrow.setAttribute('data-opened', true);
+
+            this._dispatchEvent('dropdownOpen', { dropdown });
         };
 
         options.onDropdownClose = (dropdown) => {
@@ -279,17 +289,27 @@ class Select extends Component {
             if (this._config.remote && this._config.loadFresh && !this._config.loadOnce) {                            
                 this._tomSelect.clearOptions();
             }
+
+            this._dispatchEvent('dropdownClose', { dropdown });
         };
 
-        options.onItemRemove = (value) => {
+        options.onItemAdd = (value, item) => {
+            this._dispatchEvent('itemAdd', { value, item, data: this._tomSelect.options[value] });
+        };
+
+        options.onItemRemove = (value, item) => {
             if (this._config.remote && this._config.loadFresh && !this._config.loadOnce) {                            
                 this._tomSelect.removeOption(value);
                 this._tomSelect.refreshOptions();
             }
+
+            this._dispatchEvent('itemRemove', { value, item, data: this._tomSelect.options[value] });
         };
 
         options.onLoad = (options, optgroup) => {
             showLoader(false);
+
+            this._dispatchEvent('load', { options, optgroup });
         };
 
         options.render = {
@@ -328,12 +348,12 @@ class Select extends Component {
 
         // If remote url is set 
         if (this._config.remote) {
-            options.load = (query, callback) => {
+            options.load = async (query, callback) => {
                 const columns = this._config.searchField.join(',');
                 const url = `${this._config.remote}?q=${encodeURIComponent(query)}&columns=${columns}`;
                 showLoader();
 
-                fetch(url)
+                await fetch(url)
                     .then(response => response.json())
                     .then(json => {
                         callback(json);
@@ -397,7 +417,7 @@ class Select extends Component {
         // Call the lock() method if lock option is true
         if (this._config.lock) this._tomSelect.lock();
 
-        // Clear the component on form reset
+        // Clear on form reset
         if (this._config.clearOnReset) {              
             if (this._tomSelect.input.form) {
                 this._on(this._tomSelect.input.form, 'reset', () => {
@@ -405,6 +425,16 @@ class Select extends Component {
                 });
             }
         }
+
+        this._dispatchEvent('initialize');
+    }
+
+    addItem(value, silent = false) {
+        this._tomSelect.addItem(value, silent);
+    }
+
+    clear(silent = false) {
+        this._tomSelect.clear(silent);
     }
 
     destroy() {

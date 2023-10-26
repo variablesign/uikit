@@ -52,17 +52,21 @@ class DataTable extends Component {
             this._element.id = this._config.id
         }
 
-        const tableSection = this._element.querySelector(`[${this._config.table}]`);
-        const searchSection = this._element.querySelector(`[${this._config.search}]`);
-        const lengthSection = this._element.querySelector(`[${this._config.length}]`);
-        const infoSection = this._element.querySelector(`[${this._config.info}]`);
-        const paginationSection = this._element.querySelector(`[${this._config.pagination}]`);
-        const loaderSection = this._element.querySelector(`[${this._config.loader}]`);
-        const regionSections = this._element.querySelectorAll(`[${this._config.region}]`);
+        let controller;
+        this._isLoading = false;
+        this._sections = {
+            table: this._element.querySelector(`[${this._config.table}]`), 
+            search: this._element.querySelector(`[${this._config.search}]`), 
+            length: this._element.querySelector(`[${this._config.length}]`), 
+            info: this._element.querySelector(`[${this._config.info}]`), 
+            pagination: this._element.querySelector(`[${this._config.pagination}]`), 
+            loader: this._element.querySelector(`[${this._config.loader}]`),
+            region: this._element.querySelectorAll(`[${this._config.region}]`)
+        };
 
         // Append loader if available
-        if (loaderSection && this._config.loaderLabel) {
-            loaderSection.appendChild(stringToDom(this._config.loaderLabel));
+        if (this._sections.loader && this._config.loaderLabel) {
+            this._sections.loader.appendChild(stringToDom(this._config.loaderLabel));
         }
 
         /**
@@ -136,12 +140,12 @@ class DataTable extends Component {
          */
         const loading = (hide = false) => {
             if (hide) {
-                hideElement(loaderSection);
+                hideElement(this._sections.loader);
 
                 return
             }
             
-            showElement(loaderSection);
+            showElement(this._sections.loader);
         };
 
         /**
@@ -228,7 +232,9 @@ class DataTable extends Component {
          * 
          * @param {number} index 
          */
-        this._goToIndex = (index) => {    
+        this._goToIndex = (index) => {  
+            this._abort();
+
             this._config.url = parseUrl(this._config.url, {
                 [this._config.request.page]: index || ''
             }).href;
@@ -241,7 +247,9 @@ class DataTable extends Component {
          * 
          * @param {number} page 
          */
-        this._index = (page) => {    
+        this._index = (page) => {  
+            this._abort();
+
             this._config.url = parseUrl(this._config.url, {
                 [this._config.request.page]: page
             }).href;
@@ -254,7 +262,9 @@ class DataTable extends Component {
          * 
          * @param {number} length 
          */
-        this._pageLength = (length) => {    
+        this._pageLength = (length) => {  
+            this._abort();
+
             this._config.url = parseUrl(this._config.url, {
                 [this._config.request.page]: null,
                 [this._config.request.perPage]: length || ''
@@ -269,7 +279,9 @@ class DataTable extends Component {
          * @param {string} column 
          * @param {string} direction 
          */
-        this._orderColumn = (column, direction) => {    
+        this._orderColumn = (column, direction) => {  
+            this._abort();
+
             this._config.url = parseUrl(this._config.url, {
                 [this._config.request.orderColumn]: column || '',
                 [this._config.request.orderDirection]: direction || '',
@@ -284,6 +296,8 @@ class DataTable extends Component {
          * @param {string} keyword 
          */
         this._search = (keyword) => {    
+            this._abort();
+
             this._config.url = parseUrl(this._config.url, {
                 [this._config.request.page]: null,
                 [this._config.request.search]: keyword || '',
@@ -293,11 +307,11 @@ class DataTable extends Component {
         };
 
         const populateSearch = (data) => {
-            if (!searchSection) return;
+            if (!this._sections.search) return;
             
-            if (!searchSection.hasAttribute('data-populated') && data.has_records) {
-                searchSection.innerHTML = data.html.search;
-                searchSection.setAttribute('data-populated', true);
+            if (!this._sections.search.hasAttribute('data-populated') && data.has_records) {
+                this._sections.search.innerHTML = data.html.search;
+                this._sections.search.setAttribute('data-populated', true);
                 const searchInput = this._element.querySelector(`[${this._config.searchInput}]`);
     
                 this._on(searchInput, 'input', (e) => {
@@ -309,10 +323,10 @@ class DataTable extends Component {
         };
 
         const populateTable = (data) => {
-            if (!tableSection) return;
+            if (!this._sections.table) return;
 
-            tableSection.innerHTML = data.html.table;
-            const triggers = tableSection.querySelectorAll(`[${this._config.order}]`);
+            this._sections.table.innerHTML = data.html.table;
+            const triggers = this._sections.table.querySelectorAll(`[${this._config.order}]`);
 
             triggers.forEach((element) => {
                 this._on(element, 'click', (e) => {
@@ -325,16 +339,16 @@ class DataTable extends Component {
         };
 
         const populateInfo = (data) => {
-            if (!infoSection) return;
+            if (!this._sections.info) return;
 
-            infoSection.innerHTML = data.has_records ? data.html.info : '';
+            this._sections.info.innerHTML = data.has_records ? data.html.info : '';
         };
 
         const populatePagination = (data) => {
-            if (!paginationSection) return;
+            if (!this._sections.pagination) return;
 
-            paginationSection.innerHTML = data.has_records ? data.html.pagination : '';
-            const triggers = paginationSection.querySelectorAll(`[${this._config.index}]`);
+            this._sections.pagination.innerHTML = data.has_records ? data.html.pagination : '';
+            const triggers = this._sections.pagination.querySelectorAll(`[${this._config.index}]`);
 
             triggers.forEach((element) => {
                 this._on(element, 'click', (e) => {
@@ -346,10 +360,10 @@ class DataTable extends Component {
         };
 
         const populateLength = (data) => {
-            if (!lengthSection) return;
+            if (!this._sections.length) return;
 
-            lengthSection.innerHTML = data.has_records ? data.html.length : '';
-            const triggers = lengthSection.querySelectorAll(`[${this._config.pageLength}]`);
+            this._sections.length.innerHTML = data.has_records ? data.html.length : '';
+            const triggers = this._sections.length.querySelectorAll(`[${this._config.pageLength}]`);
 
             triggers.forEach((element) => {
                 this._on(element, 'click', (e) => {
@@ -361,9 +375,9 @@ class DataTable extends Component {
         };
 
         const regionVisibility = (data) => {
-            const regionSections = this._element.querySelectorAll(`[${this._config.region}]`);
+            this._sections.region = this._element.querySelectorAll(`[${this._config.region}]`);
 
-            regionSections.forEach((element) => {
+            this._sections.region.forEach((element) => {
                 if (data.has_records) {
                     removeClass(element, this._config.classes.display);
                 } else {
@@ -417,15 +431,21 @@ class DataTable extends Component {
             }
         };
 
+        this._abort = () => {
+            if (this._isLoading) {
+                controller.abort();
+            }
+        };
+
         this._draw = async (url) => {
-            if (window.controller) window.controller.abort();
-            
+            controller = new AbortController();
+            const signal = controller.signal;
+
             url = url || this._config.url;
             this._events = {};
-            window.controller = new AbortController();
-            window.signal = window.controller.signal;
             loading();
-            this._dispatchEvent('processing', { processing: true });
+            this._isLoading = true;
+            this._dispatchEvent('processing');
 
             await fetch(url, { signal: signal }) 
                 .then(response => {
@@ -444,13 +464,16 @@ class DataTable extends Component {
                     regionVisibility(data)
                     rowSelection();
                     loading(true);
-                    this._dispatchEvent('processing', { processing: false });
+                    this._isLoading = false;
+                    this._dispatchEvent('processing');
                     pushHistoryState();
                 })
                 .finally(() => {
                     this._dispatchEvent('draw');
                 })
-                .catch((error) => console.error(error));
+                .catch((message) => {
+                    this._debug(message);
+                });
         };
 
         this._reload = () => {
@@ -461,6 +484,13 @@ class DataTable extends Component {
         mergeUrl();
         this._draw();
         this._dispatchEvent('initialize');
+
+        // Listen fetch abort event
+        controller.signal.addEventListener('abort', () => {
+            loading(true);
+            this._isLoading = false;
+            this._dispatchEvent('processing');
+        });
     }
 
     reload() {
@@ -490,6 +520,10 @@ class DataTable extends Component {
 
     search(keyword) {
         this._search(keyword);
+    }
+
+    isLoading() {
+        return this._isLoading;
     }
 
     destroy() {

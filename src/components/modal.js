@@ -50,7 +50,7 @@ class Modal extends Component {
         super(_component);
         
         if (!this._element) return;
-
+     
         this._isOpened = false;
         this._previous = false;
         this._config.zindex = parseInt(this._config.zindex) || 0;
@@ -601,11 +601,11 @@ class Modal extends Component {
     }
 
     show() {
-        this._show(this);
+        this._show?.(this);
     }
 
     hide() {
-        this._hide(this);
+        this._hide?.(this);
     }
 
     destroy() {

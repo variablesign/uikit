@@ -10,7 +10,8 @@ export default class Component {
             name: null,
             element: null,
             defaultConfig: {
-                classes: {}
+                classes: {},
+                debug: false
             },
             config: {},
             transitions: {
@@ -327,6 +328,18 @@ export default class Component {
         };
 
         /**
+         * Shows debugging messages when turned on.
+         * 
+         * @param {string} message 
+         * @param {string} type log, error, info, warn
+         */
+        this._debug = (message, type = 'error') => {
+            if (!this._config.debug) return;
+
+            console[type](message);
+        };
+
+        /**
          * Remove stored instance on element.
          * 
          * @param {HTMLElement} context 
@@ -360,8 +373,10 @@ export default class Component {
             }
 
             if (!element) return;
-
-            element.dispatchEvent(new CustomEvent(this._prefixedEventName(eventName), detail));
+            
+            setTimeout(() => {
+                element.dispatchEvent(new CustomEvent(this._prefixedEventName(eventName), detail));
+            });
         }
 
         /**
@@ -418,7 +433,7 @@ export default class Component {
             this._timeout = setTimeout(handler, timeout);
         }
 
-        this._dispatchEvent('preflight');
+        // this._dispatchEvent('preflight');
     }
 
     /**

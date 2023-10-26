@@ -8,11 +8,12 @@ class DropzoneUploader extends Component {
             create: null,
             template: null,
             autoProcessQueue: false,
-            maxFiles: 1,
+            maxFiles: null,
             csrfToken: null,
             headers: null,
-            remoteFiles: null,
-            previewsContainer: null
+            previewsContainer: null,
+            resizeWidth: null,
+            resizeHeight: null
         };
 
         const _component = {
@@ -30,7 +31,6 @@ class DropzoneUploader extends Component {
 
         if (!this._element) return;
 
-        this._remoteFiles = [];
         this._config.create = this._config.create ? this._config.create : () => void 0;
         this._config.url = this._config.url != null ? this._config.url : this._element.form.action;
 
@@ -38,22 +38,6 @@ class DropzoneUploader extends Component {
 
         const getTemplate = () => {
             return this._config.create[this._config.template](this._config);
-        };
-
-        const getRemoteFiles = async () => {
-            await fetch(this._config.remoteFiles) 
-                .then(response => response.json())
-                .then(data => {
-                    if (data instanceof Array) {
-                        data.forEach((item) => {
-                            this._remoteFiles.push(item);
-                            this._dropzone.displayExistingFile(item, item.preview);
-                        });
-
-                        this._dispatchEvent('existing', { files: data });
-                    }
-                })
-                .catch((error) => console.error(error));
         };
 
         if (this._config.csrfToken) {
@@ -78,13 +62,13 @@ class DropzoneUploader extends Component {
         // });
 
         this._dropzone.on('addedfile', (file) => {
-            const queued = this._dropzone.getQueuedFiles();
+            // const queued = this._dropzone.getQueuedFiles();
 
-            if (queued.length > 0 && this._config.maxFiles == 1) {
-                this._dropzone.removeFile(queued[0]);
-            }
+            // if (queued.length > 0 && this._config.maxFiles == 1) {
+            //     this._dropzone.removeFile(queued[0]);
+            // }
 
-            this._dispatchEvent('addedfile', { file });
+            this._dispatchEvent('addedFile', { file });
         });
 
         // this._dropzone.on('addedfiles', (files) => {
@@ -100,12 +84,16 @@ class DropzoneUploader extends Component {
         });
 
         this._dropzone.on('removedfile', (file) => {
-            this._dispatchEvent('removedfile', { file });
+            this._dispatchEvent('removedFile', { file });
         });
 
-        if (this._config.remoteFiles) {
-            getRemoteFiles();
-        }
+        this._dropzone.on('processing', (file) => {
+            this._dispatchEvent('processing', { file });
+        });
+
+        this._dropzone.on('complete', (file) => {
+            this._dispatchEvent('complete', { file });
+        });
 
         this._dispatchEvent('initialize');
     }
@@ -130,26 +118,39 @@ class DropzoneUploader extends Component {
     }
 
     getAddedFiles() {
-        return this._dropzone.getAddedFiles()
+        return this._dropzone.getAddedFiles();
     }
 
     getUploadingFiles() {
-        return this._dropzone.getUploadingFiles()
+        return this._dropzone.getUploadingFiles();
+    }
+
+    getFiles() {
+        return this._dropzone.files;
     }
 
     getFilesWithStatus(status) {
-        return this._dropzone.getFilesWithStatus(status)
+        return this._dropzone.getFilesWithStatus(status);
     }
 
-    remove(file) {
+    addFile(mockFile, imageUrl, callback, crossOrigin, resizeThumbnail) {
+        if (imageUrl === undefined && mockFile.dataURL) {
+            imageUrl = mockFile.dataURL;
+        }
+
+        this._dropzone.displayExistingFile(mockFile, imageUrl, callback, crossOrigin, resizeThumbnail);
+    }
+
+    removeFile(file) {
         this._dropzone.removeFile(file);
     }
 
-    removeAll(cancelUpload = false) {
+    removeAllFiles(cancelUpload = false) {
         this._dropzone.removeAllFiles(cancelUpload);
     }
     
     destroy() {
+        this._dropzone.disable();
         super.destroy();
     }
 }
