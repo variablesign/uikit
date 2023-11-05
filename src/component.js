@@ -241,6 +241,19 @@ export default class Component {
                 target: target
             }, options);
 
+            if (target === window && !UIkit.events[this._component.name]) {
+                UIkit.events[this._component.name]= {};
+                UIkit.events[this._component.name][eventName] = [ eventItem ];
+
+                return;
+            }
+
+            if (target === window && UIkit.events[this._component.name][eventName]) {
+                UIkit.events[this._component.name][eventName].push(eventItem);
+
+                return;
+            }
+
             if (!this._events[eventName]) {
                 this._events[eventName] = [ eventItem ];
 
@@ -433,7 +446,26 @@ export default class Component {
             this._timeout = setTimeout(handler, timeout);
         }
 
-        // this._dispatchEvent('preflight');
+        if (UIkit.events[this._component.name]) {  
+            for (const key in UIkit.events[this._component.name]) {
+                const eventArray = UIkit.events[this._component.name][key];
+
+                for (const item of eventArray) {
+        
+                    item.target.removeEventListener(item.type, item.listener, {
+                        once: item.once,
+                        passive: item.passive,
+                        useCapture: item.useCapture
+                    });
+        
+                    eventArray.splice(eventArray.indexOf(item), 1);
+
+                    if (eventArray.length === 0) {
+                        delete UIkit.events[this._component.name];
+                    }
+                }
+            }          
+        }
     }
 
     /**

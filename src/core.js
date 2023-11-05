@@ -14,6 +14,7 @@ HTMLElement.prototype.storeUikitInstance = function(component, instance) {
 UIkit.config = config;
 UIkit.globalConfig = {};
 UIkit.store = {};
+UIkit.events = {};
 UIkit.components = [];
 
 UIkit.setConfig = (options) => {

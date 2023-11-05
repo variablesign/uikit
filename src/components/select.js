@@ -2,12 +2,13 @@ import { styles, stringToDom, showElement, hideElement } from '../utils.js';
 import Component from '../component.js';
 import { computePosition, offset, flip, autoUpdate } from '@floating-ui/dom';
 import TomSelect from '../plugins/tomselect/2.2.2/tom-select.js';
-import TomSelect_remove_button from '../plugins/tomselect/2.2.2/plugins/remove_button/plugin.js'
-import TomSelect_clear_button from '../plugins/tomselect/2.2.2/plugins/clear_button/plugin.js'
-import TomSelect_checkbox_options from '../plugins/tomselect/2.2.2/plugins/checkbox_options/plugin.js'
-import TomSelect_caret_position from '../plugins/tomselect/2.2.2/plugins/caret_position/plugin.js'
-import TomSelect_input_autogrow from '../plugins/tomselect/2.2.2/plugins/input_autogrow/plugin.js'
-import TomSelect_no_active_items from '../plugins/tomselect/2.2.2/plugins/no_active_items/plugin.js'
+import TomSelect_remove_button from '../plugins/tomselect/2.2.2/plugins/remove_button/plugin.js';
+import TomSelect_clear_button from '../plugins/tomselect/2.2.2/plugins/clear_button/plugin.js';
+import TomSelect_checkbox_options from '../plugins/tomselect/2.2.2/plugins/checkbox_options/plugin.js';
+import TomSelect_caret_position from '../plugins/tomselect/2.2.2/plugins/caret_position/plugin.js';
+import TomSelect_input_autogrow from '../plugins/tomselect/2.2.2/plugins/input_autogrow/plugin.js';
+import TomSelect_no_active_items from '../plugins/tomselect/2.2.2/plugins/no_active_items/plugin.js';
+import TomSelect_no_backspace_delete from '../plugins/tomselect/2.2.2/plugins/no_backspace_delete/plugin.js';
 
 class Select extends Component {
     constructor(element, config) {
@@ -41,7 +42,9 @@ class Select extends Component {
             clearButtonLabel: '&times;',
             checkbox: false,
             caretPosition: false,
+            backspaceDelete: false,
             itemSelection: false,
+            disableSearch: false,
             classes: {
                 wrapper: '',
                 input: '',
@@ -84,6 +87,7 @@ class Select extends Component {
         TomSelect.define('caret_position', TomSelect_caret_position);
         TomSelect.define('input_autogrow', TomSelect_input_autogrow);
         TomSelect.define('no_active_items', TomSelect_no_active_items);
+        TomSelect.define('no_backspace_delete', TomSelect_no_backspace_delete);
 
         if (!this._element) return;
 
@@ -163,6 +167,11 @@ class Select extends Component {
             plugins.no_active_items = {};
         }
 
+        // Enable plugin to disable deleting items with backspace key
+        if (this._config.backspaceDelete) {
+            plugins.no_backspace_delete = {};
+        }
+
         // Show/hide remove button plugin
         if (this._config.removeButton && mode === 'multi') {
             plugins.remove_button = {
@@ -211,7 +220,7 @@ class Select extends Component {
             persist: this._config.persist,
             allowEmptyOption: this._config.allowEmptyOption,
             controlClass: this._config.classes.wrapper,
-            controlInput: `<input type="text" autocomplete="off" size="1" class="${this._config.classes.input}" />`,
+            controlInput: `<input type="text" autocomplete="off" size="1" class="${this._config.classes.input}" ${this._config.disableSearch ? 'readonly' : ''} />`,
             dropdownContentClass: this._config.classes.dropdown,
             dropdownClass: this._config.classes.dropdownWrapper,
             itemClass: mode === 'multi' ? this._config.classes.item : this._config.classes.itemSingle,

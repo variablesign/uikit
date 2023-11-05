@@ -1,4 +1,4 @@
-import { stringToDom, showElement, hideElement, camelCase, addClass, removeClass } from '../utils.js';
+import { deepClone, stringToDom, showElement, hideElement, camelCase, addClass, removeClass } from '../utils.js';
 import Component from '../component.js';
 
 class DataTable extends Component {
@@ -93,6 +93,19 @@ class DataTable extends Component {
         };
 
         /**
+         * Get the value of a search parameter by key
+         * 
+         * @param {string} key 
+         * @param {string} defaultValue 
+         * @returns {?string}
+         */
+        const getRequest = (key, defaultValue) => {
+            const url = parseUrl(this._config.url);
+
+            return url.searchParams.get(key) ?? defaultValue ?? null;
+        };
+
+        /**
          * Merge search params with current URL in browser
          */
         const mergeUrl = () => {
@@ -112,12 +125,34 @@ class DataTable extends Component {
         };
 
         /**
+         * Override search params with current browser URL params
+         */
+        const overrideUrl = (url) => {
+            const sourceUrl = new URL(this._config.url);
+            const allowedParams = Object.values(this._config.request);
+            const params = {};
+            const browserParams = Object.fromEntries(  
+                new URLSearchParams(window.location.search)
+            );
+
+            for (const name of allowedParams) {
+                if (browserParams[name]) {
+                    params[name] = browserParams[name];
+                }
+            }
+
+            this._config.url = parseUrl(sourceUrl.origin + sourceUrl.pathname, params).href;
+        };
+
+        /**
          * Update current browser URL
          */
-        const pushHistoryState = () => {
-            if (!this._config.pushState) return;
+        const pushHistoryState = (previousUrl) => {
+            const params = parseUrl(this._config.url);
 
-            history.pushState(null, '', parseUrl(this._config.url).search);
+            if (!this._config.pushState || params.search == '') return;
+
+            history.pushState({ prevUrl: previousUrl }, '',  params.search);
         };
 
         /**
@@ -319,6 +354,14 @@ class DataTable extends Component {
                         this._search(searchInput.value);
                     }, this._config.searchDelay);
                 });
+
+                return;
+            }
+
+            const searchInput = this._element.querySelector(`[${this._config.searchInput}]`);
+
+            if (!getRequest(this._config.request.search) && searchInput.value != '') {
+                searchInput.value = '';
             }
         };
 
@@ -440,6 +483,7 @@ class DataTable extends Component {
         this._draw = async (url) => {
             controller = new AbortController();
             const signal = controller.signal;
+            const prevUrl = window.location.href;
 
             url = url || this._config.url;
             this._events = {};
@@ -466,7 +510,7 @@ class DataTable extends Component {
                     loading(true);
                     this._isLoading = false;
                     this._dispatchEvent('processing');
-                    pushHistoryState();
+                    pushHistoryState(prevUrl);
                 })
                 .finally(() => {
                     this._dispatchEvent('draw');
@@ -483,6 +527,7 @@ class DataTable extends Component {
         // Initialize
         mergeUrl();
         this._draw();
+        this._location = deepClone(window.location);
         this._dispatchEvent('initialize');
 
         // Listen fetch abort event
@@ -491,6 +536,21 @@ class DataTable extends Component {
             this._isLoading = false;
             this._dispatchEvent('processing');
         });
+
+        this._onPopstate = async (e) => {
+            if (this._location.pathname == e.target.location.pathname) {
+                if (!this._isLoading) {
+                    const originalPushState = this._config.pushState;
+                    overrideUrl(e.target.location.href);
+                    this._config.pushState = false;
+                    await this._draw();
+                    this._config.pushState = originalPushState;
+                }
+            }
+        };
+
+        // this._off(window, 'popstate', this._onPopstate);
+        this._on(window, 'popstate', this._onPopstate);
     }
 
     reload() {
