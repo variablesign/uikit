@@ -11,5 +11,8 @@
   "license": "ISC",
   "dependencies": {
     "@floating-ui/dom": "^1.4.1"
+  },
+  "devDependencies": {
+    "jsdoc": "^4.0.2"
   }
 }

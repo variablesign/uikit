@@ -75,6 +75,7 @@ export const parseNestedDataset = (dataset) => {
  * All credits to author.
  * https://gomakethings.com/vanilla-javascript-version-of-jquery-extend/
  * 
+ * @returns {Object}
  */
 export const extend = (...options) => {
     let extended = {};

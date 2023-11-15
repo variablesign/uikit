@@ -6,6 +6,7 @@ import Datepicker from './components/datepicker.js';
 import Dismiss from './components/dismiss.js';
 import Dropdown from './components/dropdown.js';
 import DropzoneUploader from './components/dropzone.js';
+import Fetch from './components/fetch.js';
 import Highlight from './components/highlight.js';
 import Modal from './components/modal.js';
 import Offcanvas from './components/offcanvas.js';
@@ -30,6 +31,7 @@ UIkit.register({
     'dismiss': Dismiss,
     'dropdown': Dropdown,
     'dropzone': DropzoneUploader,
+    'fetch': Fetch,
     'highlight': Highlight,
     'modal': Modal,
     'offcanvas': Offcanvas,
