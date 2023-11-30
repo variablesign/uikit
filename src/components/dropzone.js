@@ -7,13 +7,20 @@ class DropzoneUploader extends Component {
             url: null,
             create: null,
             template: null,
+            customTemplate: null,
             autoProcessQueue: false,
             maxFiles: null,
             csrfToken: null,
             headers: null,
             previewsContainer: null,
             resizeWidth: null,
-            resizeHeight: null
+            resizeHeight: null,
+            clickable: true,
+            parallelUploads: 2,
+            disablePreviews: false,
+            maxFilesize: 256,
+            filesizeBase: 1000,
+            hiddenInputContainer: 'body'
         };
 
         const _component = {
@@ -29,7 +36,7 @@ class DropzoneUploader extends Component {
 
         super(_component);
 
-        if (!this._element) return;
+        if (!this._element || !this._config.url) return;
 
         this._config.create = this._config.create ? this._config.create : () => void 0;
         this._config.url = this._config.url != null ? this._config.url : this._element.form.action;
@@ -48,6 +55,10 @@ class DropzoneUploader extends Component {
 
         if (this._config.template) {
             this._config.previewTemplate = getTemplate();
+        }
+
+        if (this._config.customTemplate) {
+            this._config.previewTemplate = this._config.customTemplate;
         }
 
         this._dropzone = new Dropzone(this._element, this._config);
@@ -75,25 +86,33 @@ class DropzoneUploader extends Component {
         //     console.log(files);
         // });
 
-        this._dropzone.on('error', (file, message) => {
-            this._dispatchEvent('error', { file, message });
+        this._dropzone.on('uploadprogress', (file, progress, bytesSent) => {
+            this._dispatchEvent('uploadProgress', { file, progress, bytesSent });
         });
 
-        this._dropzone.on('sending', (file, xhr, formData) => {
-            this._dispatchEvent('sending', { file, xhr, formData });
+        this._dropzone.on('totaluploadprogress', (totalUploadProgress, totalBytes, totalBytesSent) => {
+            this._dispatchEvent('totalUploadProgress', { totalUploadProgress, totalBytes, totalBytesSent });
         });
 
-        this._dropzone.on('removedfile', (file) => {
-            this._dispatchEvent('removedFile', { file });
-        });
-
-        this._dropzone.on('processing', (file) => {
-            this._dispatchEvent('processing', { file });
-        });
-
-        this._dropzone.on('complete', (file) => {
-            this._dispatchEvent('complete', { file });
-        });
+        this._dropzone.on('removedfile', (file) => this._dispatchEvent('removedFile', { file }));
+        this._dropzone.on('error', (file, message) => this._dispatchEvent('error', { file, message }));
+        this._dropzone.on('errormultiple', (files) => this._dispatchEvent('errorMultiple', { files }));
+        this._dropzone.on('sending', (file, xhr, formData) => this._dispatchEvent('sending', { file, xhr, formData }));
+        this._dropzone.on('sendingmultiple', (files) => this._dispatchEvent('sendingMultiple', { files }));
+        this._dropzone.on('processing', (file) => this._dispatchEvent('processing', { file }));
+        this._dropzone.on('processingmultiple', (files) => this._dispatchEvent('processingMultiple', { files }));
+        this._dropzone.on('complete', (file) => this._dispatchEvent('complete', { file }));
+        this._dropzone.on('completemultiple', (file) => this._dispatchEvent('completeMultiple', { file }));
+        this._dropzone.on('cancel', (file) => this._dispatchEvent('cancel', { file }));
+        this._dropzone.on('canceledmultiple', (file) => this._dispatchEvent('canceledMultiple', { file }));
+        this._dropzone.on('queuecomplete', () => this._dispatchEvent('queueComplete'));
+        this._dropzone.on('drop', () => this._dispatchEvent('drop'));
+        this._dropzone.on('dragstart', () => this._dispatchEvent('dragstart'));
+        this._dropzone.on('dragend', () => this._dispatchEvent('dragend'));
+        this._dropzone.on('dragenter', () => this._dispatchEvent('dragenter'));
+        this._dropzone.on('dragover', () => this._dispatchEvent('dragover'));
+        this._dropzone.on('dragleave', () => this._dispatchEvent('dragleave'));
+        this._dropzone.on('paste', () => this._dispatchEvent('paste'));
 
         this._dispatchEvent('initialize');
     }

@@ -15,7 +15,8 @@ class Toast extends Component {
             zindex: 1090,
             dismiss: 'data-dismiss',
             classes: {
-                wrapper: null
+                wrapper: null,
+                placement: null
             },
             onAction: null,
             onClose: null
@@ -55,18 +56,6 @@ class Toast extends Component {
             return this._config.create[this._config.template](this._config);
         };
 
-        const setPositionStyles = (element) => {
-            const positions = this._config.placement.split('-');
-            const alignment = {
-                start: 'left',
-                end: 'right'
-            };
-
-            element.style[positions[0]] = 0;
-            element.style[positions[1] ? alignment[positions[1]] : 'left'] = positions[1] ? 0 : '50%';
-            element.style.transform = `translate(${positions[1] ? '0' : '-50'}%, 0%)`;
-        };
-
         this._hide = () => {
             clearTimeout(timeout);
 
@@ -98,25 +87,25 @@ class Toast extends Component {
         const show = () => {
             if (!this._config.template) return;
 
-            this._placementGroup = this._container.querySelector(`[data-toast-placement=${this._config.placement}]`);
+            this._placementGroup = this._container.querySelector(`[data-toast-group]`);
 
             if (!this._placementGroup) {
-                const paddingX = this._config.offset[0] || 24;
-                const paddingY = this._config.offset[1] || 24;
                 const alignment = this._config.placement.split('-');
 
                 this._placementGroup = document.createElement('div');
-                this._placementGroup.setAttribute('data-toast-placement', this._config.placement);
-                setPositionStyles(this._placementGroup);
+                setAttributes(this._placementGroup, {
+                    'data-toast-group': '',
+                    'data-placement': this._config.placement,
+                    'data-position': alignment[0],
+                    'data-align': alignment[1] || 'center'
+                });
                 styles(this._placementGroup, {
                     position: `fixed`,
-                    display: `flex`,
-                    flexDirection: `column`,
-                    alignItems: alignment[1] || 'center',
-                    gap: `${this._config.gap}px`,
-                    zIndex: this._config.zindex,
-                    padding: `${paddingX}px ${paddingY}px`
+                    visibility: 'hidden',
+                    inset: '0px',
+                    zIndex: this._config.zindex
                 });
+                addClass(this._placementGroup, this._config.classes.placement);
 
                 this._container.appendChild(this._placementGroup);
             }
@@ -125,6 +114,7 @@ class Toast extends Component {
                 // Create toast            
                 this._toast = document.createElement('div');
                 this._toast.innerHTML = getTemplate(this._config);
+                this._toast.style.visibility = 'visible';
                 hideElement(this._toast);
                 addClass(this._toast, this._config.classes.wrapper);
                 setAttributes(this._toast, {

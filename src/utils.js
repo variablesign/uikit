@@ -293,7 +293,7 @@ export const removeAttributes = (element, attributes = []) => {
  * Add class
  */
 export const addClass = (element, classNames) => {
-    if (!element) return;
+    if (!element || !classNames) return;
 
     classNames = classNames ? classNames.split(' ') : [];
     element.classList.add(...classNames);
@@ -303,7 +303,7 @@ export const addClass = (element, classNames) => {
  * Remove class
  */
 export const removeClass = (element, classNames) => {
-    if (!element) return;
+    if (!element || !classNames) return;
 
     classNames = classNames ? classNames.split(' ') : [];
     element.classList.remove(...classNames);

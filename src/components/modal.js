@@ -495,7 +495,7 @@ class Modal extends Component {
 
             if ((isFirstModal(this._modal) && this._config.history) || !this._config.history) {
                 clearModals();
-                this._backdrop.remove();
+                this._backdrop?.remove();
             }
         };
 

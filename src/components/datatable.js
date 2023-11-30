@@ -360,6 +360,8 @@ class DataTable extends Component {
 
             const searchInput = this._element.querySelector(`[${this._config.searchInput}]`);
 
+            if (!searchInput) return;
+
             if (!getRequest(this._config.request.search) && searchInput.value != '') {
                 searchInput.value = '';
             }
