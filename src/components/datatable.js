@@ -115,13 +115,13 @@ class DataTable extends Component {
                 new URLSearchParams(window.location.search)
             );
 
-            for (const name of allowedParams) {
-                if (browserParams[name]) {
-                    params[name] = browserParams[name];
-                }
-            }
+            // for (const name of allowedParams) {
+            //     if (browserParams[name]) {
+            //         params[name] = browserParams[name];
+            //     }
+            // }
 
-            this._config.url = parseUrl(this._config.url, params).href;
+            this._config.url = parseUrl(this._config.url, Object.assign(params, browserParams)).href;
         };
 
         /**
@@ -135,13 +135,13 @@ class DataTable extends Component {
                 new URLSearchParams(window.location.search)
             );
 
-            for (const name of allowedParams) {
-                if (browserParams[name]) {
-                    params[name] = browserParams[name];
-                }
-            }
+            // for (const name of allowedParams) {
+            //     if (browserParams[name]) {
+            //         params[name] = browserParams[name];
+            //     }
+            // }
 
-            this._config.url = parseUrl(sourceUrl.origin + sourceUrl.pathname, params).href;
+            this._config.url = parseUrl(sourceUrl.origin + sourceUrl.pathname, Object.assign(params, browserParams)).href;
         };
 
         /**
