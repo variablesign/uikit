@@ -2436,7 +2436,7 @@ class TomSelect extends MicroPlugin(MicroEvent) {
 
         self.on("change", this.onChange);
         // addClasses(input, "tomselected", "ts-hidden-accessible");
-        input.style.display = 'none';
+        // input.style.display = 'none';
         self.trigger("initialize"); // preload options
 
         if (settings.preload === true) {

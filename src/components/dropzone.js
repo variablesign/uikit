@@ -5,6 +5,7 @@ class DropzoneUploader extends Component {
     constructor(element, config) {
         const _defaults = {
             url: null,
+            method: 'post',
             create: null,
             template: null,
             customTemplate: null,

@@ -7,6 +7,8 @@ class DataTable extends Component {
             id: null,
             url: null,
             pushState: true,
+            autoUpdate: false,
+            autoUpdateInterval: 60000,
             table: null,
             search: null,
             searchInput: null,
@@ -47,12 +49,14 @@ class DataTable extends Component {
 
         super(_component);
 
+        if (!this._element || !this._config.url) return;
+
         // Id attribute on element if not set 
         if (!this._element.hasAttribute('id') && this._config.id) {
             this._element.id = this._config.id
         }
 
-        let controller;
+        let controller, autoUpdateTimer;
         this._isLoading = false;
         this._sections = {
             table: this._element.querySelector(`[${this._config.table}]`), 
@@ -109,19 +113,11 @@ class DataTable extends Component {
          * Merge search params with current URL in browser
          */
         const mergeUrl = () => {
-            const allowedParams = Object.values(this._config.request);
-            const params = {};
             const browserParams = Object.fromEntries(  
                 new URLSearchParams(window.location.search)
             );
 
-            // for (const name of allowedParams) {
-            //     if (browserParams[name]) {
-            //         params[name] = browserParams[name];
-            //     }
-            // }
-
-            this._config.url = parseUrl(this._config.url, Object.assign(params, browserParams)).href;
+            this._config.url = parseUrl(this._config.url, browserParams).href;
         };
 
         /**
@@ -129,30 +125,42 @@ class DataTable extends Component {
          */
         const overrideUrl = (url) => {
             const sourceUrl = new URL(this._config.url);
-            const allowedParams = Object.values(this._config.request);
-            const params = {};
             const browserParams = Object.fromEntries(  
                 new URLSearchParams(window.location.search)
             );
 
-            // for (const name of allowedParams) {
-            //     if (browserParams[name]) {
-            //         params[name] = browserParams[name];
-            //     }
-            // }
-
-            this._config.url = parseUrl(sourceUrl.origin + sourceUrl.pathname, Object.assign(params, browserParams)).href;
+            this._config.url = parseUrl(sourceUrl.origin + sourceUrl.pathname, browserParams).href;
         };
 
         /**
          * Update current browser URL
+         * @param {string} previousUrl
          */
         const pushHistoryState = (previousUrl) => {
-            const params = parseUrl(this._config.url);
+            const previousParams = Object.fromEntries(  
+                new URLSearchParams(parseUrl(previousUrl).search)
+            );
+            const currentParams = Object.fromEntries(  
+                new URLSearchParams(parseUrl(this._config.url).search)
+            );
+            const params = parseUrl(this._config.url, Object.assign(previousParams, currentParams));
 
             if (!this._config.pushState || params.search == '') return;
 
             history.pushState({ prevUrl: previousUrl }, '',  params.search);
+        };
+
+        /**
+         * Auto update table after the set interval
+         */
+        const autoReload = () => {
+            if (!this._config.autoUpdate) return;
+
+            this._setTimeout(() => {
+                if (this._element.isConnected) {
+                    this._reload();
+                }
+            }, this._config.autoUpdateInterval);
         };
 
         /**
@@ -513,6 +521,7 @@ class DataTable extends Component {
                     this._isLoading = false;
                     this._dispatchEvent('processing');
                     pushHistoryState(prevUrl);
+                    autoReload();
                 })
                 .finally(() => {
                     this._dispatchEvent('draw');
@@ -551,7 +560,6 @@ class DataTable extends Component {
             }
         };
 
-        // this._off(window, 'popstate', this._onPopstate);
         this._on(window, 'popstate', this._onPopstate);
     }
 

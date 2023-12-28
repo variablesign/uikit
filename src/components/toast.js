@@ -1,4 +1,4 @@
-import { isNumber, styles, addClass, setAttributes, showElement, hideElement } from '../utils.js';
+import { isNumber, styles, addClass, setAttributes, showElement, hideElement, getElement } from '../utils.js';
 import Component from '../component.js';
 
 class Toast extends Component {
@@ -12,6 +12,8 @@ class Toast extends Component {
             stack: false,
             create: null,
             template: null,
+            container: null,
+            id: null,
             zindex: 1090,
             dismiss: 'data-dismiss',
             classes: {
@@ -35,7 +37,7 @@ class Toast extends Component {
         super(_component);
 
         this._config.create = this._config.create ? this._config.create : () => void 0;
-        this._container = document.body;
+        this._container = getElement(this._config.container) || document.body;
         this._config.zindex = parseInt(this._config.zindex) || 0;
         this._config.delay = parseInt(this._config.delay);
         this.isVisible = false;
@@ -69,7 +71,7 @@ class Toast extends Component {
                 }
 
                 if (typeof this._config.onClose === 'function') {
-                    this._config.onClose(trigger)
+                    this._config.onClose()
                 }
 
                 this._removeEvent();
@@ -87,7 +89,7 @@ class Toast extends Component {
         const show = () => {
             if (!this._config.template) return;
 
-            this._placementGroup = this._container.querySelector(`[data-toast-group]`);
+            this._placementGroup = this._container.querySelector(`[data-toast-group][data-placement=${this._config.placement}]`);
 
             if (!this._placementGroup) {
                 const alignment = this._config.placement.split('-');
@@ -111,10 +113,15 @@ class Toast extends Component {
             }
             
             if (!this.isVisible) {    
-                // Create toast            
+                // Create toast           
                 this._toast = document.createElement('div');
                 this._toast.innerHTML = getTemplate(this._config);
                 this._toast.style.visibility = 'visible';
+
+                if (this._config.id) {
+                   this._toast.id = this._config.id; 
+                }
+
                 hideElement(this._toast);
                 addClass(this._toast, this._config.classes.wrapper);
                 setAttributes(this._toast, {

@@ -94,8 +94,7 @@ class Modal extends Component {
 
         // Accessible event data
         const eventData = {
-            content: this._content,
-            config: this._config
+            content: this._content
         };
 
         /**

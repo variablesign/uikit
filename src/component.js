@@ -404,7 +404,10 @@ export default class Component {
             if (!target) return;
 
             target.addEventListener(eventName, handler, options);
-            this._storeEvent(target, eventName, handler, options);
+            
+            setTimeout(() => {
+                this._storeEvent(target, eventName, handler, options);
+            });
         }
 
         /**

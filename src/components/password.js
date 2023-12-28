@@ -11,6 +11,7 @@ class Password extends Component {
             length: 8,
             toggle: null,
             progress: null,
+            clearOnReset: true,
             hint: 'data-password-hint'
         };
 
@@ -154,6 +155,15 @@ class Password extends Component {
 
         if (this._config.toggle instanceof HTMLElement) {
             this._on(this._config.toggle, 'click', onToggle);
+        }
+
+        if (this._config.clearOnReset) {           
+            if (this._element.form) {
+                this._on(this._element.form, 'reset', () => {
+                    this._element.value = '';
+                    onInput();
+                });
+            }
         }
     }
 

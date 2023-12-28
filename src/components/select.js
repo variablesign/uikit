@@ -42,9 +42,12 @@ class Select extends Component {
             clearButtonLabel: '&times;',
             checkbox: false,
             caretPosition: false,
-            backspaceDelete: false,
-            itemSelection: false,
+            backspaceDelete: true,
+            itemSelection: true,
             disableSearch: false,
+            blurOnSelect: false,
+            createFilter: null,
+            createNotFound: false,
             classes: {
                 wrapper: '',
                 input: '',
@@ -64,7 +67,9 @@ class Select extends Component {
                 noResults: '',
                 loading: '',
                 loader: ''
-            }
+            },
+            createText: 'Add <strong>:value...</strong>',
+            searchText: 'No results found for ":value"'
         };
 
         const _component = {
@@ -156,6 +161,24 @@ class Select extends Component {
             }
         };
 
+        const getText = (key, value) => {
+            return this._config[key].replace(':value', value);
+        };
+
+        const hasValue = (value) => {
+            let result = false;
+
+            for (const key in this._tomSelect.options) {
+                if (value == key) {
+                    result = true;
+
+                    break;
+                }
+            }
+
+            return result;
+        };
+
         // Enable caret position and auto grow plugin
         if (this._config.caretPosition) {
             plugins.caret_position = {};
@@ -163,12 +186,12 @@ class Select extends Component {
         }
 
         // Enable plugin to disable selection of items
-        if (this._config.itemSelection) {
+        if (!this._config.itemSelection) {
             plugins.no_active_items = {};
         }
 
         // Enable plugin to disable deleting items with backspace key
-        if (this._config.backspaceDelete) {
+        if (!this._config.backspaceDelete) {
             plugins.no_backspace_delete = {};
         }
 
@@ -209,6 +232,15 @@ class Select extends Component {
             });
         }
 
+        // Create if option is not found 
+        if (this._config.createNotFound) {
+            this._config.create = (input, callback) => {
+                if (hasValue(input)) return false;
+                
+                callback({value:input, text:input});
+            };
+        }
+
         let options = {
             valueField: this._config.valueField,
             labelField: this._config.labelField,
@@ -219,6 +251,7 @@ class Select extends Component {
             create: this._config.create,
             persist: this._config.persist,
             allowEmptyOption: this._config.allowEmptyOption,
+            createFilter: this._config.createFilter,
             controlClass: this._config.classes.wrapper,
             controlInput: `<input type="text" autocomplete="off" size="1" class="${this._config.classes.input}" ${this._config.disableSearch ? 'readonly' : ''} />`,
             dropdownContentClass: this._config.classes.dropdown,
@@ -278,6 +311,10 @@ class Select extends Component {
             // Show/hide clear button based on number of items
             clearButtonVisibility();
 
+            if (this._config.blurOnSelect && this._tomSelect.settings.mode === 'single') {
+                this._tomSelect.blur();
+            }
+
             this._dispatchEvent('change', { value });
         };
 
@@ -329,10 +366,12 @@ class Select extends Component {
                 return `<div>${escape(data[this._config.labelField])}</div>`;
             },
             option_create: (data, escape) => {
-                return `<div class="create ${this._config.classes.createOption}">Add <strong>${escape(data.input)}</strong>&hellip;</div>`;
+                if (this._config.createNotFound && hasValue(escape(data.input))) return;
+
+                return `<div class="create ${this._config.classes.createOption}">${getText('createText', escape(data.input))}</div>`;
             },
             no_results: (data, escape) => {
-                return `<div class="${this._config.classes.noResults}">No results found for "${escape(data.input)}"</div>`;
+                return `<div class="${this._config.classes.noResults}">${getText('searchText', escape(data.input))}</div>`;
             },
             not_loading: (data, escape) => {
                 // no default content

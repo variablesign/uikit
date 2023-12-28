@@ -62,7 +62,7 @@ class Fetch extends Component {
             if (this._isLoading) return;
 
             this._fetch().then((data) => {
-                if (this._config.target instanceof HTMLElement) {
+                if (this._config.target instanceof HTMLElement && data[this._config.value]) {
                     this._config.target.innerHTML = data[this._config.value];
                 }
 
