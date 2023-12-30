@@ -1,5 +1,6 @@
 import './core.js';
 import Accordion from './components/accordion.js'; 
+import Autogrow from './components/autogrow.js'; 
 import Checkbox from './components/checkbox.js'; 
 import Clipboard from './components/clipboard.js';
 import Datepicker from './components/datepicker.js'; 
@@ -25,6 +26,7 @@ import DataTable from './components/datatable.js';
 // Register components for auto loading
 UIkit.register({
     'accordion': Accordion,
+    'autogrow': Autogrow,
     'checkbox': Checkbox,
     'clipboard': Clipboard,
     'datepicker': Datepicker,
