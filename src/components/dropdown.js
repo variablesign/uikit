@@ -1,4 +1,4 @@
-import { styles, addClass, removeClass } from '../utils.js';
+import { styles, addClass, removeClass, getElements } from '../utils.js';
 import Component from '../component.js';
 import { computePosition, offset, flip, shift, limitShift, autoUpdate } from '@floating-ui/dom';
 
@@ -10,10 +10,15 @@ class Dropdown extends Component {
             reference: null,
             autoClose: true,
             placement: 'bottom-start',
+            placementMobile: null,
             autoPlacement: true,
             offset: 8,
+            alignmentOffset: 0,
+            offsetMobile: null,
+            alignmentOffsetMobile: null,
             shift: 8,
             zindex: 1000,
+            close: 'data-close',
             classes: {
                 display: 'hidden'
             }
@@ -47,6 +52,20 @@ class Dropdown extends Component {
         this._reference = this._reference 
             ? this._reference 
             : this._element;
+
+        this._config.placement = this._config.placementMobile && this._isMobile() 
+            ? this._config.placementMobile 
+            : this._config.placement;
+
+        this._config.offset = this._config.offsetMobile && this._isMobile() 
+            ? this._config.offsetMobile 
+            : this._config.offset;
+
+        this._config.alignmentOffset = this._config.alignmentOffsetMobile && this._isMobile() 
+            ? this._config.alignmentOffsetMobile 
+            : this._config.alignmentOffset;
+
+        const closeTriggers = getElements(`[${this._config.close}]`, this._dropdown);
             
         let autoUpdatePosition = () => void 0;
 
@@ -56,7 +75,11 @@ class Dropdown extends Component {
             computePosition(this._reference, this._dropdown, {
                 placement: this._config.placement,
                 middleware: [ 
-                    offset(this._config.offset),
+                    offset({
+                        mainAxis: this._config.offset,
+                        crossAxis: this._config.alignmentOffset,
+                        alignmentAxis: null
+                    }),
                     flip(),
                     shift({ 
                         padding: this._config.shift,
@@ -161,6 +184,10 @@ class Dropdown extends Component {
         this._on(this._reference, 'click', onClickToggle);
         this._on(this._reference, 'keydown', onKeydown);
         this._on(document, 'click', onClickHide);
+
+        for (const close of closeTriggers) {
+            this._on(close, 'click', this._hide);
+        }
 
         this._dispatchEvent('initialize');
     }

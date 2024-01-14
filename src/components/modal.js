@@ -607,6 +607,10 @@ class Modal extends Component {
         this._hide?.(this);
     }
 
+    visible() {
+        return this._isOpened;
+    }
+
     destroy() {
         this._hide(this);
         this._backdrop?.remove();

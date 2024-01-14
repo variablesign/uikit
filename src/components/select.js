@@ -169,7 +169,7 @@ class Select extends Component {
             let result = false;
 
             for (const key in this._tomSelect.options) {
-                if (value == key) {
+                if (value.toLowerCase() == key.toLowerCase()) {
                     result = true;
 
                     break;

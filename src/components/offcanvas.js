@@ -55,6 +55,10 @@ class Offcanvas extends Component {
         this.modal.hide();
     }
 
+    visible() {
+        return this.modal.visible();
+    }
+
     destroy() {
         this.modal.destroy();
     }

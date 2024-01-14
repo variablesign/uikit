@@ -1,4 +1,12 @@
-import { getElement, parseNestedDataset, replaceObjectKeys, extend, addClass, removeClass, capitalize } from './utils.js';
+import { 
+    getElement, 
+    parseNestedDataset, 
+    replaceObjectKeys, 
+    extend, 
+    addClass, 
+    removeClass, 
+    capitalize 
+} from './utils.js';
 
 export default class Component {
     constructor(options) {
@@ -11,9 +19,11 @@ export default class Component {
             element: null,
             defaultConfig: {
                 classes: {},
-                debug: false
+                debug: false,
+                maxMobileWidth: '640px'
             },
             config: {},
+            storage: false,
             transitions: {
                 enter: false,
                 leave: false
@@ -134,6 +144,31 @@ export default class Component {
          * Events storage.
          */
         this._events = {};
+
+        /**
+         * Allow local or session storage.
+         */
+        if (this._component.storage) {
+            this._config = extend({
+                storage: 'local',
+            }, this._config);
+
+            this._storage = {
+                set: (key, value) => {
+                    key = `${this._component.name}_${key}`;
+                    window[`${this._config.storage}Storage`].setItem(key, value);
+                },
+                get: (key) => {
+                    key = `${this._component.name}_${key}`;
+                    
+                    return window[`${this._config.storage}Storage`].getItem(key);
+                },
+                remove: (key) => {
+                    key = `${this._component.name}_${key}`;
+                    window[`${this._config.storage}Storage`].removeItem(key);
+                }
+            };
+        }
 
         /**
          * Enable the use of enter transitions config for component.
@@ -338,6 +373,13 @@ export default class Component {
             );
 
             return items;
+        };
+
+        /**
+         * Checks for mobile devices
+         */
+        this._isMobile = () => {
+            return window.matchMedia(`(max-width: ${this._config.maxMobileWidth})`).matches;
         };
 
         /**

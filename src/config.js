@@ -1,4 +1,4 @@
 export default {
     prefix: 'uk',
-    elementPropName: 'uikitInstance'
+    elementPropName: 'uikitInstance',
 };

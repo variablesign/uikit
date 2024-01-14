@@ -9,6 +9,7 @@ class Fetch extends Component {
             data: null,
             delay: 1000,
             csrfToken: null,
+            contentType: 'application/json',
             value: 'value',
             target: null
         };
@@ -38,7 +39,7 @@ class Fetch extends Component {
             const response = await fetch(this._config.url, {
                 method: this._config.method,
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': this._config.contentType,
                     'X-CSRF-TOKEN': this._config.csrfToken
                 },
                 body: this._config.data ? JSON.stringify(this._config.data) : null

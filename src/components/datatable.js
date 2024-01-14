@@ -6,7 +6,7 @@ class DataTable extends Component {
         const _defaults = {
             id: null,
             url: null,
-            pushState: true,
+            saveState: true,
             autoUpdate: false,
             autoUpdateInterval: 60000,
             table: null,
@@ -41,6 +41,7 @@ class DataTable extends Component {
             element: element, 
             defaultConfig: _defaults, 
             config: config, 
+            storage: true,
             transitions: {
                 enter: false,
                 leave: false
@@ -56,7 +57,7 @@ class DataTable extends Component {
             this._element.id = this._config.id
         }
 
-        let controller, autoUpdateTimer;
+        let controller;
         this._isLoading = false;
         this._sections = {
             table: this._element.querySelector(`[${this._config.table}]`), 
@@ -107,47 +108,6 @@ class DataTable extends Component {
             const url = parseUrl(this._config.url);
 
             return url.searchParams.get(key) ?? defaultValue ?? null;
-        };
-
-        /**
-         * Merge search params with current URL in browser
-         */
-        const mergeUrl = () => {
-            const browserParams = Object.fromEntries(  
-                new URLSearchParams(window.location.search)
-            );
-
-            this._config.url = parseUrl(this._config.url, browserParams).href;
-        };
-
-        /**
-         * Override search params with current browser URL params
-         */
-        const overrideUrl = (url) => {
-            const sourceUrl = new URL(this._config.url);
-            const browserParams = Object.fromEntries(  
-                new URLSearchParams(window.location.search)
-            );
-
-            this._config.url = parseUrl(sourceUrl.origin + sourceUrl.pathname, browserParams).href;
-        };
-
-        /**
-         * Update current browser URL
-         * @param {string} previousUrl
-         */
-        const pushHistoryState = (previousUrl) => {
-            const previousParams = Object.fromEntries(  
-                new URLSearchParams(parseUrl(previousUrl).search)
-            );
-            const currentParams = Object.fromEntries(  
-                new URLSearchParams(parseUrl(this._config.url).search)
-            );
-            const params = parseUrl(this._config.url, Object.assign(previousParams, currentParams));
-
-            if (!this._config.pushState || params.search == '') return;
-
-            history.pushState({ prevUrl: previousUrl }, '',  params.search);
         };
 
         /**
@@ -493,7 +453,6 @@ class DataTable extends Component {
         this._draw = async (url) => {
             controller = new AbortController();
             const signal = controller.signal;
-            const prevUrl = window.location.href;
 
             url = url || this._config.url;
             this._events = {};
@@ -520,8 +479,11 @@ class DataTable extends Component {
                     loading(true);
                     this._isLoading = false;
                     this._dispatchEvent('processing');
-                    pushHistoryState(prevUrl);
                     autoReload();
+
+                    if (this._config.saveState) {                        
+                        this._storage.set(this._element.id, JSON.stringify(data.options.request.save));
+                    }
                 })
                 .finally(() => {
                     this._dispatchEvent('draw');
@@ -535,8 +497,13 @@ class DataTable extends Component {
             this._draw();
         };
 
+        // Update URL when save state is true
+        if (this._config.saveState) {                    
+            const params = JSON.parse(this._storage.get(this._element.id));
+            this._config.url = parseUrl(this._config.url, params).href;
+        }
+
         // Initialize
-        mergeUrl();
         this._draw();
         this._location = deepClone(window.location);
         this._dispatchEvent('initialize');
@@ -547,18 +514,6 @@ class DataTable extends Component {
             this._isLoading = false;
             this._dispatchEvent('processing');
         });
-
-        this._onPopstate = async (e) => {
-            if (this._location.pathname == e.target.location.pathname) {
-                if (!this._isLoading) {
-                    const originalPushState = this._config.pushState;
-                    overrideUrl(e.target.location.href);
-                    this._config.pushState = false;
-                    await this._draw();
-                    this._config.pushState = originalPushState;
-                }
-            }
-        };
 
         this._on(window, 'popstate', this._onPopstate);
     }
