@@ -501,6 +501,8 @@ class DataTable extends Component {
         if (this._config.saveState) {                    
             const params = JSON.parse(this._storage.get(this._element.id));
             this._config.url = parseUrl(this._config.url, params).href;
+        } else {
+            this._storage.remove(this._element.id);
         }
 
         // Initialize
