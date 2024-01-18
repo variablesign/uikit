@@ -25,6 +25,7 @@ class Select extends Component {
             maxItems: null,
             lock: false,
             placeholder: null,
+            selectedOptions: null,
             persist: true,
             create: false,
             allowEmptyOption: false,
@@ -101,9 +102,15 @@ class Select extends Component {
         let plugins = {};
         this._selectedRemote = [];
 
+        if (this._config.selectedOptions != null) {            
+            this._config.selectedOptions = this._config.selectedOptions instanceof Array 
+                ? this._config.selectedOptions 
+                : String(this._config.selectedOptions).split(' ');
+        }
+
         this._config.searchField = this._config.searchField instanceof Array 
             ? this._config.searchField 
-            : this._config.searchField.split(' ')
+            : this._config.searchField.split(' ');
 
         const setPosition = () => {
             computePosition(this._tomSelect.control, this._tomSelect.dropdown_content, {
@@ -408,6 +415,10 @@ class Select extends Component {
 
                         // Set selected items after load
                         if (this._config.remote && this._config.loadOnce && this._element.tagName === 'SELECT') {
+                            if (this._config.selectedOptions != null) {            
+                                this._selectedRemote = this._config.selectedOptions;
+                            }
+
                             if (this._tomSelect.settings.mode === 'single') {
                                 this._tomSelect.addItem(this._selectedRemote[0]);
                                 this._tomSelect.updateOption(this._selectedRemote[0]);
