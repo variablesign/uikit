@@ -21,11 +21,11 @@ class Select extends Component {
             valueField: "value",
             labelField: "text",
             searchField: ["text"],
+            sortField: "$order",
             maxOptions: 50,
             maxItems: null,
             lock: false,
             placeholder: null,
-            selectedOptions: null,
             persist: true,
             create: false,
             allowEmptyOption: false,
@@ -101,12 +101,6 @@ class Select extends Component {
         let autoUpdatePosition = () => void 0;
         let plugins = {};
         this._selectedRemote = [];
-
-        if (this._config.selectedOptions != null) {            
-            this._config.selectedOptions = this._config.selectedOptions instanceof Array 
-                ? this._config.selectedOptions 
-                : String(this._config.selectedOptions).split(' ');
-        }
 
         this._config.searchField = this._config.searchField instanceof Array 
             ? this._config.searchField 
@@ -232,7 +226,10 @@ class Select extends Component {
         // Get selected options when using remote data 
         if (this._config.remote && this._config.loadOnce && this._element.tagName === 'SELECT') {
             [...this._element.selectedOptions].forEach((option) => {
-                this._selectedRemote.push(option.value);
+                this._selectedRemote.push({
+                    [this._config.valueField]: option.value,
+                    [this._config.labelField]: option.label
+                });
 
                 // Remove option 
                 option.remove();
@@ -252,6 +249,7 @@ class Select extends Component {
             valueField: this._config.valueField,
             labelField: this._config.labelField,
             searchField: this._config.searchField,
+            sortField: this._config.sortField,
             maxOptions: this._config.maxOptions,
             maxItems: mode === 'single' ? 1 : this._config.maxItems,
             preload: this._config.preload,
@@ -414,17 +412,23 @@ class Select extends Component {
                         callback(json);
 
                         // Set selected items after load
-                        if (this._config.remote && this._config.loadOnce && this._element.tagName === 'SELECT') {
-                            if (this._config.selectedOptions != null) {            
-                                this._selectedRemote = this._config.selectedOptions;
+                        if (this._config.remote && this._config.loadOnce && this._element.tagName === 'SELECT') {                      
+                            console.log(this._selectedRemote);
+                            if (this._tomSelect.settings.mode === 'single') {
+                                this._tomSelect.addOption(this._selectedRemote[0]);
+                                this._tomSelect.addItem(this._selectedRemote[0][this._config.valueField]);
+                            } else {
+                                const selectedItems = [];
+
+                                for (const item of this._selectedRemote) {
+                                    selectedItems.push(item[this._config.valueField]);
+                                }
+
+                                this._tomSelect.addOptions(this._selectedRemote);
+                                this._tomSelect.addItems(selectedItems);
                             }
 
-                            if (this._tomSelect.settings.mode === 'single') {
-                                this._tomSelect.addItem(this._selectedRemote[0]);
-                                this._tomSelect.updateOption(this._selectedRemote[0]);
-                            } else {
-                                this._tomSelect.addItems(this._selectedRemote);
-                            }
+                            this._tomSelect.refreshOption();
                         }
 
                         // showLoader(false);
