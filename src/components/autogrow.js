@@ -1,4 +1,3 @@
-// import { addClass, removeClass } from '../utils.js';
 import Component from '../component.js';
 
 class Autogrow extends Component {

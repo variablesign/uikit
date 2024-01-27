@@ -413,7 +413,7 @@ class Select extends Component {
 
                         // Set selected items after load
                         if (this._config.remote && this._config.loadOnce && this._element.tagName === 'SELECT') {                      
-                            console.log(this._selectedRemote);
+
                             if (this._tomSelect.settings.mode === 'single') {
                                 this._tomSelect.addOption(this._selectedRemote[0]);
                                 this._tomSelect.addItem(this._selectedRemote[0][this._config.valueField]);
