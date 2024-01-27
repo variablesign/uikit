@@ -12,7 +12,7 @@ import {
 import Component from '../component.js';
 
 class Modal extends Component {
-    constructor(element, config) {
+    constructor(element, config, componentSettings) {
 
         const _defaults = {
             target: null,
@@ -36,7 +36,7 @@ class Modal extends Component {
             }
         };
 
-        const _component = {
+        const _component = Object.assign({
             name: 'modal',
             element: element, 
             defaultConfig: _defaults, 
@@ -45,7 +45,7 @@ class Modal extends Component {
                 enter: true,
                 leave: true
             }
-        };
+        }, componentSettings ?? {});
 
         super(_component);
         

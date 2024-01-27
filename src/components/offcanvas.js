@@ -1,7 +1,6 @@
-import Component from '../component.js';
 import Modal from './modal.js';
 
-class Offcanvas extends Component {
+class Offcanvas extends Modal {
     constructor(element, config) {
 
         const _defaults = {
@@ -26,40 +25,19 @@ class Offcanvas extends Component {
             }
         };
 
-        const _component = {
-            name: 'offcanvas',
-            element: element, 
-            defaultConfig: _defaults, 
-            config: config, 
-            transitions: {
-                enter: true,
-                leave: true
+        super(
+            element, 
+            Object.assign(_defaults, config), 
+            { 
+                name: 'offcanvas'
             }
-        };
+        );
 
-        super(_component);
+        // this._lockConfig({
+        //     autoCloseDelay: 0
+        // });
 
-        this._lockConfig({
-            autoCloseDelay: 0
-        });
-
-        this.modal = new Modal(this._element, this._config);
-    }
-
-    show() {
-        this.modal.show();
-    }
-
-    hide() {
-        this.modal.hide();
-    }
-
-    visible() {
-        return this.modal.visible();
-    }
-
-    destroy() {
-        this.modal.destroy();
+        // this.modal = new Modal(this._element, this._config);
     }
 }
 
