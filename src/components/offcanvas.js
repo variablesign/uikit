@@ -28,7 +28,6 @@ class Offcanvas extends Component {
 
         const _component = {
             name: 'offcanvas',
-            alias: 'modal',
             element: element, 
             defaultConfig: _defaults, 
             config: config, 
