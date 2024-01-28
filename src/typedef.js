@@ -1,0 +1,4 @@
+/**
+  @typedef ConfigObject
+  @type {Object}
+*/
