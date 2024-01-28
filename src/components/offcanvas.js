@@ -36,8 +36,6 @@ class Offcanvas extends Modal {
         // this._lockConfig({
         //     autoCloseDelay: 0
         // });
-
-        // this.modal = new Modal(this._element, this._config);
     }
 }
 
