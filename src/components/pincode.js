@@ -9,7 +9,8 @@ class Pincode extends Component {
             type: 'number',
             mask: true,
             maskDelay: 500,
-            focus: true
+            focus: true,
+            autoSubmit: false
         };
 
         const _component = {
@@ -35,6 +36,7 @@ class Pincode extends Component {
         this._filled = 0;
         this._value = '';
         this._index = 0;
+        this._form = this._element.closest('form');
 
         targets.forEach((target, index) => {
 
@@ -125,17 +127,28 @@ class Pincode extends Component {
             combineValues();
         };
 
-        const onInput = (e) => {
-            setValue();
-
+        const emitInputEvent = () => {
             this._dispatchEvent('input', { 
                 filled: this._total === this._filled,
                 value: this._value 
             });
+        };
 
+        const emitFilledEvent = () => {
             if (this._total === this._filled) {
                 this._dispatchEvent('filled', { value: this._value });
+
+                if (this._config.autoSubmit && this._form) {
+                    const submitter = this._form.querySelector('[type=submit]');
+                    this._form.requestSubmit(submitter);
+                }
             }
+        };
+
+        const onInput = (e) => {
+            setValue();
+            emitInputEvent();
+            emitFilledEvent();
         };
 
         const onFocus = (e) => {
@@ -152,12 +165,28 @@ class Pincode extends Component {
             }
         };
 
+        const onReset = (e) => {
+            this._index = 0;
+            this._filled = 0;
+            this._value = '';
+
+            this._data.forEach((data) => {
+                data.filled = false;
+                data.invalid = false;
+                data.value = '';
+            });
+        };
+
         this._data.forEach((data) => {
             this._on(data.input, 'input', onInput);
             this._on(data.input, 'focus', onFocus);
             this._on(data.input, 'blur', onBlur);
             this._on(data.input, 'keyup', onKeyup);
         });
+
+        if (this._form) {            
+            this._on(this._form, 'reset', onReset);
+        }
 
         this._dispatchEvent('initialize');
     }
