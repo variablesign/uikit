@@ -1,19 +1,19 @@
 import terser from '@rollup/plugin-terser';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
 
 export default [
     {
         input: './src/uikit.js',
-        external: ['@floating-ui/dom', 'UIkit'],
         output: {
             file: './dist/js/uikit.min.js',
             format: 'iife',
-            sourcemap: true,
-            globals: {
-                '@floating-ui/dom': 'dom',
-                'UIkit': 'UIkit'
-            }
+            sourcemap: true
+        },
+        moduleContext: {
+            './src/plugins/pikaday/1.8.2/pikaday.js': 'window'
         },
         plugins: [
+            nodeResolve(),
             terser({
                 toplevel: false,
                 format: {
