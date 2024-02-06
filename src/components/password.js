@@ -1,4 +1,4 @@
-// import { camelCase } from '../utils.js';
+import { getElement, getElements } from '../utils.js';
 import Component from '../component.js';
 
 class Password extends Component {
@@ -11,6 +11,7 @@ class Password extends Component {
             length: 8,
             toggle: null,
             progress: null,
+            confirm: null,
             clearOnReset: true,
             hint: 'data-password-hint'
         };
@@ -38,14 +39,18 @@ class Password extends Component {
         this._config.mixed = this._config.letters ? false : this._config.mixed;
 
         this._config.toggle = typeof this._config.toggle === 'string' 
-            ? document.querySelector(this._config.toggle) 
+            ? getElement(this._config.toggle) 
             : this._config.toggle;
 
         this._config.progress = typeof this._config.progress === 'string' 
-            ? document.querySelector(this._config.progress)
+            ? getElement(this._config.progress)
             : this._config.progress;
 
-        this._hints = document.querySelectorAll(`[${this._config.hint}]`);
+        this._config.confirm = typeof this._config.confirm === 'string' 
+            ? getElement(this._config.confirm)
+            : this._config.confirm;
+
+        this._hints = getElements(`[${this._config.hint}]`);
 
         const regex = {
             letters: /(.*[a-zA-Z])/,
@@ -67,6 +72,11 @@ class Password extends Component {
 
         if (this._config.toggle instanceof HTMLElement) {
             this._config.toggle.setAttribute('aria-pressed', false);
+        }
+
+        if (this._config.confirm instanceof HTMLInputElement) {
+            this._element.setAttribute('data-match', false);
+            this._config.confirm.setAttribute('data-match', false);
         }
 
         const calculateStrength = () => {
@@ -148,6 +158,12 @@ class Password extends Component {
                 }
             }
 
+            if (this._config.confirm instanceof HTMLInputElement) {
+                const match = this._element.value == this._config.confirm.value;
+                this._element.setAttribute('data-match', match);
+                this._config.confirm.setAttribute('data-match', match);
+            }
+
             updateCheckedHint();
         };
 
@@ -155,6 +171,14 @@ class Password extends Component {
 
         if (this._config.toggle instanceof HTMLElement) {
             this._on(this._config.toggle, 'click', onToggle);
+        }
+
+        if (this._config.confirm instanceof HTMLInputElement) {
+            this._on(this._config.confirm, 'input', () => {
+                const match = this._element.value == this._config.confirm.value;
+                this._element.setAttribute('data-match', match);
+                this._config.confirm.setAttribute('data-match', match);
+            });
         }
 
         if (this._config.clearOnReset) {           

@@ -170,10 +170,15 @@ class Pincode extends Component {
             this._filled = 0;
             this._value = '';
 
-            this._data.forEach((data) => {
+            this._data.forEach((data, index) => {
                 data.filled = false;
                 data.invalid = false;
                 data.value = '';
+
+                // Focus if input is first
+                if (this._config.focus && index === 0) {
+                    data.input.focus();
+                }
             });
         };
 

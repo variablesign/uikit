@@ -365,16 +365,14 @@ export const getElement = (selector, context = document) => {
  * 
  * @param {(string|NodeList)} selector
  * @param {HTMLElement} context
- * @returns {?NodeList}
+ * @returns {NodeList}
  */
 export const getElements = (selector, context = document) => {
 	if (selector instanceof NodeList) {
         return selector;
     }
 
-    return typeof selector === 'string'
-        ? context.querySelectorAll(selector)
-        : null;
+    return context.querySelectorAll(selector);
 }
 
 /**
