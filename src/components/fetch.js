@@ -47,11 +47,14 @@ class Fetch extends Component {
                 this._debug(message);
             }).finally(() => {
                 this._isLoading = false;
-                this._dispatchEvent('success', { response });
             });
 
             if (response.status != 200) {
                 this._dispatchEvent('fail', { message: response.statusText, response });
+            }
+
+            if (response.status == 200) {
+                this._dispatchEvent('success', { response });
             }
 
             this._response = response;
