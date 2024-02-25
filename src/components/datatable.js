@@ -12,7 +12,7 @@ class DataTable extends Component {
             table: null,
             search: null,
             searchInput: null,
-            searchDelay: 500,
+            searchDelay: 750,
             checkbox: null,
             pagination: null,
             info: null,
@@ -57,8 +57,10 @@ class DataTable extends Component {
             this._element.id = this._config.id
         }
 
-        let controller;
+        let controller, searchTimeout;
         this._isLoading = false;
+        this._searchPrase = '';
+        this._lastFocusedRequestElement = null;
         this._sections = {
             table: this._element.querySelector(`[${this._config.table}]`), 
             search: this._element.querySelector(`[${this._config.search}]`), 
@@ -203,6 +205,15 @@ class DataTable extends Component {
         };
 
         /**
+         * Store the a reference identifier for last focused request element
+         * 
+         * @param {String} name
+         */
+        const setLastFocusedRequestElement = (name) => {    
+            this._lastFocusedRequestElement = `[name="${name}"]`;
+        };
+
+        /**
          * Check all unchecked checkboxes
          */
         this._select = () => {    
@@ -298,7 +309,7 @@ class DataTable extends Component {
          * 
          * @param {string} keyword 
          */
-        this._search = (keyword) => {    
+        this._search = async (keyword) => {    
             this._abort();
 
             this._config.url = parseUrl(this._config.url, {
@@ -306,10 +317,14 @@ class DataTable extends Component {
                 [this._config.request.search]: keyword || '',
             }).href;
 
-            this._draw();
+            await this._draw();
+
+            const searchInput = this._sections.search.querySelector(`[${this._config.searchInput}]`);
+            searchInput.focus();
+            searchInput.value = this._searchPrase;
         };
 
-        const populateSearch = (data) => {
+        /*const populateSearch = (data) => {
             if (!this._sections.search) return;
             
             if (!this._sections.search.hasAttribute('data-populated') && data.has_records) {
@@ -333,6 +348,21 @@ class DataTable extends Component {
             if (!getRequest(this._config.request.search) && searchInput.value != '') {
                 searchInput.value = '';
             }
+        };*/
+
+        const populateSearch = (data) => {
+            if (!this._sections.search) return;
+
+            this._sections.search.innerHTML = data.html.search;
+            const searchInput = this._sections.search.querySelector(`[${this._config.searchInput}]`);
+
+            this._on(searchInput, 'input', (e) => {
+                this._searchPrase = searchInput.value;
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    this._search(searchInput.value);
+                }, this._config.searchDelay);
+            });
         };
 
         const populateTable = (data) => {
