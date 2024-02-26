@@ -1,5 +1,6 @@
 import { deepClone, stringToDom, showElement, hideElement, camelCase, addClass, removeClass } from '../utils.js';
 import Component from '../component.js';
+import { Idiomorph } from './../plugins/idiomorph/0.3.0/idiomorph.js';
 
 class DataTable extends Component {
     constructor(element, config) {
@@ -57,10 +58,9 @@ class DataTable extends Component {
             this._element.id = this._config.id
         }
 
-        let controller, searchTimeout;
+        let controller,
+            loadCount = 0;
         this._isLoading = false;
-        this._searchPrase = '';
-        this._lastFocusedRequestElement = null;
         this._sections = {
             table: this._element.querySelector(`[${this._config.table}]`), 
             search: this._element.querySelector(`[${this._config.search}]`), 
@@ -205,12 +205,12 @@ class DataTable extends Component {
         };
 
         /**
-         * Store the a reference identifier for last focused request element
+         * Check if datatable is loading for the first time
          * 
-         * @param {String} name
+         * @returns {boolean}
          */
-        const setLastFocusedRequestElement = (name) => {    
-            this._lastFocusedRequestElement = `[name="${name}"]`;
+        const isInitialLoad = () => {    
+            return loadCount == 1;
         };
 
         /**
@@ -309,7 +309,7 @@ class DataTable extends Component {
          * 
          * @param {string} keyword 
          */
-        this._search = async (keyword) => {    
+        this._search = (keyword) => {    
             this._abort();
 
             this._config.url = parseUrl(this._config.url, {
@@ -317,11 +317,7 @@ class DataTable extends Component {
                 [this._config.request.search]: keyword || '',
             }).href;
 
-            await this._draw();
-
-            const searchInput = this._sections.search.querySelector(`[${this._config.searchInput}]`);
-            searchInput.focus();
-            searchInput.value = this._searchPrase;
+            this._draw();
         };
 
         /*const populateSearch = (data) => {
@@ -353,16 +349,20 @@ class DataTable extends Component {
         const populateSearch = (data) => {
             if (!this._sections.search) return;
 
-            this._sections.search.innerHTML = data.html.search;
-            const searchInput = this._sections.search.querySelector(`[${this._config.searchInput}]`);
-
-            this._on(searchInput, 'input', (e) => {
-                this._searchPrase = searchInput.value;
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    this._search(searchInput.value);
-                }, this._config.searchDelay);
+            Idiomorph.morph(this._sections.search, data.html.search, {
+                morphStyle: 'innerHTML',
+                ignoreActiveValue: true
             });
+
+            if (isInitialLoad()) {                
+                const searchInput = this._sections.search.querySelector(`[${this._config.searchInput}]`);
+    
+                this._on(searchInput, 'input', (e) => {
+                    this._setTimeout(() => {
+                        this._search(searchInput.value);
+                    }, this._config.searchDelay);
+                });
+            }
         };
 
         const populateTable = (data) => {
@@ -488,6 +488,7 @@ class DataTable extends Component {
             this._events = {};
             loading();
             this._isLoading = true;
+            loadCount++;
             this._dispatchEvent('processing');
 
             await fetch(url, { signal: signal }) 
@@ -511,8 +512,12 @@ class DataTable extends Component {
                     this._dispatchEvent('processing');
                     autoReload();
 
-                    if (this._config.saveState) {                        
-                        this._storage.set(this._element.id, JSON.stringify(data.options.request.save));
+                    if (this._config.saveState) {   
+                        if (data.options.request.save instanceof Array) {
+                            this._storage.remove(this._element.id);
+                        } else {
+                            this._storage.set(this._element.id, JSON.stringify(data.options.request.save));
+                        }                   
                     }
                 })
                 .finally(() => {
