@@ -16,6 +16,8 @@ class DataTable extends Component {
             searchDelay: 750,
             checkbox: null,
             pagination: null,
+            filter: null,
+            filters: null,
             info: null,
             length: null,
             region: null,
@@ -30,7 +32,8 @@ class DataTable extends Component {
                 search: 'search',
                 orderColumn: 'order_column',
                 orderDirection: 'order_direction',
-                perPage: 'per_page'
+                perPage: 'per_page',
+                filters: 'filters'
             },
             classes: {
                 display: 'hidden'
@@ -66,7 +69,8 @@ class DataTable extends Component {
             search: this._element.querySelector(`[${this._config.search}]`), 
             length: this._element.querySelector(`[${this._config.length}]`), 
             info: this._element.querySelector(`[${this._config.info}]`), 
-            pagination: this._element.querySelector(`[${this._config.pagination}]`), 
+            pagination: this._element.querySelector(`[${this._config.pagination}]`),
+            filters: this._element.querySelector(`[${this._config.filters}]`),
             loader: this._element.querySelector(`[${this._config.loader}]`),
             region: this._element.querySelectorAll(`[${this._config.region}]`)
         };
@@ -320,31 +324,68 @@ class DataTable extends Component {
             this._draw();
         };
 
-        /*const populateSearch = (data) => {
-            if (!this._sections.search) return;
-            
-            if (!this._sections.search.hasAttribute('data-populated') && data.has_records) {
-                this._sections.search.innerHTML = data.html.search;
-                this._sections.search.setAttribute('data-populated', true);
-                const searchInput = this._element.querySelector(`[${this._config.searchInput}]`);
+        /**
+         * Filter records
+         * 
+         * @param {String} key 
+         * @param {*} value 
+         */
+        this._filter = (key, value) => {    
+            if (!key.startsWith(this._config.request.filters)) return;
+
+            this._abort();
+
+            this._config.url = parseUrl(this._config.url, {
+                [this._config.request.page]: null,
+                [key]: value
+            }).href;
+
+            this._draw();
+        };
+
+        /**
+         * Clear filters
+         */
+        this._resetFilters = () => {    
+            const url = parseUrl(this._config.url);
+            const params = Array.from(url.searchParams.keys());
+
+            for (const key of params) {
+                if (key.startsWith(this._config.request.filters)) {
+                    url.searchParams.delete(key);
+                }
+            }
+
+            this._config.url = url.href;
+            this._draw();
+        };
+
+        const populateFilters = (data) => {
+            if (!this._sections.filters) return;
+
+            Idiomorph.morph(this._sections.filters, data.html.filter, {
+                morphStyle: 'innerHTML',
+                ignoreActiveValue: true,
+                callbacks: {
+                    beforeNodeMorphed: (oldNode, newNode) => {
+                        return false
+                    }
+                }
+            });
+
+            if (isInitialLoad()) {                
+                const filters = this._sections.filters.querySelectorAll(`[${this._config.filter}]`);
     
-                this._on(searchInput, 'input', (e) => {
-                    this._setTimeout(() => {
-                        this._search(searchInput.value);
-                    }, this._config.searchDelay);
+                filters.forEach((element) => {
+                    if (element.localName == 'select') {                    
+                        this._on(element, 'change', (e) => {
+                            e.preventDefault();
+                            this._filter(e.target.name, e.target.value);
+                        });
+                    }
                 });
-
-                return;
             }
-
-            const searchInput = this._element.querySelector(`[${this._config.searchInput}]`);
-
-            if (!searchInput) return;
-
-            if (!getRequest(this._config.request.search) && searchInput.value != '') {
-                searchInput.value = '';
-            }
-        };*/
+        };
 
         const populateSearch = (data) => {
             if (!this._sections.search) return;
@@ -501,6 +542,7 @@ class DataTable extends Component {
                 })
                 .then(data => {
                     populateSearch(data);
+                    populateFilters(data);
                     populateTable(data);
                     populateInfo(data)
                     populatePagination(data);
@@ -516,13 +558,17 @@ class DataTable extends Component {
                         if (data.options.request.save instanceof Array) {
                             this._storage.remove(this._element.id);
                         } else {
-                            this._storage.set(this._element.id, JSON.stringify(data.options.request.save));
+                            this._storage.set(this._element.id, JSON.stringify({
+                                request: data.options.request.save
+                            }));
                         }                   
                     }
+
+                    this._dispatchEvent('draw', { response: data});
                 })
-                .finally(() => {
-                    this._dispatchEvent('draw');
-                })
+                // .finally(() => {
+                //     this._dispatchEvent('draw');
+                // })
                 .catch((message) => {
                     this._debug(message);
                 });
@@ -535,7 +581,10 @@ class DataTable extends Component {
         // Update URL when save state is true
         if (this._config.saveState) {                    
             const params = JSON.parse(this._storage.get(this._element.id));
-            this._config.url = parseUrl(this._config.url, params).href;
+
+            if (params?.request) {
+                this._config.url = parseUrl(this._config.url, params.request).href;
+            }
         } else {
             this._storage.remove(this._element.id);
         }
@@ -586,6 +635,10 @@ class DataTable extends Component {
 
     isLoading() {
         return this._isLoading;
+    }
+
+    resetFilters() {
+        return this._resetFilters();
     }
 
     destroy() {
