@@ -18,6 +18,7 @@ class DataTable extends Component {
             pagination: null,
             filter: null,
             filters: null,
+            autoFilter: true,
             info: null,
             length: null,
             region: null,
@@ -64,6 +65,7 @@ class DataTable extends Component {
         let controller,
             loadCount = 0;
         this._isLoading = false;
+        this._filterParams = {};
         this._sections = {
             table: this._element.querySelector(`[${this._config.table}]`), 
             search: this._element.querySelector(`[${this._config.search}]`), 
@@ -209,11 +211,32 @@ class DataTable extends Component {
         };
 
         /**
+         * Store filter parameter
+         * 
+         * @param {String} key 
+         * @param {String} value 
+         */
+        const storeFilterParameter = (key, value) => {  
+            if (!key.startsWith(this._config.request.filters)) return;
+
+            this._filterParams[key] = value == '' ? null : value;
+        };
+
+        /**
+         * Get all filter elements 
+         * 
+         * @returns {HTMLElement}
+         */
+        const getFilterElements = () => {  
+            return this._sections.filters.querySelectorAll(`[${this._config.filter}]`);
+        };
+
+        /**
          * Check if datatable is loading for the first time
          * 
          * @returns {boolean}
          */
-        const isInitialLoad = () => {    
+        this._isInitialLoad = () => {    
             return loadCount == 1;
         };
 
@@ -326,27 +349,23 @@ class DataTable extends Component {
 
         /**
          * Filter records
-         * 
-         * @param {String} key 
-         * @param {*} value 
          */
-        this._filter = (key, value) => {    
-            if (!key.startsWith(this._config.request.filters)) return;
-
+        this._filter = () => {    
             this._abort();
 
             this._config.url = parseUrl(this._config.url, {
                 [this._config.request.page]: null,
-                [key]: value
+                ...this._filterParams
             }).href;
 
             this._draw();
+            this._dispatchEvent('filter');
         };
 
         /**
          * Clear filters
          */
-        this._resetFilters = () => {    
+        this._resetFilter = () => {    
             const url = parseUrl(this._config.url);
             const params = Array.from(url.searchParams.keys());
 
@@ -356,8 +375,14 @@ class DataTable extends Component {
                 }
             }
 
+            getFilterElements().forEach((filterElement) => {
+                filterElement.value = '';
+            });
+
+            this._filterParams = {};
             this._config.url = url.href;
             this._draw();
+            this._dispatchEvent('filterReset', {filters: getFilterElements()});
         };
 
         const populateFilters = (data) => {
@@ -373,14 +398,16 @@ class DataTable extends Component {
                 }
             });
 
-            if (isInitialLoad()) {                
-                const filters = this._sections.filters.querySelectorAll(`[${this._config.filter}]`);
-    
-                filters.forEach((element) => {
-                    if (element.localName == 'select') {                    
-                        this._on(element, 'change', (e) => {
+            if (this._isInitialLoad()) {                
+                getFilterElements().forEach((filterElement) => {
+                    if (filterElement.localName == 'select') {                    
+                        this._on(filterElement, 'change', (e) => {
                             e.preventDefault();
-                            this._filter(e.target.name, e.target.value);
+                            storeFilterParameter(e.target.name, e.target.value);
+
+                            if (this._config.autoFilter) {
+                                this._filter();
+                            }
                         });
                     }
                 });
@@ -395,7 +422,7 @@ class DataTable extends Component {
                 ignoreActiveValue: true
             });
 
-            if (isInitialLoad()) {                
+            if (this._isInitialLoad()) {                
                 const searchInput = this._sections.search.querySelector(`[${this._config.searchInput}]`);
     
                 this._on(searchInput, 'input', (e) => {
@@ -574,10 +601,6 @@ class DataTable extends Component {
                 });
         };
 
-        this._reload = () => {
-            this._draw();
-        };
-
         // Update URL when save state is true
         if (this._config.saveState) {                    
             const params = JSON.parse(this._storage.get(this._element.id));
@@ -605,7 +628,7 @@ class DataTable extends Component {
     }
 
     reload() {
-        this._reload();
+        this._draw();
     }
 
     perPage(length) {
@@ -637,8 +660,12 @@ class DataTable extends Component {
         return this._isLoading;
     }
 
-    resetFilters() {
-        return this._resetFilters();
+    filter() {
+        return this._filter();
+    }
+
+    resetFilter() {
+        return this._resetFilter();
     }
 
     destroy() {
