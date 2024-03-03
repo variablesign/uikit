@@ -134,6 +134,10 @@ class Datepicker extends Component {
             ? this._config.buttons.split(' ')
             : this._config.buttons;
 
+        this._config.focus = this._config.buttons instanceof Array
+            ? true
+            : this._config.focus;
+
         this._config.minDate = typeof this._config.minDate == 'string'
             ? new Date(Date.parse(this._config.minDate))
             : this._config.minDate;

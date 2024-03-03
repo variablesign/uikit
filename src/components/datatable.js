@@ -402,7 +402,16 @@ class DataTable extends Component {
                 getFilterElements().forEach((filterElement) => {
                     if (filterElement.localName == 'select') {                    
                         this._on(filterElement, 'change', (e) => {
-                            e.preventDefault();
+                            storeFilterParameter(e.target.name, e.target.value);
+
+                            if (this._config.autoFilter) {
+                                this._filter();
+                            }
+                        });
+                    }
+
+                    if (filterElement.localName == 'input') {                    
+                        this._on(filterElement, 'input', (e) => {
                             storeFilterParameter(e.target.name, e.target.value);
 
                             if (this._config.autoFilter) {
