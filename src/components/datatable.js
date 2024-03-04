@@ -376,7 +376,11 @@ class DataTable extends Component {
             }
 
             getFilterElements().forEach((filterElement) => {
-                filterElement.value = '';
+                if (filterElement.localName == 'select') {
+                    filterElement.value = filterElement.options.length > 0 ? filterElement.options[0].value : '';
+                } else {
+                    filterElement.value = '';
+                }
             });
 
             this._filterParams = {};
@@ -415,7 +419,9 @@ class DataTable extends Component {
                             storeFilterParameter(e.target.name, e.target.value);
 
                             if (this._config.autoFilter) {
-                                this._filter();
+                                this._setTimeout(() => {
+                                    this._filter();
+                                }, this._config.searchDelay);
                             }
                         });
                     }

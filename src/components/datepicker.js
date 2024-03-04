@@ -184,7 +184,7 @@ class Datepicker extends Component {
                 if (!range.getDate()) {
                     range.gotoDate(date);
                 }
-
+                
                 if (range.getDate()) {
                     this._pikaday.setEndRange(range.getDate());
                 }
@@ -354,6 +354,10 @@ class Datepicker extends Component {
         options.onSelect = (date, hasEvent) => {
             updateRangeDate();
             this._dispatchEvent('select', { date, hasEvent });
+
+            if (this._element.localName == 'input') {
+                this._element.dispatchEvent(new Event('input'));
+            }
         };
 
         if (!this._config.toString && this._config.format && (!this._hasMoment || !this._hasDayjs)) {
@@ -584,6 +588,13 @@ class Datepicker extends Component {
     }
 
     clear() {
+        if (this._config.startRangeTarget || this._config.endRangeTarget) {            
+            this._pikaday.setStartRange(null);
+            this._pikaday.setEndRange(null);
+            this._pikaday.setMinDate(null);
+            this._pikaday.setMaxDate(null);
+        }
+
         this._pikaday.clear();
     }
 

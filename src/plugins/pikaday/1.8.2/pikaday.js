@@ -995,10 +995,6 @@
                 if (this._o.field) {
                     this._o.field.value = '';
                     fireEvent(this._o.field, 'change', { firedBy: this });
-
-                    if (this._o.field.localName == 'input') {
-                        this._o.field.dispatchEvent(new Event('input'));
-                    }
                 }
 
                 return this.draw();
@@ -1034,10 +1030,6 @@
                 }
 
                 fireEvent(this._o.field, 'change', { firedBy: this });
-
-                if (this._o.field.localName == 'input') {
-                    this._o.field.dispatchEvent(new Event('input'));
-                }
             }
             if (!preventOnSelect && typeof this._o.onSelect === 'function') {
                 let hasEvent = false;
