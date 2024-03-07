@@ -377,7 +377,7 @@ class DataTable extends Component {
 
             getFilterElements().forEach((filterElement) => {
                 if (filterElement.localName == 'select') {
-                    filterElement.value = filterElement.options.length > 0 ? filterElement.options[0].value : '';
+                    filterElement.value = filterElement.selectedOptions.length > 0 ? filterElement.selectedOptions[0].value : '';
                 } else {
                     filterElement.value = '';
                 }

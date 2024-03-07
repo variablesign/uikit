@@ -486,8 +486,8 @@ class Select extends Component {
                 this._on(this._tomSelect.input.form, 'reset', () => {
                     this._tomSelect.clear(true);
 
-                    if (this._config.allowEmptyOption && this._tomSelect.input.options.length > 0) {
-                        this._tomSelect.addItem(this._tomSelect.input.options[0].value, true);
+                    if (this._config.allowEmptyOption && this._tomSelect.input.selectedOptions.length > 0) {
+                        this._tomSelect.addItem(this._tomSelect.input.selectedOptions[0].value, true);
                     }
                 });
             }
