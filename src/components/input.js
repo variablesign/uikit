@@ -1,10 +1,12 @@
-import { getElement } from '../utils.js';
+import { getElements, addClass, removeClass } from '../utils.js';
 import Component from '../component.js';
 
 class Input extends Component {
     constructor(element, config) {
         const _defaults = {
-            
+            classes: {
+                display: 'hidden'
+            }
         };
 
         const _component = {
@@ -41,26 +43,57 @@ class Input extends Component {
             }
         };
 
+        /**
+         * Get actions from dataset and store them 
+         * 
+         * @param {DOMStringMap} dataset 
+         */
+        const setActions = (dataset) => {
+            for (const key in dataset) {
+                const renamedKey = key.replace(this._component.name, '');
+
+                if (typeof actions[renamedKey] === 'function') {
+                    actions[renamedKey](dataset[key]);
+                }
+            }
+        };
+
+        const actionHandler = (selector, callback) => {
+            getElements(selector).forEach((element) => {
+                callback(element);
+            });
+        };
+
         actions['Enable'] = (selector) => {
-            const target = getElement(selector);
-            target.disabled = false;
+            actionHandler(selector, (element) => {
+                element.disabled = false;
+            });
         };
 
         actions['Disable'] = (selector) => {
-            const target = getElement(selector);
-            target.disabled = true;
+            actionHandler(selector, (element) => {
+                element.disabled = true;
+            });
+        };
+
+        actions['Show'] = (selector) => {
+            actionHandler(selector, (element) => {
+                removeClass(element, this._config.classes.display);
+            });
+        };
+
+        actions['Hide'] = (selector) => {
+            actionHandler(selector, (element) => {
+                addClass(element, this._config.classes.display);
+            });
         };
 
         types['select-one'] = (e) => {
-            const data = e.target.selectedOptions[0].dataset;
+            setActions(e.target.selectedOptions[0].dataset);
+        };
 
-            for (const key in data) {
-                const newKey = key.replace(this._component.name, '');
-
-                if (typeof actions[newKey] === 'function') {
-                    actions[newKey](data[key]);
-                }
-            }
+        types['radio'] = types['checkbox'] = (e) => {
+            setActions(e.target.dataset);
         };
 
         this._on(this._element, guessType().event, types[guessType().type]);
