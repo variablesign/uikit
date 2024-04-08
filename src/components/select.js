@@ -70,7 +70,8 @@ class Select extends Component {
                 loader: ''
             },
             createText: 'Add <strong>:value...</strong>',
-            searchText: 'No results found for ":value"'
+            searchText: 'No results found for ":value"',
+            emptyRemoteText: 'No results found',
         };
 
         const _component = {
@@ -308,7 +309,7 @@ class Select extends Component {
                     showElement(this._tomSelect.control.firstElementChild);
                 }
             }
-
+            
             this._dispatchEvent('type', { string });
         };
 
@@ -379,7 +380,15 @@ class Select extends Component {
                 return `<div class="${this._config.classes.noResults}">${getText('searchText', escape(data.input))}</div>`;
             },
             not_loading: (data, escape) => {
-                // no default content
+                if (this._config.emptyRemoteText == '') return;
+
+                if (this._tomSelect.currentResults.total == 0) {
+                    if (this._tomSelect.currentResults.query.length == 0) {
+                        return `<div class="${this._config.classes.noResults}">${getText('emptyRemoteText', escape(data.input))}</div>`;
+                    }
+
+                    return `<div class="${this._config.classes.noResults}">${getText('searchText', escape(data.input))}</div>`;
+                }
             },
             optgroup: (data) => {
                 const optgroup = document.createElement('div');
@@ -438,11 +447,11 @@ class Select extends Component {
             };
 
             options.shouldLoad = (query) => {
-                if (this._config.loadOnce) return;
+                if (this._config.loadOnce) return false;
             
-                if (this._config.loadOnce) {
-                    return true;
-                }
+                // if (this._config.loadOnce) {
+                //     return true;
+                // }
 
                 return query.length > 1;
             };
@@ -502,6 +511,16 @@ class Select extends Component {
 
     clear(silent = false) {
         this._tomSelect.clear(silent);
+    }
+
+    disable() {
+        this._tomSelect.disable();
+        this._tomSelect.control.setAttribute('data-disabled', true);
+    }
+
+    enable() {
+        this._tomSelect.enable();
+        this._tomSelect.control.setAttribute('data-disabled', false);
     }
 
     destroy() {
