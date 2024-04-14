@@ -376,6 +376,21 @@ export const getElements = (selector, context = document) => {
 }
 
 /**
+ * Get a nested object property with dot (.) notation
+ * 
+ * @param {object} data 
+ * @param {string} key 
+ * @returns 
+ */
+export const deepGet = (data, key) => {
+    key = key.split('.');
+
+    return key.reduce((xs, x) => {
+        return xs?.[x] ?? undefined;
+    }, data);
+}
+
+/**
  * Capitalize the first letter of a string
  */
 export const capitalize = string => {

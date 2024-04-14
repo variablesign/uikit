@@ -1,4 +1,4 @@
-import { styles, stringToDom, showElement, hideElement } from '../utils.js';
+import { styles, stringToDom, showElement, hideElement, deepGet } from '../utils.js';
 import Component from '../component.js';
 import { computePosition, offset, flip, autoUpdate } from '@floating-ui/dom';
 import TomSelect from '../plugins/tomselect/2.2.2/tom-select.js';
@@ -22,6 +22,7 @@ class Select extends Component {
             labelField: "text",
             searchField: ["text"],
             sortField: "$order",
+            data: null,
             maxOptions: 50,
             maxItems: null,
             lock: false,
@@ -366,7 +367,22 @@ class Select extends Component {
 
         options.render = {
             option: (data, escape) => {
-                return `<div>${escape(data[this._config.labelField])}</div>`;
+                let attributes = '';
+
+                if (this._config.data instanceof Object && this._config.remote != null) {
+
+                    for (const key in this._config.data) {
+                        const value = deepGet(data, this._config.data[key]);
+    
+                        if (value != undefined) {
+                            attributes += value instanceof Object 
+                                ? ` data-${key}='${JSON.stringify(value)}'`
+                                : ` data-${key}="${value}"`;
+                        }
+                    }
+                }
+
+                return `<div${attributes}>${escape(data[this._config.labelField])}</div$>`;
             },
             item: (data, escape) => {
                 return `<div>${escape(data[this._config.labelField])}</div>`;
@@ -503,6 +519,10 @@ class Select extends Component {
         }
 
         this._dispatchEvent('initialize');
+    }
+
+    getOption(value, create = false) {
+        return this._tomSelect.getOption(value, create);
     }
 
     addItem(value, silent = false) {
