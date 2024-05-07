@@ -472,7 +472,7 @@ class Datepicker extends Component {
         if (this._config.clearOnReset) {              
             if (this._element.form) {
                 this._on(this._element.form, 'reset', () => {
-                    this._pikaday.clear();
+                    this.clear();
                 });
             }
         }
