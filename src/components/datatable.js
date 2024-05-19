@@ -19,6 +19,7 @@ class DataTable extends Component {
             filter: null,
             filters: null,
             autoFilter: true,
+            export: null,
             info: null,
             length: null,
             region: null,
@@ -73,6 +74,7 @@ class DataTable extends Component {
             info: this._element.querySelector(`[${this._config.info}]`), 
             pagination: this._element.querySelector(`[${this._config.pagination}]`),
             filters: this._element.querySelector(`[${this._config.filters}]`),
+            export: this._element.querySelector(`[${this._config.export}]`),
             loader: this._element.querySelector(`[${this._config.loader}]`),
             region: this._element.querySelectorAll(`[${this._config.region}]`)
         };
@@ -470,6 +472,12 @@ class DataTable extends Component {
             this._sections.info.innerHTML = data.has_records ? data.html.info : '';
         };
 
+        const populateExport = (data) => {
+            if (!this._sections.export) return;
+
+            this._sections.export.innerHTML = data.has_records ? data.html.export : '';
+        };
+
         const populatePagination = (data) => {
             if (!this._sections.pagination) return;
 
@@ -587,6 +595,7 @@ class DataTable extends Component {
                     populateFilters(data);
                     populateTable(data);
                     populateInfo(data)
+                    populateExport(data)
                     populatePagination(data);
                     populateLength(data);
                     regionVisibility(data)
