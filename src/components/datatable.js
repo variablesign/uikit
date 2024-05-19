@@ -608,9 +608,6 @@ class DataTable extends Component {
 
                     this._dispatchEvent('draw', { response: data});
                 })
-                // .finally(() => {
-                //     this._dispatchEvent('draw');
-                // })
                 .catch((message) => {
                     this._debug(message);
                 });
