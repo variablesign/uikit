@@ -295,7 +295,7 @@ class Select extends Component {
 
             // Restore hidden selected item
             if (this._tomSelect.items.length === 1 && this._tomSelect.settings.mode === 'single') {
-                showElement(this._tomSelect.control.firstElementChild);
+                showElement(this._tomSelect.control.firstElementChild, null);
             }
 
             this._dispatchEvent('blur');
